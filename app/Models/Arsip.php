@@ -31,6 +31,7 @@ class Arsip extends Model
         'total_qty_in',
         'total_qty_out',
         'detail_barang',
+        'pemohon',
     ];
 
     protected $casts = [

@@ -2,9 +2,9 @@
 
     {{-- ================= HEADER ================= --}}
     <div class="sidebar-header p-4 d-flex align-items-center">
-        <div class="bg-primary text-white rounded p-2 me-3 d-flex align-items-center justify-content-center shadow-sm"
+        <div class="bg-white rounded p-1 me-3 d-flex align-items-center justify-content-center shadow-sm"
              style="width:40px;height:40px">
-            <i class="bi bi-archive-fill fs-5"></i>
+            <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <div>
             <h6 class="mb-0 fw-bold text-dark">IT - Submission</h6>
@@ -17,37 +17,7 @@
         <ul class="nav flex-column gap-1">
 
             {{-- NOTIFICATION DROPDOWN --}}
-            <li class="nav-item dropdown mb-3">
-                <a class="nav-link d-flex align-items-center justify-content-between px-3 py-2 rounded-3 text-dark bg-light border border-secondary border-opacity-10" 
-                   data-bs-toggle="dropdown" style="cursor: pointer;">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-bell-fill me-3 text-warning"></i>
-                        <span class="fw-medium text-sm">Notifikasi</span>
-                    </div>
-                    @if(($unreadCount ?? 0) > 0)
-                    <span class="badge bg-danger rounded-pill px-2">
-                        {{ $unreadCount }}
-                    </span>
-                    @endif
-                </a>
 
-                <div class="dropdown-menu shadow-lg border-0 mt-2 p-0 w-100 overflow-hidden" style="z-index: 1050;">
-                    <div class="p-3 border-bottom bg-primary text-white fw-bold">
-                        🔔 Info Terbaru
-                    </div>
-                    <div style="max-height: 250px; overflow-y: auto;">
-                        @forelse(($notifications ?? []) as $n)
-                            <div class="p-3 border-bottom small hover-bg-light">
-                                {{ $n->message }}
-                            </div>
-                        @empty
-                            <div class="p-3 text-center text-muted small">
-                                Tidak ada notifikasi baru
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-            </li>
 
             {{-- DASHBOARD --}}
             <li class="nav-item">
@@ -170,30 +140,7 @@
                 </div>
             </li>
 
-            <li class="nav-header text-xs fw-bold text-slate-500 text-uppercase mt-4 mb-2 ps-3">
-                Akun & Sistem
-            </li>
 
-            {{-- PROFILE --}}
-            <li class="nav-item">
-                <a href="{{ route('superadmin.profile') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.profile') ? 'active' : '' }}">
-                    <i class="bi bi-person-circle me-3"></i>
-                    <span class="fw-medium">Profile Saya</span>
-                </a>
-            </li>
-
-            {{-- LOGOUT --}}
-            <li class="nav-item mt-2">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit"
-                            class="nav-link w-100 d-flex align-items-center text-danger border-0 bg-transparent hover-bg-danger-light">
-                        <i class="bi bi-box-arrow-right me-3"></i>
-                        <span class="fw-medium">Logout</span>
-                    </button>
-                </form>
-            </li>
 
         </ul>
     </div>

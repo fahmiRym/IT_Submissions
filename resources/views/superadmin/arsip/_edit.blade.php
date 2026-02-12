@@ -31,7 +31,7 @@
         {{-- 3. JENIS PENGAJUAN --}}
         <div class="mb-3">
             <label class="form-label small fw-bold text-secondary">Jenis Pengajuan</label>
-            <select name="jenis_pengajuan" id="editJenisPengajuan" class="form-select bg-warning bg-opacity-10 border-warning border-opacity-25 text-dark fw-bold" required>
+            <select name="jenis_pengajuan" id="editJenisPengajuan" class="form-select bg-white border-warning border-opacity-50 text-dark fw-bold" required>
                 <option value="Cancel">Cancel</option>
                 <option value="Adjust">Adjust</option>
                 <option value="Mutasi_Billet">Mutasi Billet</option>
@@ -44,7 +44,7 @@
         {{-- 4. KATEGORI (Dynamic Show/Hide handled by JS) --}}
         <div class="mb-3 d-none dynamic-section-edit" id="editWrapperKategori">
             <label class="form-label small fw-bold text-danger">Kategori Error</label>
-            <select name="kategori" id="editKategori" class="form-select bg-danger bg-opacity-10 border-danger border-opacity-25 text-danger">
+            <select name="kategori" id="editKategori" class="form-select bg-white border-danger border-opacity-50 text-dark fw-bold">
                 <option value="Human">Human Error</option>
                 <option value="System">System Error</option>
                 <option value="None">None</option>
@@ -78,49 +78,59 @@
                 </select>
             </div>
         </div>
+        
+        <div class="mb-3">
+            <label class="form-label small fw-bold text-secondary">Nama Pemohon</label>
+            <textarea name="pemohon" id="editPemohon" class="form-control bg-light border-0" rows="2" placeholder="Nama-nama pemohon..."></textarea>
+        </div>
 
         {{-- STATUS CONTROLS (Superadmin Special) --}}
-        <div class="p-3 rounded-3 bg-white border border-warning border-opacity-25 mb-3">
-            <h6 class="small fw-bold text-warning mb-2 border-bottom pb-1">Status & Verifikasi</h6>
+        <div class="p-3 rounded-3 bg-gradient bg-light border border-warning border-opacity-25 mb-3 shadow-sm">
+            <div class="d-flex align-items-center mb-2 pb-2 border-bottom border-warning border-opacity-25">
+                <i class="bi bi-shield-lock text-warning me-2"></i>
+                <h6 class="small fw-bold text-secondary mb-0">Status & Verifikasi</h6>
+            </div>
             
             <div class="mb-2">
-                <label class="form-label text-xs text-muted mb-1">Status Utama</label>
-                <select name="status" id="editStatus" class="form-select form-select-sm fw-bold">
-                    <option value="Check">Check</option>
-                    <option value="Process">Process</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Done">Done</option>
-                    <option value="Reject">Reject</option>
-                    <option value="Void">Void</option>
+                <label class="form-label text-xs fw-bold text-muted mb-1">Status Utama (Flow)</label>
+                <select name="status" id="editStatus" class="form-select form-select-sm bg-white border-warning border-opacity-25 text-dark fw-bold">
+                    <option value="Check">Check (Verifikasi Awal)</option>
+                    <option value="Process">Process (Sedang Diproses)</option>
+                    <option value="Done">Done (Selesai)</option>
+                    <option value="Reject">Reject (Ditolak)</option>
+                    <option value="Void">Void (Dibatalkan)</option>
                 </select>
             </div>
 
             <div class="row g-2">
-                <div class="col-6">
-                     <label class="form-label text-xs text-muted mb-1">Ket. Proses</label>
-                     <select name="ket_process" id="editKetProcess" class="form-select form-select-sm">
-                        <option value="Review">Review</option>
-                        <option value="Process">Process</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Done">Done</option>
-                        <option value="Void">Void</option>
+                <div class="col-12">
+                     <label class="form-label text-xs fw-bold text-muted mb-1">Ket. Proses Pengerjaan</label>
+                     <select name="ket_process" id="editKetProcess" class="form-select form-select-sm bg-white border-warning border-opacity-25 text-primary fw-semibold">
+                        <option value="Review">Review (Sedang Diulas)</option>
+                        <option value="Process">Process (Dikerjakan)</option>
+                        <option value="Pending">Pending (Tertunda)</option>
+                        <option value="Partial Done">Partial Done (Sebagian)</option>
+                        <option value="Done">Done (Selesai)</option>
+                        <option value="Void">Void (Batal)</option>
                      </select>
                 </div>
                 <div class="col-6">
-                    <label class="form-label text-xs text-muted mb-1">BA / Arsip</label>
-                    <div class="d-flex gap-1">
-                        <select name="ba" id="editBa" class="form-select form-select-sm">
-                            <option value="Pending">Pending</option>
-                            <option value="Process">Process</option>
-                            <option value="Done">Done</option>
-                             <option value="Void">Void</option>
-                        </select>
-                        <select name="arsip" id="editArsipStatus" class="form-select form-select-sm">
-                            <option value="Pending">Pending</option>
-                             <option value="Done">Done</option>
-                             <option value="None">None</option>
-                        </select>
-                    </div>
+                    <label class="form-label text-xs fw-bold text-muted mb-1">Berita Acara (BA)</label>
+                    <select name="ba" id="editBa" class="form-select form-select-sm bg-white border-warning border-opacity-25">
+                        <option value="Process">Process</option>
+                        <option value="Done">Done (Ada)</option>
+                        <option value="Void">Void</option>
+                        <option value="None">None (Tidak Ada)</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="form-label text-xs fw-bold text-muted mb-1">Fisik Arsip</label>
+                    <select name="arsip" id="editArsipStatus" class="form-select form-select-sm bg-white border-warning border-opacity-25">
+                        <option value="Pending">Pending (Belum)</option>
+                        <option value="Process">Process</option>
+                        <option value="Done">Done (Disimpan)</option>
+                        <option value="None">None</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -188,6 +198,16 @@
                     </div>
                     <div class="table-responsive rounded-3 border border-danger border-opacity-25 bg-danger bg-opacity-10 p-2">
                         <table class="table table-sm table-borderless mb-0 align-middle">
+                            <thead class="text-xs text-danger fw-bold">
+                                <tr>
+                                    <th>Kode</th>
+                                    <th>Nama Produk</th>
+                                    <th width="80" class="text-center">Qty</th>
+                                    <th>Lot</th>
+                                    <th width="150">Lokasi</th>
+                                    <th width="40"></th>
+                                </tr>
+                            </thead>
                             <tbody id="wrapperAsalEdit"></tbody>
                         </table>
                     </div>
@@ -201,6 +221,16 @@
                     </div>
                     <div class="table-responsive rounded-3 border border-success border-opacity-25 bg-success bg-opacity-10 p-2">
                         <table class="table table-sm table-borderless mb-0 align-middle">
+                            <thead class="text-xs text-success fw-bold">
+                                <tr>
+                                    <th>Kode</th>
+                                    <th>Nama Produk</th>
+                                    <th width="80" class="text-center">Qty</th>
+                                    <th>Lot</th>
+                                    <th width="150">Lokasi</th>
+                                    <th width="40"></th>
+                                </tr>
+                            </thead>
                             <tbody id="wrapperTujuanEdit"></tbody>
                         </table>
                     </div>

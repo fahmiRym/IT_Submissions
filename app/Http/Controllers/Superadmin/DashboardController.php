@@ -175,6 +175,13 @@ class DashboardController extends Controller
             'deptMemo'         => $deptMemo,
             'deptMutasi'       => $deptMutasi,
 
+            // Ket Process Stats
+            'ketPending'       => (clone $query)->where('ket_process', 'Pending')->count(),
+            'ketProcess'       => (clone $query)->where('ket_process', 'Process')->count(),
+            'ketDone'          => (clone $query)->where('ket_process', 'Done')->count(),
+            'ketPartial'       => (clone $query)->where('ket_process', 'Partial Done')->count(),
+            'ketReview'        => (clone $query)->where('ket_process', 'Review')->count(), // Assuming Review exists based on table logic
+
             'monthlyChart'     => $monthlyChart,
             
             // Others

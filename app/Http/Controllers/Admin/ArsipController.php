@@ -22,16 +22,85 @@ use App\Models\Notification;
 
 class ArsipController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems'])
+                        ->where('admin_id', auth()->id());
+
+        /* ================= SEARCH ================= */
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($x) use ($q) {
+                $x->where('no_doc', 'like', "%{$q}%")
+                    ->orWhere('no_transaksi', 'like', "%{$q}%")
+                    ->orWhere('no_registrasi', 'like', "%{$q}%");
+            });
+        }
+
+        /* ================= FILTER ================= */
+        // 1. Departemen
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // 2. Kategori
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        // 3. Jenis
+        $jenis = $request->get('jenis') ?? $request->get('jenis_pengajuan');
+        if ($jenis) {
+            $query->where('jenis_pengajuan', $jenis);
+        }
+
+        // 4. Status Process
+        if ($request->filled('ket_process')) {
+            $query->where('ket_process', $request->ket_process);
+        }
+
+        // 5. Date Range
+        if ($request->filled('start_date')) {
+            $query->whereDate('tgl_pengajuan', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('tgl_pengajuan', '<=', $request->end_date);
+        }
+
+        /* ================= SORT ================= */
+        $allowedSort = ['id', 'tgl_pengajuan', 'no_registrasi', 'ket_process', 'department_id'];
+        $sort = in_array($request->get('sort'), $allowedSort) ? $request->get('sort') : 'id';
+        $dir = $request->get('dir') === 'asc' ? 'asc' : 'desc';
+
+        $query->orderBy($sort, $dir);
+
+        /* ================= DATA ================= */
+        $perPage = $request->input('per_page', 10);
+        $arsips = $query->paginate($perPage)->withQueryString();
+
+        /* ================= STATS ================= */
+        $statsQuery = Arsip::where('admin_id', auth()->id());
+        if ($jenis) {
+            $statsQuery->where('jenis_pengajuan', $jenis);
+        }
+
+        $stats = [
+            'total'   => (clone $statsQuery)->count(),
+            'Review'  => (clone $statsQuery)->where('ket_process', 'Review')->count(),
+            'Process' => (clone $statsQuery)->where('ket_process', 'Process')->count(),
+            'Done'    => (clone $statsQuery)->where('ket_process', 'Done')->count(),
+            'Pending' => (clone $statsQuery)->where('ket_process', 'Pending')->count(),
+            'Void'    => (clone $statsQuery)->where('ket_process', 'Void')->count(),
+        ];
+
         return view('admin.arsip.index', [
-            'arsips'      => Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems'])
-                                ->where('admin_id', auth()->id())
-                                ->latest()
-                                ->paginate(10),
+            'arsips'      => $arsips,
             'units'       => Unit::orderBy('name')->get(),
             'departments' => Department::orderBy('name')->get(),
             'managers'    => Manager::orderBy('name')->get(),
+            'sort'        => $sort,
+            'dir'         => $dir,
+            'stats'       => $stats
         ]);
     }
 
@@ -146,6 +215,7 @@ class ArsipController extends Controller
                 'no_transaksi'    => $request->no_transaksi,
                 'jenis_pengajuan' => $request->jenis_pengajuan,
                 'kategori'        => $request->kategori ?? 'None',
+                'pemohon'         => $request->pemohon,
                 'keterangan'      => $request->keterangan,
                 'detail_barang'   => $request->only(['mutasi_asal', 'mutasi_tujuan', 'bundel', 'adjust']),
                 'total_qty_in'    => $totalIn,
@@ -190,9 +260,9 @@ class ArsipController extends Controller
     {
         $arsip = Arsip::findOrFail($id);
 
-        if (in_array($arsip->status, ['Done', 'Reject', 'Void'])) {
-             if($request->ajax()) return response()->json(['message' => 'Data final tidak bisa diubah'], 403);
-             return back()->with('error', 'Data sudah final.');
+        if (in_array($arsip->status, ['Done', 'Reject', 'Void']) || in_array($arsip->ket_process, ['Done', 'Void'])) {
+             if($request->ajax()) return response()->json(['message' => 'Data sudah selesai (Done) dan tidak bisa diubah'], 403);
+             return back()->with('error', 'Data sudah selesai diproses.');
         }
 
         DB::beginTransaction();
@@ -244,6 +314,7 @@ class ArsipController extends Controller
                 'jenis_pengajuan' => $request->jenis_pengajuan, // Update jenis juga jika berubah
                 'no_transaksi'    => $request->no_transaksi,
                 'kategori'        => $request->kategori,
+                'pemohon'         => $request->pemohon,
                 'keterangan'      => $request->keterangan,
                 'total_qty_in'    => $totalIn,
                 'total_qty_out'   => $totalOut,
@@ -304,6 +375,7 @@ class ArsipController extends Controller
                     'qty'          => $item['qty'] ?? 0,
                     'lot'          => $item['lot'] ?? $item['keterangan'] ?? null,
                     'panjang'      => $item['panjang'] ?? null,
+                    'location'     => $item['location'] ?? null,
                 ]);
             }
         };

@@ -28,7 +28,7 @@
         </div>
 
         {{-- PREVIEW FORMAT --}}
-        <div class="border rounded p-3 bg-light">
+        <div class="border rounded p-3 bg-light mb-3">
             <div class="fw-semibold mb-2">📄 Contoh Format No Dokumen:</div>
 
 <pre class="mb-0 small text-dark">
@@ -43,7 +43,31 @@ Internal Memo   : IM/{{ date('Y') }}/{{ date('m') }}/1485
             </small>
         </div>
 
+        {{-- MANUAL SEQUENCE INPUT --}}
+        <div class="p-3 rounded-3 border border-success border-opacity-25 bg-white shadow-sm">
+            <label class="form-label small fw-bold text-success d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-hash fs-5 animate-pulse-green"></i> 
+                Atur Nomor Urut (Manual Sequence)
+            </label>
+            <input type="number" name="sequence_number" class="form-control form-control-lg fw-bold text-success border-2" 
+                   placeholder="Contoh: 0500" style="border-color: #d1fae5 !important;">
+            <div class="form-text mt-2 small text-muted">
+                <i class="bi bi-info-circle me-1"></i> Biarkan <b>KOSONG</b> untuk menggunakan nomor urut otomatis sistem.
+            </div>
+        </div>
+
     </div>
+
+    <style>
+        @keyframes pulse-green {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pulse-green {
+            animation: pulse-green 2s infinite ease-in-out;
+        }
+    </style>
 
     {{-- FOOTER --}}
     <div class="modal-footer">

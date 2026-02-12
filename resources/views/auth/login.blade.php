@@ -60,8 +60,8 @@
 
 <div class="login-card animate-on-scroll">
     <div class="login-header">
-        <div class="login-icon">
-            <i class="bi bi-shield-lock-fill"></i>
+        <div class="login-icon bg-white p-2">
+            <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <h4 class="fw-bold text-dark mb-1">Selamat Datang</h4>
         <p class="text-secondary small mb-0">Silakan login untuk mengakses IT Submission</p>

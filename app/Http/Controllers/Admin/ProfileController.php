@@ -31,10 +31,37 @@ class ProfileController extends Controller
         $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|min:6|confirmed'
+            'password' => 'nullable|min:6|confirmed',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $user = auth()->user();
+        // Handle photo removal
+        if ($request->filled('remove_photo') && $request->remove_photo == '1') {
+            if ($user->photo && file_exists(public_path('profile_photos/' . $user->photo))) {
+                unlink(public_path('profile_photos/' . $user->photo));
+            }
+            $user->photo = null;
+        }
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($user->photo && file_exists(public_path('profile_photos/' . $user->photo))) {
+                unlink(public_path('profile_photos/' . $user->photo));
+            }
+
+            // Create directory if not exists
+            if (!file_exists(public_path('profile_photos'))) {
+                mkdir(public_path('profile_photos'), 0755, true);
+            }
+
+            // Upload new photo
+            $file = $request->file('photo');
+            $filename = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('profile_photos'), $filename);
+            $user->photo = $filename;
+        }
+
         $user->name  = $request->name;
         $user->email = $request->email;
 

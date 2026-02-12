@@ -63,7 +63,7 @@
                                     {{-- 3. JENIS PENGAJUAN --}}
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold text-secondary">Jenis Pengajuan <span class="text-danger">*</span></label>
-                                        <select name="jenis_pengajuan" id="jenisPengajuanTambah" class="form-select bg-primary bg-opacity-10 border-primary border-opacity-25 text-primary fw-bold" required>
+                                        <select name="jenis_pengajuan" id="jenisPengajuanTambah" class="form-select bg-white border-primary border-opacity-50 text-dark fw-bold" required>
                                             <option value="">-- Pilih Jenis --</option>
                                             <option value="Cancel">Cancel (Pembatalan)</option>
                                             <option value="Adjust">Adjust (Penyesuaian Stok)</option>
@@ -77,7 +77,7 @@
                                     {{-- 4. KATEGORI (Cancel Only) - HIDDEN DEFAULT --}}
                                     <div class="mb-3 d-none dynamic-section" id="wrapperKategori">
                                         <label class="form-label small fw-bold text-danger">Kategori Error <span class="text-danger">*</span></label>
-                                        <select name="kategori" class="form-select bg-danger bg-opacity-10 border-danger border-opacity-25 text-danger">
+                                        <select name="kategori" class="form-select bg-white border-danger border-opacity-50 text-dark fw-bold">
                                             <option value="">-- Pilih Kategori --</option>
                                             <option value="Human">Human Error</option>
                                             <option value="System">System Error</option>
@@ -114,15 +114,36 @@
                                     </div>
                                     
                                     {{-- STATUS FINAL (Superadmin Only) --}}
-                                    <div class="mb-3">
-                                        <label class="form-label small fw-bold text-secondary">Status Awal</label>
-                                        <select name="status" class="form-select bg-warning bg-opacity-10 border-warning border-opacity-25 text-dark fw-bold">
-                                            <option value="Check">Check (Baru)</option>
-                                            <option value="Process">Process</option>
-                                            <option value="Done">Done (Selesai)</option>
-                                            <option value="Reject">Reject</option>
-                                            <option value="Void">Void</option>
-                                        </select>
+                                    {{-- STATUS GROUP --}}
+                                    <div class="p-3 rounded-3 bg-gradient bg-light border border-secondary border-opacity-10 mb-3 shadow-sm">
+                                        <div class="d-flex align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10">
+                                            <i class="bi bi-sliders2 text-primary me-2"></i>
+                                            <h6 class="small fw-bold text-secondary mb-0">Set Status Awal</h6>
+                                        </div>
+                                        
+                                        <div class="row g-2">
+                                            <div class="col-12">
+                                                <label class="form-label text-xs fw-bold text-muted mb-1">Status Utama</label>
+                                                <select name="status" class="form-select form-select-sm bg-white border-secondary border-opacity-25 text-dark fw-bold">
+                                                    <option value="Check">Check (Baru)</option>
+                                                    <option value="Process">Process</option>
+                                                    <option value="Done">Done (Selesai)</option>
+                                                    <option value="Reject">Reject</option>
+                                                    <option value="Void">Void</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label text-xs fw-bold text-muted mb-1">Ket. Proses Pengerjaan</label>
+                                                <select name="ket_process" class="form-select form-select-sm bg-white border-secondary border-opacity-25 text-primary fw-semibold">
+                                                    <option value="Review">Review (Sedang Diulas)</option>
+                                                    <option value="Process">Process (Dikerjakan)</option>
+                                                    <option value="Pending">Pending (Tertunda)</option>
+                                                    <option value="Partial Done">Partial Done (Sebagian)</option>
+                                                    <option value="Done">Done (Selesai)</option>
+                                                    <option value="Void">Void (Batal)</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
 
                                 </div>
@@ -200,6 +221,16 @@
                                                 </div>
                                                 <div class="table-responsive rounded-3 border border-danger border-opacity-25 bg-danger bg-opacity-10 p-2">
                                                     <table class="table table-sm table-borderless mb-0 align-middle">
+                                                        <thead class="text-xs text-danger fw-bold">
+                                                            <tr>
+                                                                <th>Kode</th>
+                                                                <th>Nama Produk</th>
+                                                                <th width="80">Qty</th>
+                                                                <th>Lot</th>
+                                                                <th width="150">Lokasi</th>
+                                                                <th width="40"></th>
+                                                            </tr>
+                                                        </thead>
                                                         <tbody id="wrapperAsal" class="dynamic-row-container"></tbody>
                                                     </table>
                                                 </div>
@@ -214,6 +245,16 @@
                                                 </div>
                                                 <div class="table-responsive rounded-3 border border-success border-opacity-25 bg-success bg-opacity-10 p-2">
                                                     <table class="table table-sm table-borderless mb-0 align-middle">
+                                                        <thead class="text-xs text-success fw-bold">
+                                                            <tr>
+                                                                <th>Kode</th>
+                                                                <th>Nama Produk</th>
+                                                                <th width="80">Qty</th>
+                                                                <th>Lot</th>
+                                                                <th width="150">Lokasi</th>
+                                                                <th width="40"></th>
+                                                            </tr>
+                                                        </thead>
                                                         <tbody id="wrapperTujuan" class="dynamic-row-container"></tbody>
                                                     </table>
                                                 </div>

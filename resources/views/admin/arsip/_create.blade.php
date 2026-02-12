@@ -48,7 +48,7 @@
                                         <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
                                         <div class="w-100">
                                             <label class="small fw-bold">Penyebab Cancel:</label>
-                                            <select name="kategori" class="form-select form-select-sm border-danger text-danger fw-bold">
+                                            <select name="kategori" class="form-select form-select-sm border-danger text-dark fw-bold">
                                                 <option value="Human">Human Error</option>
                                                 <option value="System">System Error</option>
                                                 <option value="None">Lainnya</option>
@@ -67,7 +67,7 @@
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <div class="form-floating">
-                                        <select name="department_id" class="form-select border-0 bg-light" id="deptSelect" required>
+                                        <select name="department_id" class="form-select bg-white border border-secondary border-opacity-25" id="deptSelect" required>
                                             <option value="">Pilih...</option>
                                             @foreach($departments as $d)
                                                 <option value="{{ $d->id }}">{{ $d->name }}</option> 
@@ -78,7 +78,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-floating">
-                                        <select name="unit_id" class="form-select border-0 bg-light" id="unitSelect" required>
+                                        <select name="unit_id" class="form-select bg-white border border-secondary border-opacity-25" id="unitSelect" required>
                                             <option value="">Pilih...</option>
                                             @foreach($units as $u)
                                                 <option value="{{ $u->id }}">{{ $u->name }}</option>
@@ -89,13 +89,19 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-floating">
-                                        <select name="manager_id" class="form-select border-0 bg-light" id="mgrSelect" required>
+                                        <select name="manager_id" class="form-select bg-white border border-secondary border-opacity-25" id="mgrSelect" required>
                                             <option value="">Pilih...</option>
                                             @foreach($managers as $m)
                                                 <option value="{{ $m->id }}">{{ $m->name }}</option>
                                             @endforeach
                                         </select>
                                         <label for="mgrSelect">Manager Approval</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <div class="form-floating">
+                                        <textarea name="pemohon" class="form-control border-0 bg-light" placeholder="Nama-nama Pemohon" style="height: 60px"></textarea>
+                                        <label class="small fw-bold text-muted text-uppercase">Nama-nama Pemohon (Gunakan koma atau baris baru)</label>
                                     </div>
                                 </div>
                             </div>
@@ -155,7 +161,8 @@
                                                     <th width="80">Qty</th>
                                                     <th>Lot</th>
                                                     <th width="80">Pjg</th>
-                                                    <th width="50"></th>
+                                                    <th width="150">Lokasi</th>
+                                                    <th width="40"></th>
                                                 </tr>
                                             </thead>
                                             <tbody id="wrapperAsal"></tbody>
@@ -180,7 +187,8 @@
                                                     <th width="80">Qty</th>
                                                     <th>Lot</th>
                                                     <th width="80">Pjg</th>
-                                                    <th width="50"></th>
+                                                    <th width="150">Lokasi</th>
+                                                    <th width="40"></th>
                                                 </tr>
                                             </thead>
                                             <tbody id="wrapperTujuan"></tbody>
@@ -218,7 +226,7 @@
 
                     {{-- SECTION NO TRANSAKSI (CANCEL) --}}
                     <div id="sectionNoTrans" class="d-none dynamic-section mb-3">
-                        <div class="card border-0 shadow-sm bg-danger bg-opacity-10 border-danger border-start border-4">
+                        <div class="card border-0 shadow-sm bg-white bg-opacity-20 border-danger border-start border-4">
                             <div class="card-body">
                                 <h6 class="fw-bold text-danger mb-2"><i class="bi bi-x-circle me-1"></i> PEMBATALAN TRANSAKSI</h6>
                                 <div class="form-floating">

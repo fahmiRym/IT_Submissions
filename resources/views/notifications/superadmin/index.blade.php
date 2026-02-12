@@ -112,7 +112,7 @@
                                                 <span class="badge bg-white text-dark border font-monospace">Reg: {{ $n->arsip->no_registrasi }}</span>
                                             @endif
                                             <span class="badge bg-white text-dark border">
-                                                Status: {{ $n->arsip->status }}
+                                                Tahap: {{ $n->arsip->ket_process }}
                                             </span>
                                         </div>
                                     </div>
@@ -121,7 +121,7 @@
                                 {{-- ACTIONS --}}
                                 <div class="d-flex gap-2 mt-2">
                                     @if(!$n->is_read)
-                                        <form method="POST" action="{{ route('notifications.read', $n->id) }}">
+                                        <form method="POST" action="{{ route('superadmin.notifications.read', $n->id) }}">
                                             @csrf @method('PUT')
                                             <button class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3">
                                                 <i class="bi bi-check2-all me-1"></i> Tandai Dibaca

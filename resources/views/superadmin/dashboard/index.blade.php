@@ -54,7 +54,7 @@
 @php
     $stats = [
         [
-            'title' => 'ARSIP FISIK TERDATA', 
+            'title' => 'PENGAJUAN TERARSIP', 
             'value' => $totalArsip, 
             'icon' => 'bi-archive-fill', 
             'bg_gradient' => 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', // Indigo Gradient
@@ -70,12 +70,12 @@
             'desc' => 'Semua Data Masuk'
         ],
         [
-            'title' => 'PROSES SELESAI', 
+            'title' => 'PENGAJUAN SELESAI', 
             'value' => $arsipDone, 
             'icon' => 'bi-check-circle-fill', 
             'bg_gradient' => 'linear-gradient(135deg, #10b981 0%, #059669 100%)', // Emerald Gradient
             'text_color' => 'text-white',
-            'desc' => 'Status Final'
+            'desc' => 'Status Final (Done)'
         ],
         [
             'title' => 'DINAMIKA PROSES', 
@@ -114,7 +114,113 @@
     @endforeach
 </div>
 
-{{-- SECTION: STATISTIK PER JENIS (Small Cards) --}}
+{{-- SECTION: STATUS PROSES OVERVIEW --}}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-activity me-2 text-primary"></i>Status Proses Pengerjaan</h6>
+    </div>
+
+    {{-- 1. PENDING --}}
+    <div class="col-md">
+        <a href="{{ route('superadmin.arsip.index', ['ket_process' => 'Pending']) }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 hover-scale overflow-hidden">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="rounded-3 bg-secondary bg-opacity-10 text-secondary p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-hourglass-split fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-secondary fw-bold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Pending</div>
+                        <h3 class="fw-bold text-dark mb-0">{{ $ketPending }}</h3>
+                    </div>
+                </div>
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-secondary" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- 2. REVIEW --}}
+    <div class="col-md">
+        <a href="{{ route('superadmin.arsip.index', ['ket_process' => 'Review']) }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 hover-scale overflow-hidden">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="rounded-3 bg-info bg-opacity-10 text-info p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-search fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-info fw-bold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Review</div>
+                        <h3 class="fw-bold text-dark mb-0">{{ $ketReview }}</h3>
+                    </div>
+                </div>
+                 <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- 3. PROCESS --}}
+    <div class="col-md">
+        <a href="{{ route('superadmin.arsip.index', ['ket_process' => 'Process']) }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 hover-scale overflow-hidden">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="rounded-3 bg-warning bg-opacity-10 text-warning p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-gear-wide-connected fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-warning fw-bold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Process</div>
+                        <h3 class="fw-bold text-dark mb-0">{{ $ketProcess }}</h3>
+                    </div>
+                </div>
+                 <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+     {{-- 4. PARTIAL DONE --}}
+    <div class="col-md">
+        <a href="{{ route('superadmin.arsip.index', ['ket_process' => 'Partial Done']) }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 hover-scale overflow-hidden">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-pie-chart-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-primary fw-bold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Partial Done</div>
+                        <h3 class="fw-bold text-dark mb-0">{{ $ketPartial }}</h3>
+                    </div>
+                </div>
+                 <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- 5. DONE --}}
+    <div class="col-md">
+        <a href="{{ route('superadmin.arsip.index', ['ket_process' => 'Done']) }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 hover-scale overflow-hidden">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="rounded-3 bg-success bg-opacity-10 text-success p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-check-circle-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-success fw-bold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Selesai (Done)</div>
+                        <h3 class="fw-bold text-dark mb-0">{{ $ketDone }}</h3>
+                    </div>
+                </div>
+                 <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
 <div class="row g-4 mb-4">
     <div class="col-md-12">
         <h6 class="fw-bold text-dark mb-0"><i class="bi bi-grid-3x3-gap-fill me-2 text-primary"></i>Statistik per Jenis Pengajuan</h6>
@@ -341,10 +447,10 @@
     </div>
 </div>
 
-{{-- TABLE LATEST ARSIP --}}
+{{-- TABLE LATEST SUBMISSIONS --}}
 <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
     <div class="card-header bg-white border-0 pt-4 px-4">
-        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>History Pengajuan</h6>
+        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat Pengajuan Terbaru</h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -360,27 +466,27 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($latestArsip as $la)
+                    @forelse($latestArsip as $submission)
                     <tr>
-                        <td class="ps-4 fw-bold text-dark text-xs font-monospace">{{ $la->no_registrasi ?? '-' }}</td>
+                        <td class="ps-4 fw-bold text-dark text-xs font-monospace">{{ $submission->no_registrasi ?? '-' }}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <span class="avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width:24px;height:24px;font-size:0.7rem;">
-                                    {{ substr($la->admin->name ?? 'U', 0, 1) }}
+                                    {{ substr($submission->admin->name ?? 'U', 0, 1) }}
                                 </span>
-                                <span class="small fw-semibold">{{ $la->admin->name ?? 'User' }}</span>
+                                <span class="small fw-semibold">{{ $submission->admin->name ?? 'User' }}</span>
                             </div>
                         </td>
-                        <td><span class="badge bg-light text-secondary border border-secondary border-opacity-25">{{ $la->jenis_pengajuan }}</span></td>
-                        <td class="small">{{ $la->department->name ?? '-' }}</td>
+                        <td><span class="badge bg-light text-secondary border border-secondary border-opacity-25">{{ $submission->jenis_pengajuan }}</span></td>
+                        <td class="small">{{ $submission->department->name ?? '-' }}</td>
                         <td>
                              @php
                                 $colors = ['Review' => 'info', 'Process' => 'warning', 'Done' => 'success', 'Partial Done' => 'primary', 'Pending' => 'secondary'];
-                                $sc = $colors[$la->ket_process] ?? 'secondary';
+                                $sc = $colors[$submission->ket_process] ?? 'secondary';
                             @endphp
-                           <span class="badge bg-{{ $sc }} text-{{ $sc }} bg-opacity-10 rounded-pill" style="font-size: 0.7rem;">{{ $la->ket_process }}</span>
+                           <span class="badge bg-{{ $sc }} text-{{ $sc }} bg-opacity-10 rounded-pill" style="font-size: 0.7rem;">{{ $submission->ket_process }}</span>
                         </td>
-                        <td class="text-end pe-4 text-muted small">{{ $la->tgl_pengajuan ? $la->tgl_pengajuan->format('d/m/Y') : '-' }}</td>
+                        <td class="text-end pe-4 text-muted small">{{ $submission->tgl_pengajuan ? $submission->tgl_pengajuan->format('d/m/Y') : '-' }}</td>
                     </tr>
                     @empty
                     <tr><td colspan="6" class="text-center text-muted small py-3">Belum ada data.</td></tr>

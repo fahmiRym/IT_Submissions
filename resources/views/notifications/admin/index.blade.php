@@ -110,17 +110,19 @@
                                                 <span class="badge bg-white text-dark border font-monospace">Reg: {{ $n->arsip->no_registrasi }}</span>
                                             @endif
                                             
-                                            {{-- Status Badge dynamic color --}}
+                                            {{-- Status Badge dynamic color based on ket_process --}}
                                             @php
-                                                $statusColor = match($n->arsip->status) {
-                                                    'disetujui' => 'success',
-                                                    'ditolak' => 'danger',
-                                                    'revisi' => 'warning',
+                                                $statusColor = match($n->arsip->ket_process) {
+                                                    'Done' => 'success',
+                                                    'Process' => 'info',
+                                                    'Review' => 'warning',
+                                                    'Partial Done' => 'primary',
+                                                    'Void' => 'danger',
                                                     default => 'secondary'
                                                 };
                                             @endphp
                                             <span class="badge bg-{{ $statusColor }} bg-opacity-10 text-{{ $statusColor }} border border-{{ $statusColor }}">
-                                                {{ ucfirst($n->arsip->status) }}
+                                                {{ ucfirst($n->arsip->ket_process) }}
                                             </span>
                                         </div>
                                     </div>
@@ -129,7 +131,7 @@
                                 {{-- ACTIONS --}}
                                 <div class="d-flex gap-2 mt-2">
                                     @if(!$n->is_read)
-                                        <form method="POST" action="{{ route('notifications.read', $n->id) }}">
+                                        <form method="POST" action="{{ route('admin.notifications.read', $n->id) }}">
                                             @csrf @method('PUT')
                                             <button class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3">
                                                 <i class="bi bi-check2-all me-1"></i> Tandai Dibaca

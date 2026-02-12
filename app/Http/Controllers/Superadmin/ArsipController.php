@@ -40,57 +40,95 @@ class ArsipController extends Controller
         }
 
         /* ================= FILTER ================= */
+        // 1. Departemen
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
+        // 2. Kategori (Error Type)
         if ($request->filled('kategori')) {
             $query->where('kategori', $request->kategori);
         }
 
-        if ($request->filled('jenis')) {
-            $query->where('jenis_pengajuan', $request->jenis);
+        // 3. Jenis Pengajuan (Support both 'jenis' and 'jenis_pengajuan' params)
+        $jenis = $request->get('jenis') ?? $request->get('jenis_pengajuan');
+        if ($jenis) {
+            $query->where('jenis_pengajuan', $jenis);
         }
 
-        if ($request->filled('jenis_pengajuan')) {
-            $query->where('jenis_pengajuan', $request->jenis_pengajuan);
+        // 4. Status Process (Review, Process, Done, Pending, Void)
+        if ($request->filled('ket_process')) {
+            $query->where('ket_process', $request->ket_process);
+        }
+
+        // 5. Date Range (Tgl Pengajuan)
+        if ($request->filled('start_date')) {
+            $query->whereDate('tgl_pengajuan', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('tgl_pengajuan', '<=', $request->end_date);
+        }
+
+        // 6. User (Pengaju)
+        if ($request->filled('admin_id')) {
+            $query->where('admin_id', $request->admin_id);
+        }
+
+        // 7. BA Status (Khusus dashboard click)
+        if ($request->filled('ba')) {
+            $query->where('ba', $request->ba);
+        }
+
+        // 8. Arsip Status (Khusus dashboard click)
+        if ($request->filled('arsip')) {
+            $query->where('arsip', $request->arsip);
         }
 
         /* ================= SORT ================= */
-        $allowedSort = ['id', 'tgl_pengajuan', 'tgl_arsip', 'status'];
+        $allowedSort = ['id', 'tgl_pengajuan', 'tgl_arsip', 'no_registrasi', 'ket_process', 'department_id', 'admin_id'];
         $sort = in_array($request->get('sort'), $allowedSort) ? $request->get('sort') : 'id';
         $dir = $request->get('dir') === 'asc' ? 'asc' : 'desc';
 
+        $query->orderBy($sort, $dir);
+
         /* ================= DATA ================= */
+        $perPage = $request->input('per_page', 10);
         $arsips = $query
-            ->orderBy($sort, $dir)
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        /* ================= STATS (DIPERBAIKI) ================= */
-        // Menambahkan key 'Review' agar sesuai dengan View Blade
+        /* ================= STATS ================= */
+        // Base query for stats (should respect current non-status filters if needed, but usually stats are broad)
+        // For now, let's keep stats somewhat independent or just filtered by 'jenis' as before to not confuse the user with disappearing stats.
+        // However, if the user requested "Filter", usually they want to see stats for that filter? 
+        // Let's stick to the previous pattern of filtering stats only by 'jenis' to show "Global Context" of that type.
         
-        if ($request->filled('jenis') || $request->filled('jenis_pengajuan')) {
-            $filterType = $request->jenis ?? $request->jenis_pengajuan;
-            $stats = [
-                'total'   => Arsip::where('jenis_pengajuan', $filterType)->count(),
-                'Review'  => Arsip::where('jenis_pengajuan', $filterType)->where('ket_process', 'Review')->count(), // <-- PERBAIKAN DISINI
-                'process' => Arsip::where('jenis_pengajuan', $filterType)->where('ket_process', 'Process')->count(),
-                'done'    => Arsip::where('jenis_pengajuan', $filterType)->where('ket_process', 'Done')->count(),
-            ];
-        } else {
-            // Default Global Stats
-            $stats = [
-                'total'   => Arsip::count(),
-                'Review'  => Arsip::where('ket_process', 'Review')->count(), // <-- PERBAIKAN DISINI
-                'process' => Arsip::where('ket_process', 'Process')->count(),
-                'done'    => Arsip::where('ket_process', 'Done')->count(),
-            ];
+        $statsQuery = Arsip::query();
+        if ($jenis) {
+            $statsQuery->where('jenis_pengajuan', $jenis);
         }
+
+        // Clone for counts
+        $total    = (clone $statsQuery)->count();
+        $review   = (clone $statsQuery)->where('ket_process', 'Review')->count();
+        $process  = (clone $statsQuery)->where('ket_process', 'Process')->count();
+        $done     = (clone $statsQuery)->where('ket_process', 'Done')->count();
+        $pending  = (clone $statsQuery)->where('ket_process', 'Pending')->count();
+        $void     = (clone $statsQuery)->where('ket_process', 'Void')->count();
+
+        $stats = [
+            'total'   => $total,
+            'Review'  => $review,
+            'Process' => $process,
+            'Done'    => $done,
+            'Pending' => $pending,
+            'Void'    => $void,
+            'ba_pending' => (clone $statsQuery)->where('ba', 'Pending')->count(),
+            'ba_process' => (clone $statsQuery)->where('ba', 'Process')->count(),
+            'ba_done'    => (clone $statsQuery)->where('ba', 'Done')->count(),
+            'arsip_pending' => (clone $statsQuery)->where('arsip', 'Pending')->count(),
+            'arsip_done'    => (clone $statsQuery)->where('arsip', 'Done')->count(),
+        ];
 
         return view('superadmin.arsip.index', [
             'arsips'      => $arsips,
@@ -101,7 +139,7 @@ class ArsipController extends Controller
             'superadmins' => User::where('role', 'superadmin')->orderBy('name')->get(),
             'sort'        => $sort,
             'dir'         => $dir,
-            'stats'       => $stats // Data stats dikirim ke View
+            'stats'       => $stats
         ]);
     }
 
@@ -315,7 +353,9 @@ class ArsipController extends Controller
                     break;
             }
 
-            $seqDoc = str_pad($arsip->id, 4, '0', STR_PAD_LEFT);
+            // --- USE MANUAL SEQUENCE OR AUTO ID ---
+            $rawSeq = $request->sequence_number ?: $arsip->id;
+            $seqDoc = str_pad($rawSeq, $padding, '0', STR_PAD_LEFT);
 
             if ($arsip->jenis_pengajuan === 'Cancel') {
                 $finalNoDoc = "Cancelled No Doc : {$seqDoc}/{$bulan}/{$kodeDept}/{$tahun}";
@@ -380,10 +420,7 @@ class ArsipController extends Controller
      */
     public function update(Request $request, Arsip $arsip)
     {
-        // 🔒 STATUS DONE TIDAK BOLEH DIUBAH
-        if (in_array($arsip->status, ['Done', 'Reject', 'Void'])) {
-            return back()->withErrors(['status' => 'Status ini sudah final dan tidak bisa diubah.']);
-        }
+
 
         $request->validate([
             'status'      => 'required|in:Check,Process,Pending,Done,Reject,Void',
@@ -393,63 +430,103 @@ class ArsipController extends Controller
             'bukti_scan'  => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        $filename = $arsip->bukti_scan;
-        if ($request->hasFile('bukti_scan')) {
-            $file = $request->file('bukti_scan');
-            $cleanName = preg_replace('/[^A-Za-z0-9\.\_\-]/', '_', $file->getClientOriginalName());
-            $filename = time() . '_' . $cleanName;
-            $file->storeAs('bukti_scan', $filename, ['disk' => 'public', 'visibility' => 'public']);
+        DB::beginTransaction();
+        try {
+            $filename = $arsip->bukti_scan;
+            if ($request->hasFile('bukti_scan')) {
+                $file = $request->file('bukti_scan');
+                $cleanName = preg_replace('/[^A-Za-z0-9\.\_\-]/', '_', $file->getClientOriginalName());
+                $filename = time() . '_' . $cleanName;
+                $file->storeAs('bukti_scan', $filename, ['disk' => 'public', 'visibility' => 'public']);
+            }
+
+            // MAP STATUS UTAMA
+            $map = [
+                'Check'   => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Review'],
+                'Process' => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Process'],
+                'Pending' => ['ket_process' => 'Pending'],
+                'Done'    => ['ba' => 'Done', 'arsip' => 'Done', 'ket_process' => 'Done'],
+                'Reject'  => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
+                'Void'    => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
+            ];
+
+            // 1. Ambil Data Detail dari Request
+            $rawItems = $request->detail_barang ?: [];
+
+            // 2. Hitung Ulang Total Qty (Mutasi, Adjust, Bundel)
+            $totalIn  = 0;
+            $totalOut = 0;
+
+            if (!empty($rawItems['mutasi_asal']))   $totalOut += collect($rawItems['mutasi_asal'])->sum('qty');
+            if (!empty($rawItems['mutasi_tujuan'])) $totalIn  += collect($rawItems['mutasi_tujuan'])->sum('qty');
+            if (!empty($rawItems['bundel']))        $totalOut += collect($rawItems['bundel'])->sum('qty');
+            if (!empty($rawItems['adjust'])) {
+                $totalIn  += collect($rawItems['adjust'])->sum('qty_in');
+                $totalOut += collect($rawItems['adjust'])->sum('qty_out');
+            }
+
+            // 3. Update Header Arsip
+            $arsip->update(array_merge(
+                ['status' => $request->status],
+                $map[$request->status] ?? [],
+                [
+                    'admin_id'        => $request->user_id,
+                    'tgl_pengajuan'   => $request->tgl_pengajuan,
+                    'tgl_arsip'       => $request->tgl_arsip,
+                    'department_id'   => $request->department_id,
+                    'manager_id'      => $request->manager_id,
+                    'unit_id'         => $request->unit_id,
+                    'no_transaksi'    => $request->no_transaksi,
+                    'kategori'        => $request->kategori ?? 'None',
+                    'ba'              => $request->ba,
+                    'arsip'           => $request->arsip,
+                    'ket_process'     => $request->ket_process, 
+                    'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,
+                    'target_qty'      => $request->target_qty ?? $arsip->target_qty,
+                    'keterangan'      => $request->keterangan ?? $arsip->keterangan,
+                    'sub_jenis'       => $request->sub_jenis ?? $arsip->sub_jenis,
+                    'detail_barang'   => $rawItems, 
+                    'total_qty_in'    => $totalIn,
+                    'total_qty_out'   => $totalOut,
+                    'bukti_scan'      => $filename,
+                ]
+            ));
+
+            // 4. Sinkronisasi Tabel Relasi (Hapus Lama, Buat Baru)
+            ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
+            ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
+            ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
+
+            $this->saveDetailItems($arsip, $rawItems);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->wantsJson()) {
+                return response()->json(['status' => 'error', 'message' => 'Gagal menyimpan: ' . $e->getMessage()], 500);
+            }
+            return back()->withErrors(['error' => 'Gagal menyimpan: ' . $e->getMessage()]);
         }
 
-        // MAP STATUS
-        $map = [
-            'Check'   => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Review'],
-            'Process' => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Process'],
-            'Pending' => ['ket_process' => 'Pending'],
-            'Done'    => ['ba' => 'Done', 'arsip' => 'Done', 'ket_process' => 'Done', 'tgl_arsip' => now()],
-            'Reject'  => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
-            'Void'    => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
-        ];
+        // NOTIFIKASI CUSTOM (Menggunakan Keterangan Proses sesuai permintaan user)
+        $title = 'Update Tahap Pengajuan';
+        $message = "Pengajuan Anda sekarang berada di tahap: {$arsip->ket_process}";
 
-        // Hitung QTY jika ada perubahan detail barang
-        $qtyIn = $arsip->total_qty_in;
-        $qtyOut = $arsip->total_qty_out;
-
-        if (($request->jenis_pengajuan ?? $arsip->jenis_pengajuan) == 'Adjust' && is_array($request->detail_barang)) {
-            $qtyIn  = collect($request->detail_barang['adjust'] ?? [])->sum('qty_in');
-            $qtyOut = collect($request->detail_barang['adjust'] ?? [])->sum('qty_out');
-        }
-
-        $arsip->update(array_merge(
-            ['status' => $request->status],
-            $map[$request->status] ?? [],
-            [
-                'ba'              => $request->ba,
-                'arsip'           => $request->arsip,
-                'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,
-                'target_qty'      => $request->target_qty ?? $arsip->target_qty,
-                'keterangan'      => $request->keterangan ?? $arsip->keterangan,
-                'sub_jenis'       => $request->sub_jenis ?? $arsip->sub_jenis,
-                'detail_barang'   => $request->detail_barang ?? $arsip->detail_barang,
-                'total_qty_in'    => $qtyIn,
-                'total_qty_out'   => $qtyOut,
-                'bukti_scan'      => $filename,
-            ]
-        ));
-
-        // NOTIFIKASI CUSTOM
-        $title = 'Update Pengajuan Arsip';
-        $message = "Pengajuan Anda tahap {$arsip->status}";
-
-        if ($arsip->status == 'Reject') {
-            $title = 'Pengajuan Ditolak';
-            $message = 'Mohon maaf, pengajuan Anda ditolak.';
-        } elseif ($arsip->status == 'Done') {
+        if ($arsip->ket_process == 'Void') {
+            $title = 'Pengajuan Dibatalkan / Void';
+            $message = 'Pengajuan dokumen Anda telah dibatalkan (Void).';
+        } elseif ($arsip->ket_process == 'Done') {
             $title = 'Pengajuan Selesai';
-            $message = 'Selamat, pengajuan dokumen Anda telah selesai.';
-        } elseif ($arsip->status == 'Pending') {
-            $title = 'Pengajuan Pending / Revisi';
-            $message = 'Pengajuan Anda perlu perbaikan.';
+            $message = 'Selamat, pengajuan dokumen Anda telah selesai (Done).';
+        } elseif ($arsip->ket_process == 'Partial Done') {
+            $title = 'Pengajuan Selesai Sebagian';
+            $message = 'Pengajuan Anda telah selesai sebagian (Partial Done).';
+        } elseif ($arsip->ket_process == 'Pending') {
+            $title = 'Pengajuan Ditunda (Pending)';
+            $message = 'Pengajuan Anda sedang dipending atau memerlukan revisi.';
+        } elseif ($arsip->ket_process == 'Review') {
+            $title = 'Pengajuan Sedang Diulas';
+            $message = 'Pengajuan Anda sedang dalam tahap review oleh Superadmin.';
         }
 
         Notification::create([
@@ -494,6 +571,7 @@ class ArsipController extends Controller
                     'qty'          => $item['qty'] ?? 0,
                     'lot'          => $item['lot'] ?? $item['keterangan'] ?? null,
                     'panjang'      => $item['panjang'] ?? null,
+                    'location'     => $item['location'] ?? null,
                 ]);
             }
         };

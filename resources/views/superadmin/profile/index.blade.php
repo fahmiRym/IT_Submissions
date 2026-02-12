@@ -5,267 +5,406 @@
 
 @push('styles')
 <style>
+    :root {
+        --profile-primary: #4f46e5;
+        --profile-secondary: #6366f1;
+        --profile-bg: #f8fafc;
+        --profile-card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
     .profile-header {
-        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
-        height: 180px;
-        border-radius: 20px 20px 0 0;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        height: 140px;
+        border-radius: 16px 16px 0 0;
         position: relative;
     }
+
     .profile-card {
+        border-radius: 16px;
+        box-shadow: var(--profile-card-shadow);
         border: none;
-        border-radius: 20px;
-        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         overflow: hidden;
-        background: #fff;
     }
+
     .avatar-wrapper {
         position: relative;
-        margin-top: -90px;
+        margin-top: -65px;
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 1.5rem;
     }
+
     .avatar-circle {
-        width: 140px;
-        height: 140px;
+        width: 130px;
+        height: 130px;
         border-radius: 50%;
         background: #fff;
-        padding: 5px;
+        padding: 4px;
         display: inline-block;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
     }
-    .avatar-initial {
+
+    .avatar-img, .avatar-initial {
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        background: linear-gradient(45deg, #f8f9fc, #eaecf4);
-        color: #4e73df;
+        object-fit: cover;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: 800;
-        border: 2px solid #eaecf4;
+        background: #f1f5f9;
+        color: var(--profile-primary);
     }
-    .stat-mini-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px;
-        text-align: center;
-        transition: all 0.2s;
-    }
-    .stat-mini-card:hover {
-        background: #fff;
-        border-color: #4e73df;
-        transform: translateY(-3px);
-    }
-    .stat-mini-val {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #4e73df;
-        line-height: 1;
-        margin-bottom: 4px;
-    }
-    .stat-mini-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-    }
-    .form-control-user {
-        border-radius: 12px;
-        padding: 12px 18px;
-        border: 1px solid #d1d3e2;
-        font-size: 0.95rem;
-        transition: all 0.2s;
-    }
-    .form-control-user:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 4px rgba(78, 115, 223, 0.1);
-    }
-    .input-group-text {
-        border-radius: 12px 0 0 12px;
-        border: 1px solid #d1d3e2;
-        background-color: #f8f9fc;
-        color: #6e707e;
-    }
-    .section-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #94a3b8;
-        margin-bottom: 1.5rem;
+
+    .photo-upload-btn {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: #4f46e5;
+        color: white;
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .section-title::after {
-        content: "";
-        flex: 1;
-        height: 1px;
+
+    .photo-upload-btn:hover {
+        background: #4338ca;
+        transform: scale(1.15);
+    }
+
+    .stat-box {
+        background: white;
+        border: 1px solid #f1f5f9;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .stat-box:hover {
+        border-color: #e2e8f0;
+        background: #fbfcfd;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 0.1rem;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.025em;
+        border: 1px solid #e0e7ff;
+    }
+
+    .form-group-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .premium-input {
+        background-color: #f8fafc !important;
+        border: 1px solid transparent !important;
+        border-radius: 12px !important;
+        padding: 0.8rem 1.2rem !important;
+        font-weight: 500;
+        color: #1e293b;
+        transition: all 0.2s ease;
+    }
+
+    .premium-input:focus {
+        background-color: #fff !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.05) !important;
+    }
+
+    .security-section {
+        background: #fff;
+        border: 1px solid #f1f5f9;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .security-title {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .security-icon-box {
+        width: 28px;
+        height: 28px;
+        background: #eef2ff;
+        color: #4f46e5;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .info-alert {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #64748b;
+        font-size: 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-save {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.8rem 2rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-save:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-reset {
         background: #f1f5f9;
-        margin-left: 1rem;
+        color: #64748b;
+        border: none;
+        border-radius: 12px;
+        padding: 0.8rem 1.5rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-reset:hover {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .delete-photo-link {
+        color: #ef4444;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s ease;
+    }
+
+    .delete-photo-link:hover {
+        color: #dc2626;
+        opacity: 0.8;
     }
 </style>
 @endpush
 
 @section('content')
 
-<div class="row justify-content-center">
-    <div class="col-xl-10 col-lg-11">
-        
-        @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4 rounded-4" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="bi bi-check-circle-fill fs-5 me-2"></i> 
-                <span>{{ session('success') }}</span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        @endif
-
-        @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4 rounded-4" role="alert">
-            <div class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i> Terdapat Kesalahan:</div>
-            <ul class="mb-0 ps-3 small">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        @endif
-
-        {{-- GLOBAL SYSTEM STATS --}}
-        <div class="row g-3 mb-4">
-            <div class="col-md-2 col-6">
-                <div class="stat-mini-card">
-                    <div class="stat-mini-val">{{ $stats['total_users'] }}</div>
-                    <div class="stat-mini-label">Pengguna</div>
-                </div>
-            </div>
-            <div class="col-md-2 col-6">
-                <div class="stat-mini-card">
-                    <div class="stat-mini-val">{{ $stats['total_arsip'] }}</div>
-                    <div class="stat-mini-label">Total Arsip</div>
-                </div>
-            </div>
-            <div class="col-md-2 col-6">
-                <div class="stat-mini-card">
-                    <div class="stat-mini-val text-warning">{{ $stats['pending'] }}</div>
-                    <div class="stat-mini-label">Pending</div>
-                </div>
-            </div>
-            <div class="col-md-2 col-6">
-                <div class="stat-mini-card">
-                    <div class="stat-mini-val text-info">{{ $stats['process'] }}</div>
-                    <div class="stat-mini-label">Proses</div>
-                </div>
-            </div>
-            <div class="col-md-2 col-6">
-                <div class="stat-mini-card">
-                    <div class="stat-mini-val text-success">{{ $stats['done'] }}</div>
-                    <div class="stat-mini-label">Selesai</div>
-                </div>
-            </div>
-            <div class="col-md-2 col-6">
-                <div class="stat-mini-card">
-                    <div class="stat-mini-val text-primary">{{ $stats['departments'] }}</div>
-                    <div class="stat-mini-label">Dept</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card profile-card">
-            {{-- HEADER BACKGROUND --}}
+<div class="row">
+    {{-- LEFT: PROFILE CARD --}}
+    <div class="col-xl-4 mb-4">
+        <div class="card profile-card border-0">
             <div class="profile-header"></div>
-            
-            <div class="card-body px-4 px-md-5 pb-5">
-                
-                {{-- AVATAR --}}
+            <div class="card-body p-0 pb-4">
                 <div class="avatar-wrapper">
                     <div class="avatar-circle">
-                        <div class="avatar-initial">
-                            {{ substr(strtoupper($user->name), 0, 1) }}
-                        </div>
+                        @if($user->photo)
+                            <img src="{{ asset('profile_photos/' . $user->photo) }}" alt="Profile Photo" class="avatar-img" id="currentPhoto">
+                        @else
+                            <div class="avatar-initial" id="avatarInitial">
+                                {{ substr(strtoupper($user->name), 0, 1) }}
+                            </div>
+                        @endif
+                        <label for="photoInput" class="photo-upload-btn" title="Ganti Foto">
+                            <i class="bi bi-camera-fill"></i>
+                        </label>
                     </div>
-                    <h4 class="mt-3 fw-bold text-dark mb-1">{{ $user->name }}</h4>
-                    <p class="text-muted d-flex align-items-center justify-content-center gap-2 mb-2">
-                        <i class="bi bi-envelope-at"></i> {{ $user->email }}
-                    </p>
-                    <div class="d-flex justify-content-center">
-                        <span class="badge bg-primary rounded-pill px-4 py-2 border shadow-sm">
-                            <i class="bi bi-shield-lock-fill me-1"></i> Global Superadmin
-                        </span>
+
+                    <div class="mt-3">
+                        <h4 class="fw-bold text-dark mb-0">{{ $user->name }}</h4>
+                        <p class="text-muted small mb-3">{{ $user->email }}</p>
+                        <div class="role-badge">
+                            <i class="bi bi-shield-fill-check me-1"></i> SUPERADMIN
+                        </div>
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('superadmin.profile.update') }}" class="mt-4">
+                <hr class="mx-4 my-2 opacity-10">
+
+                <div class="px-4 py-3">
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-value">{{ $stats['total_users'] }}</div>
+                                <div class="stat-label">Users</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-value">{{ $stats['total_arsip'] }}</div>
+                                <div class="stat-label">Arsip</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box">
+                                <div class="stat-value text-success">{{ $stats['done'] }}</div>
+                                <div class="stat-label">Selesai</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- RIGHT: EDIT FORM --}}
+    <div class="col-xl-8">
+        
+        @if(session('success'))
+            <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+                <i class="bi bi-check-circle-fill fs-5 me-3"></i>
+                <div class="fw-bold">{{ session('success') }}</div>
+            </div>
+        @endif
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
+                    <i class="bi bi-gear-fill me-2 text-primary"></i> Edit Profil
+                </h5>
+                @if($user->photo)
+                    <a href="javascript:void(0)" class="delete-photo-link" onclick="removeCurrentPhoto()">
+                        <i class="bi bi-trash-fill"></i> Hapus Foto Saat Ini
+                    </a>
+                @endif
+            </div>
+
+            <div class="card-body px-4 pb-4 pt-0">
+                <form method="POST" action="{{ route('superadmin.profile.update') }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
-                    {{-- PERSONAL INFO --}}
-                    <div class="section-title">Informasi Pribadi</div>
-                    <div class="row g-4 mb-5">
-                        <div class="col-md-6">
-                            <label class="form-label text-xs fw-bold text-muted px-1">Nama Lengkap</label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0"><i class="bi bi-person"></i></span>
-                                <input type="text" name="name" class="form-control form-control-user border-start-0" 
-                                       value="{{ old('name', $user->name) }}" required>
+                    {{-- PHOTO UPLOAD HIDDEN INPUTS --}}
+                    <input type="file" id="photoInput" name="photo" accept="image/*" class="d-none">
+                    <input type="hidden" id="removePhoto" name="remove_photo" value="0">
+
+                    {{-- PREVIEW SECTION (Dynamic) --}}
+                    <div id="photoPreviewBanner" class="d-none mb-4 animate__animated animate__fadeIn">
+                        <div class="p-3 rounded-4 bg-light d-flex align-items-center justify-content-between border">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="position-relative">
+                                    <img id="tempPhotoPreview" src="" alt="Preview" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <div class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle" style="width: 12px; height: 12px;"></div>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">Pratinjau Foto Baru</div>
+                                    <small class="text-muted" id="photoNameLabel" style="font-size: 0.7rem;"></small>
+                                </div>
                             </div>
+                            <button type="button" class="btn btn-sm btn-white border rounded-pill px-3 fw-bold text-danger" onclick="cancelPhotoUpload()">
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-group-label">Nama Lengkap</label>
+                            <input type="text" name="name" class="form-control premium-input @error('name') is-invalid @enderror" 
+                                   value="{{ old('name', $user->name) }}" required placeholder="Masukkan nama lengkap">
+                            @error('name') <div class="invalid-feedback ps-2">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-xs fw-bold text-muted px-1">Alamat Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0"><i class="bi bi-envelope"></i></span>
-                                <input type="email" name="email" class="form-control form-control-user border-start-0" 
-                                       value="{{ old('email', $user->email) }}" required>
+                            <label class="form-group-label">Alamat Email</label>
+                            <input type="email" name="email" class="form-control premium-input @error('email') is-invalid @enderror" 
+                                   value="{{ old('email', $user->email) }}" required placeholder="email@contoh.com">
+                            @error('email') <div class="invalid-feedback ps-2">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <div class="security-section">
+                        <div class="security-title">
+                            <div class="security-icon-box">
+                                <i class="bi bi-shield-lock-fill"></i>
+                            </div>
+                            Keamanan
+                        </div>
+
+                        <div class="info-alert">
+                            <i class="bi bi-info-circle-fill text-primary"></i>
+                            Biarkan kosong jika tidak ingin mengganti password.
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-group-label" style="font-size: 0.65rem;">Password Baru</label>
+                                <input type="password" name="password" class="form-control premium-input @error('password') is-invalid @enderror" placeholder="••••••••">
+                                @error('password') <div class="invalid-feedback ps-2">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-group-label" style="font-size: 0.65rem;">Ulangi Password</label>
+                                <input type="password" name="password_confirmation" class="form-control premium-input" placeholder="••••••••">
                             </div>
                         </div>
                     </div>
 
-                    {{-- SECURITY --}}
-                    <div class="section-title text-primary">Keamanan & Akses</div>
-                    <div class="alert alert-light border-0 shadow-sm mb-4 rounded-4 d-flex align-items-center py-3">
-                        <i class="bi bi-info-circle-fill fs-5 me-3 text-primary"></i>
-                        <small class="text-muted fw-medium">Kosongkan kolom di bawah jika Anda tidak ingin mengubah password saat ini.</small>
-                    </div>
-
-                    <div class="row g-4 mb-5">
-                        <div class="col-md-6">
-                            <label class="form-label text-xs fw-bold text-muted px-1">Password Baru</label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0"><i class="bi bi-key"></i></span>
-                                <input type="password" name="password" class="form-control form-control-user border-start-0" 
-                                       placeholder="Minimal 6 karakter">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-xs fw-bold text-muted px-1">Konfirmasi Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0"><i class="bi bi-shield-lock"></i></span>
-                                <input type="password" name="password_confirmation" class="form-control form-control-user border-start-0" 
-                                       placeholder="Ulangi password baru">
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ACTIONS --}}
-                    <div class="d-flex justify-content-end gap-3 pt-3 border-top mt-5">
-                        <button type="reset" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
-                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    <div class="d-flex justify-content-end gap-3 mt-5 pb-2">
+                        <button type="reset" class="btn-reset">Reset</button>
+                        <button type="submit" class="btn-save">
+                            <i class="bi bi-save-fill"></i> Simpan Perubahan
                         </button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
-                            <i class="bi bi-save2-fill me-2"></i> Simpan Perubahan
-                        </button>
                     </div>
-
                 </form>
-
             </div>
         </div>
-
     </div>
 </div>
 
@@ -274,7 +413,60 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Optional interaction
+        const photoInput = document.getElementById('photoInput');
+        
+        // Photo upload preview
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewBanner = document.getElementById('photoPreviewBanner');
+                    const tempPhotoPreview = document.getElementById('tempPhotoPreview');
+                    const photoNameLabel = document.getElementById('photoNameLabel');
+                    const currentPhoto = document.getElementById('currentPhoto');
+                    const avatarInitial = document.getElementById('avatarInitial');
+                    
+                    tempPhotoPreview.src = e.target.result;
+                    photoNameLabel.textContent = file.name;
+                    previewBanner.classList.remove('d-none');
+                    
+                    // Update main avatar in real-time
+                    if (currentPhoto) {
+                        currentPhoto.src = e.target.result;
+                    } else if (avatarInitial) {
+                        avatarInitial.outerHTML = `<img src="${e.target.result}" alt="Profile" class="avatar-img" id="currentPhoto">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     });
+
+    function cancelPhotoUpload() {
+        const photoInput = document.getElementById('photoInput');
+        const previewBanner = document.getElementById('photoPreviewBanner');
+        const currentPhoto = document.getElementById('currentPhoto');
+        const avatarInitial = document.getElementById('avatarInitial');
+        
+        photoInput.value = '';
+        previewBanner.classList.add('d-none');
+        
+        // Restore
+        @if($user->photo)
+            if (currentPhoto) currentPhoto.src = "{{ asset('profile_photos/' . $user->photo) }}";
+        @else
+            if (currentPhoto) currentPhoto.outerHTML = `<div class="avatar-initial" id="avatarInitial">{{ substr(strtoupper($user->name), 0, 1) }}</div>`;
+        @endif
+    }
+
+    function removeCurrentPhoto() {
+        if (confirm('Hapus foto profil saat ini?')) {
+            const removeInput = document.getElementById('removePhoto');
+            removeInput.value = '1';
+            document.querySelector('form').submit();
+        }
+    }
 </script>
 @endpush
+

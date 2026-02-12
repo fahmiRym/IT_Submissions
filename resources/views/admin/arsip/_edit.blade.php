@@ -63,7 +63,7 @@
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <div class="form-floating">
-                                        <select name="department_id" id="editDepartment" class="form-select border-0 bg-light">
+                                        <select name="department_id" id="editDepartment" class="form-select bg-white border border-secondary border-opacity-25">
                                             @foreach($departments as $d)
                                                 <option value="{{ $d->id }}">{{ $d->name }}</option>
                                             @endforeach
@@ -73,7 +73,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-floating">
-                                        <select name="unit_id" id="editUnit" class="form-select border-0 bg-light">
+                                        <select name="unit_id" id="editUnit" class="form-select bg-white border border-secondary border-opacity-25">
                                             @foreach($units as $u)
                                                 <option value="{{ $u->id }}">{{ $u->name }}</option>
                                             @endforeach
@@ -83,7 +83,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-floating">
-                                        <select name="manager_id" id="editManager" class="form-select border-0 bg-light">
+                                        <select name="manager_id" id="editManager" class="form-select bg-white border border-secondary border-opacity-25">
                                             @foreach($managers as $m)
                                                 <option value="{{ $m->id }}">{{ $m->name }}</option>
                                             @endforeach
@@ -91,9 +91,15 @@
                                         <label>Manager</label>
                                     </div>
                                 </div>
+                                <div class="col-12 mt-2">
+                                    <div class="form-floating">
+                                        <textarea name="pemohon" id="editPemohon" class="form-control border-0 bg-light" placeholder="Nama-nama Pemohon" style="height: 60px"></textarea>
+                                        <label class="small fw-bold text-muted text-uppercase">Nama-nama Pemohon</label>
+                                    </div>
+                                </div>
                                 <div class="col-12 mt-2 d-none" id="editWrapperKategori">
                                     <div class="form-floating">
-                                        <select name="kategori" id="editKategori" class="form-select border-danger text-danger bg-white">
+                                        <select name="kategori" id="editKategori" class="form-select border-danger text-dark bg-white">
                                             <option value="Human">Human Error</option>
                                             <option value="System">System Error</option>
                                             <option value="None">Lainnya</option>
@@ -149,6 +155,7 @@
                                             <th width="70">Qty</th>
                                             <th>Lot</th>
                                             <th width="60">Pjg</th>
+                                            <th width="150">Lokasi</th>
                                             <th width="40"></th>
                                         </tr>
                                     </thead>
@@ -170,6 +177,7 @@
                                             <th width="70">Qty</th>
                                             <th>Lot</th>
                                             <th width="60">Pjg</th>
+                                            <th width="150">Lokasi</th>
                                             <th width="40"></th>
                                         </tr>
                                     </thead>

@@ -399,3 +399,75 @@ a {
     opacity: 0.5;
     backdrop-filter: blur(4px);
 }
+
+/* =========================================
+   DROPDOWN & NOTIFICATION ENHANCEMENTS
+   ========================================= */
+
+/* Dropdown Menu Styling */
+.dropdown-menu {
+    z-index: 1050 !important;
+    animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Notification Hover Effect */
+.hover-bg-light:hover {
+    background-color: #f8fafc !important;
+    transition: background-color 0.2s ease;
+}
+
+/* Dropdown Item Hover */
+.dropdown-item:hover {
+    background-color: #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+/* Profile Dropdown Button Hover */
+.dropdown button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.2s ease;
+}
+
+/* Notification Badge Pulse */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.badge.bg-danger {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scrollbar for Notification Dropdown */
+.dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
