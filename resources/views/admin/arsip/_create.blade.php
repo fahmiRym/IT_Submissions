@@ -101,7 +101,7 @@
                                 <div class="col-12 mt-2">
                                     <div class="form-floating">
                                         <textarea name="pemohon" class="form-control border-0 bg-light" placeholder="Nama-nama Pemohon" style="height: 60px"></textarea>
-                                        <label class="small fw-bold text-muted text-uppercase">Nama-nama Pemohon (Gunakan koma atau baris baru)</label>
+                                        <label class="small fw-bold text-muted text-uppercase">Nama-nama Pemohon (Gunakan baris baru)</label>
                                     </div>
                                 </div>
                             </div>
@@ -231,7 +231,13 @@
                                 <h6 class="fw-bold text-danger mb-2"><i class="bi bi-x-circle me-1"></i> PEMBATALAN TRANSAKSI</h6>
                                 <div class="form-floating">
                                     <textarea name="no_transaksi" class="form-control border-danger" placeholder="No Transaksi" style="height: 80px"></textarea>
-                                    <label>Masukkan No Transaksi yang dibatalkan</label>
+                                    <label>Masukkan No Transaksi yang dibatalkan ( Beri Enter untuk membedakan No Transaksi)
+                                        <br>Contoh:
+                                        <br>MO/26/02/0001
+                                        <br>INK/PR/54654
+                                        <br>(Enter)
+                                        <br>INT/215464
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -250,7 +256,7 @@
                                 <div class="card-body">
                                     <label class="form-label fw-bold small text-muted">UPLOAD BUKTI SCAN <span class="text-danger">*</span></label>
                                     <input type="file" name="bukti_scan" class="form-control" required>
-                                    <div class="form-text small text-muted"><i class="bi bi-info-circle me-1"></i> Format: PDF, JPG, PNG (Max 5MB)</div>
+                                    <div class="form-text small text-muted"><i class="bi bi-info-circle me-1"></i> Format: PDF (Max 5MB)</div>
                                 </div>
                             </div>
                         </div>

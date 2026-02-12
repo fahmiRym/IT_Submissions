@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Pengajuan')
-@section('page-title', '📁 Manajemen Pengajuan')
+@section('title', 'IT Submission Data Pengajuan')
+@section('page-title', 'Data Pengajuan')
 
 @push('styles')
 <style>

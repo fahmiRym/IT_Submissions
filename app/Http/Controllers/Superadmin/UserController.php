@@ -14,7 +14,12 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('department')->orderBy('name')->get();
-        return view('users.index', compact('users'));
+        $totalAdmin = User::where('role', 'admin')->count();
+        $totalSuper = User::where('role', 'superadmin')->count();
+        $latestUser = User::latest()->first()->name ?? '-';
+        $departments = Department::orderBy('name')->get();
+
+        return view('users.index', compact('users', 'totalAdmin', 'totalSuper', 'latestUser', 'departments'));
     }
 
     public function create()

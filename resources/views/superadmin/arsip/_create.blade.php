@@ -113,6 +113,11 @@
                                         </div>
                                     </div>
                                     
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold text-secondary">Nama Pemohon</label>
+                                        <textarea name="pemohon" class="form-control bg-light border-0" rows="2" placeholder="Nama-nama pemohon...">{{ old('pemohon') }}</textarea>
+                                    </div>
+
                                     {{-- STATUS FINAL (Superadmin Only) --}}
                                     {{-- STATUS GROUP --}}
                                     <div class="p-3 rounded-3 bg-gradient bg-light border border-secondary border-opacity-10 mb-3 shadow-sm">

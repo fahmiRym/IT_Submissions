@@ -11,7 +11,11 @@ class DepartmentController extends Controller
     public function index()
     {
         $departments = Department::orderBy('name')->get();
-        return view('departments.index', compact('departments'));
+        $totalDept = Department::count();
+        $totalUser = \App\Models\User::count();
+        $latestDept = Department::latest()->first()->name ?? '-';
+
+        return view('departments.index', compact('departments', 'totalDept', 'totalUser', 'latestDept'));
     }
 
     public function create()

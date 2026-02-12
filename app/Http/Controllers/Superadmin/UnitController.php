@@ -11,7 +11,10 @@ class UnitController extends Controller
     public function index()
     {
         $units = Unit::orderBy('name')->get();
-        return view('units.index', compact('units'));
+        $totalUnit = Unit::count();
+        $latestUnit = Unit::latest()->first()->name ?? '-';
+
+        return view('units.index', compact('units', 'totalUnit', 'latestUnit'));
     }
 
     public function create()

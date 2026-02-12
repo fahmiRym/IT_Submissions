@@ -208,6 +208,7 @@ class ArsipController extends Controller
                 'manager_id'      => $request->manager_id,
                 'unit_id'         => $request->unit_id,
                 'kategori'        => $request->kategori ?: 'None', // Handle empty string
+                'pemohon'         => $request->pemohon,
                 'keterangan'      => $request->keterangan,
                 'no_doc'          => $request->no_doc,
                 'no_transaksi'    => $request->no_transaksi,
@@ -482,6 +483,7 @@ class ArsipController extends Controller
                     'arsip'           => $request->arsip,
                     'ket_process'     => $request->ket_process, 
                     'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,
+                    'pemohon'         => $request->pemohon,
                     'target_qty'      => $request->target_qty ?? $arsip->target_qty,
                     'keterangan'      => $request->keterangan ?? $arsip->keterangan,
                     'sub_jenis'       => $request->sub_jenis ?? $arsip->sub_jenis,

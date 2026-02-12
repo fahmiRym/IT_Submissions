@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Laporan Pengajuan')
-@section('page-title', '📄 Laporan Pengajuan')
+@section('title', 'IT Submission Report')
+@section('page-title', '📄 IT Submission Report')
 
 @push('styles')
 <style>
@@ -10,6 +10,11 @@
     .gradient-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
     .card-hover:hover { transform: translateY(-5px); transition: all 0.3s ease; }
     .table-hover tbody tr:hover { background-color: #f1f5f9; }
+    .scan-thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.2s; border: 2px solid #e2e8f0; }
+    .scan-thumb:hover { transform: scale(1.1); border-color: #3b82f6; }
+    .pdf-badge { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #fee2e2; color: #dc2626; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 2px solid #fecaca; }
+    .pdf-badge:hover { background: #dc2626; color: white; transform: scale(1.1); }
+    .no-scan { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; color: #94a3b8; border-radius: 8px; border: 2px dashed #cbd5e1; }
 </style>
 @endpush
 
@@ -22,26 +27,47 @@
     </div>
     <div class="card-body">
         <form action="{{ route('superadmin.laporan.index') }}" method="GET" class="row g-3">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small text-muted fw-bold">DARI TANGGAL</label>
-                <div class="input-group">
+                <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-calendar"></i></span>
                     <input type="date" name="from" class="form-control border-start-0 ps-0" value="{{ request('from') }}">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label small text-muted fw-bold">SAMPAI TANGGAL</label>
-                <div class="input-group">
+                <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-calendar-check"></i></span>
                     <input type="date" name="to" class="form-control border-start-0 ps-0" value="{{ request('to') }}">
                 </div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label small text-muted fw-bold">DEPARTEMEN</label>
-                 <div class="input-group">
+             <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold">PENGAJU (STAFF)</label>
+                 <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-person-badge"></i></span>
+                    <select name="admin_id" class="form-select border-start-0 ps-0">
+                        <option value="">Semua Pengaju</option>
+                        @foreach($admins as $admin)
+                        <option value="{{ $admin->id }}" {{ request('admin_id') == $admin->id ? 'selected' : '' }}>
+                            {{ $admin->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+             <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold">PEMOHON</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-person-circle"></i></span>
+                    <input type="text" name="pemohon" class="form-control border-start-0 ps-0" placeholder="Nama pemohon..." value="{{ request('pemohon') }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold">DEPT. PEMOHON</label>
+                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-building"></i></span>
                     <select name="department_id" class="form-select border-start-0 ps-0">
-                        <option value="">Semua Departemen</option>
+                        <option value="">Semua Dept</option>
                         @foreach($departments as $dept)
                         <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
                             {{ $dept->name }}
@@ -50,14 +76,25 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary flex-fill shadow-sm">
-                    <i class="bi bi-search me-1"></i> Terapkan
+            <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold">STATUS SCAN</label>
+                 <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-camera"></i></span>
+                    <select name="has_scan" class="form-select border-start-0 ps-0">
+                        <option value="">Semua</option>
+                        <option value="yes" {{ request('has_scan') == 'yes' ? 'selected' : '' }}>Ada Scan</option>
+                        <option value="no" {{ request('has_scan') == 'no' ? 'selected' : '' }}>Belum Scan</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-end gap-1">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill shadow-sm">
+                    <i class="bi bi-search"></i>
                 </button>
-                <button type="submit" formaction="{{ route('superadmin.laporan.pdf') }}" formtarget="_blank" class="btn btn-danger flex-fill shadow-sm">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                <button type="submit" formaction="{{ route('superadmin.laporan.pdf') }}" formtarget="_blank" class="btn btn-danger btn-sm flex-fill shadow-sm">
+                    <i class="bi bi-file-earmark-pdf"></i>
                 </button>
-                <a href="{{ route('superadmin.laporan.index') }}" class="btn btn-light border flex-fill shadow-sm" title="Reset Filter">
+                <a href="{{ route('superadmin.laporan.index') }}" class="btn btn-light btn-sm border flex-fill shadow-sm" title="Reset Filter">
                     <i class="bi bi-arrow-counterclockwise"></i>
                 </a>
             </div>
@@ -143,10 +180,10 @@
                 <thead class="bg-light">
                     <tr class="text-nowrap" style="font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">
                         <th class="px-4 py-3 text-secondary">#</th>
-                        <th class="px-4 py-3 text-secondary">No Registrasi</th>
-                        <th class="px-4 py-3 text-secondary">Tanggal</th>
-                        <th class="px-4 py-3 text-secondary">Pengirim</th>
-                        <th class="px-4 py-3 text-secondary">Departemen</th>
+                        <th class="px-4 py-3 text-secondary">Registrasi & Tgl</th>
+                        <th class="px-4 py-3 text-secondary">Pihak Pengaju (Staff)</th>
+                        <th class="px-4 py-3 text-secondary">Pihak Pemohon</th>
+                        <th class="px-4 py-3 text-secondary text-center">Bukti Scan</th>
                         <th class="px-4 py-3 text-secondary">Status Fisik</th>
                         <th class="px-4 py-3 text-secondary">Status</th>
                     </tr>
@@ -158,21 +195,47 @@
                         <td class="px-4">
                             <div class="d-flex flex-column">
                                 <span class="fw-bold text-dark">{{ $arsip->no_registrasi ?? '-' }}</span>
-                                <span class="small text-muted" style="font-size: 0.75rem;">Type: {{ str_replace('_', ' ', $arsip->jenis_pengajuan) }}</span>
+                                <span class="small text-muted" style="font-size: 0.75rem;">
+                                    <i class="bi bi-tag-fill me-1"></i>{{ str_replace('_', ' ', $arsip->jenis_pengajuan) }}
+                                </span>
+                                <span class="small text-muted" style="font-size: 0.75rem;">
+                                    <i class="bi bi-calendar-event me-1"></i>{{ $arsip->tgl_pengajuan ? $arsip->tgl_pengajuan->format('d/m/Y') : '-' }}
+                                </span>
                             </div>
                         </td>
                         <td class="px-4">
-                            <div class="d-flex align-items-center text-muted">
-                                <i class="bi bi-calendar-event me-2"></i>
-                                {{ $arsip->tgl_pengajuan ? $arsip->tgl_pengajuan->format('d M Y') : '-' }}
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold text-dark">{{ $arsip->admin->name ?? 'System' }}</span>
+                                <div class="small text-muted">Dept: {{ $arsip->admin->department->name ?? '-' }}</div>
                             </div>
                         </td>
                         <td class="px-4">
-                            <span class="fw-semibold text-dark">{{ $arsip->manager->name ?? '-' }}</span>
-                            <div class="small text-muted">Unit: {{ $arsip->unit->name ?? '-' }}</div>
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold text-primary">{{ $arsip->pemohon ?? '-' }}</span>
+                                <div class="small text-muted">Dept: {{ $arsip->department->name ?? '-' }}</div>
+                                <div class="small text-muted" style="font-size: 0.7rem;">Manager: {{ $arsip->manager->name ?? '-' }}</div>
+                            </div>
                         </td>
-                        <td class="px-4">
-                            <span class="badge bg-light text-dark border">{{ $arsip->department->name ?? '-' }}</span>
+                        <td class="px-4 text-center">
+                            @if($arsip->bukti_scan)
+                                @php $ext = pathinfo($arsip->bukti_scan, PATHINFO_EXTENSION); @endphp
+                                @if(in_array(strtolower($ext), ['jpg','jpeg','png','webp']))
+                                    <img src="{{ route('preview.file', $arsip->bukti_scan) }}" 
+                                         class="scan-thumb shadow-sm" 
+                                         onclick="showBukti('{{ route('preview.file', $arsip->bukti_scan) }}')"
+                                         title="Klik untuk memperbesar">
+                                @else
+                                    <div class="pdf-badge shadow-sm" 
+                                         onclick="showBukti('{{ route('preview.file', $arsip->bukti_scan) }}')"
+                                         title="Klik untuk lihat PDF">
+                                        <i class="bi bi-file-pdf-fill fs-4"></i>
+                                    </div>
+                                @endif
+                            @else
+                                <div class="no-scan mx-auto" title="Belum ada bukti scan">
+                                    <i class="bi bi-camera-off fs-5"></i>
+                                </div>
+                            @endif
                         </td>
                          <td class="px-4">
                             @if($arsip->arsip == 'Done')
@@ -195,7 +258,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <div class="d-flex flex-column align-items-center justify-content-center">
                                 <i class="bi bi-inbox fs-1 text-muted opacity-25 mb-3"></i>
                                 <span class="text-muted">Tidak ada data yang sesuai filter.</span>
@@ -213,5 +276,7 @@
     </div>
     @endif
 </div>
+
+@include('superadmin.arsip._view')
 
 @endsection

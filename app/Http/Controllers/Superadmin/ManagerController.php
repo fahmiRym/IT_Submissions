@@ -11,7 +11,10 @@ class ManagerController extends Controller
     public function index()
     {
         $managers = Manager::orderBy('name')->get();
-        return view('managers.index', compact('managers'));
+        $totalManager = Manager::count();
+        $latestManager = Manager::latest()->first()->name ?? '-';
+
+        return view('managers.index', compact('managers', 'totalManager', 'latestManager'));
     }
 
     public function create()

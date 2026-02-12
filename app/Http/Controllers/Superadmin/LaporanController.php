@@ -11,7 +11,7 @@ class LaporanController extends Controller
 {
     private function getFilteredArsips(Request $request)
     {
-        $query = Arsip::with(['admin', 'department', 'unit', 'manager']); // Eager load relations
+        $query = Arsip::with(['admin.department', 'department', 'unit', 'manager']); // Eager load relations including admin department
 
         if ($request->from && $request->to) {
             $query->whereBetween('tgl_pengajuan', [$request->from, $request->to]);
@@ -21,6 +21,22 @@ class LaporanController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
+        if ($request->admin_id) {
+            $query->where('admin_id', $request->admin_id);
+        }
+
+        if ($request->pemohon) {
+            $query->where('pemohon', 'like', '%' . $request->pemohon . '%');
+        }
+
+        if ($request->has_scan === 'yes') {
+            $query->whereNotNull('bukti_scan')->where('bukti_scan', '!=', '');
+        } elseif ($request->has_scan === 'no') {
+            $query->where(function($q) {
+                $q->whereNull('bukti_scan')->orWhere('bukti_scan', '');
+            });
+        }
+
         return $query->latest()->get();
     }
 
@@ -28,23 +44,37 @@ class LaporanController extends Controller
     {
         $arsips = $this->getFilteredArsips($request);
 
-        // Statistics for Cards (Keep logic here or move if needed for PDF too, but usually PDF just needs the list)
-        // ... (We can keep separate stats query or reuse if needed, but for now let's keep index logic simple)
-        // Re-calcuating stats based on current filter might be heavy if done twice, 
-        // but for now let's just stick to the requested structure.
-        
-        // Actually, to avoid breaking existing stats logic which aggregates on DB, 
-        // I will keep the specific stats queries in index() as they group by ID.
-        // But for the main list, I use the helper.
+        // Initialize queries for stats
+        $statsQuery = Arsip::query();
 
-        $byUser = Arsip::selectRaw('admin_id, COUNT(*) as total')
+        if ($request->from && $request->to) {
+            $statsQuery->whereBetween('tgl_pengajuan', [$request->from, $request->to]);
+        }
+        if ($request->department_id) {
+            $statsQuery->where('department_id', $request->department_id);
+        }
+        if ($request->admin_id) {
+            $statsQuery->where('admin_id', $request->admin_id);
+        }
+        if ($request->pemohon) {
+            $statsQuery->where('pemohon', 'like', '%' . $request->pemohon . '%');
+        }
+        if ($request->has_scan === 'yes') {
+            $statsQuery->whereNotNull('bukti_scan')->where('bukti_scan', '!=', '');
+        } elseif ($request->has_scan === 'no') {
+            $statsQuery->where(function($q) {
+                $q->whereNull('bukti_scan')->orWhere('bukti_scan', '');
+            });
+        }
+
+        $byUser = (clone $statsQuery)->selectRaw('admin_id, COUNT(*) as total')
             ->with('admin')
             ->groupBy('admin_id')
             ->orderByDesc('total')
             ->limit(5)
             ->get();
 
-        $byDepartment = Arsip::selectRaw('department_id, COUNT(*) as total')
+        $byDepartment = (clone $statsQuery)->selectRaw('department_id, COUNT(*) as total')
             ->with('department')
             ->groupBy('department_id')
             ->orderByDesc('total')
@@ -52,12 +82,14 @@ class LaporanController extends Controller
             ->get();
 
         $departments = Department::orderBy('name')->get();
+        $admins = \App\Models\User::where('role', 'Admin')->orderBy('name')->get();
 
         return view('laporan.index', compact(
             'arsips',
             'byUser',
             'byDepartment',
-            'departments'
+            'departments',
+            'admins'
         ));
     }
 
@@ -118,10 +150,15 @@ class LaporanController extends Controller
         
         $topCancelerDisplay = $topCancelerName . ($topCancelerDept ? " ($topCancelerDept)" : "");
 
+        // 3. SCAN EVIDENCE ANALYSIS
+        $withScan = $arsips->filter(fn($a) => !empty($a->bukti_scan))->count();
+        $scanRate = $total > 0 ? round(($withScan / $total) * 100, 1) : 0;
+
         // Conclusion Text
         $conclusion = "Total aktivitas pengajuan: <strong>$total dokumen</strong>. "
             . "Departemen paling aktif adalah <strong>$topDeptName</strong> ($topDeptCount dokumen).<br>"
             . "Tingkat pembatalan (Cancel) dokumen: <strong>$cancelRate%</strong> ($totalCancel dokumen). "
+            . "Kelengkapan bukti scan dokumen: <strong>$scanRate%</strong> ($withScan dokumen).<br>"
             . "Pengaju dengan frekuensi cancel tertinggi: <strong>$topCancelerDisplay</strong> ($topCancelerCount dokumen).";
 
         // CHART 1: TOP 5 DEPARTMENTS (Activity)
@@ -159,7 +196,7 @@ class LaporanController extends Controller
         $chartPieUrl = 'https://quickchart.io/chart?width=350&height=200&c=' . urlencode(json_encode($barCancelConfig)); // Still reusing var name
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.pdf', compact(
-            'pivotData', 'departmentName', 'filterDate', 'conclusion', 'chartBarUrl', 'chartPieUrl', 'userCancelList'
+            'pivotData', 'departmentName', 'filterDate', 'conclusion', 'chartBarUrl', 'chartPieUrl', 'userCancelList', 'arsips'
         ))->setPaper('a4', 'landscape');
         
         return $pdf->stream('laporan-analisis-error.pdf');
