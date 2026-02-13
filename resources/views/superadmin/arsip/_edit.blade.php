@@ -96,6 +96,7 @@
                 <select name="status" id="editStatus" class="form-select form-select-sm bg-white border-warning border-opacity-25 text-dark fw-bold">
                     <option value="Check">Check (Verifikasi Awal)</option>
                     <option value="Process">Process (Sedang Diproses)</option>
+                    <option value="Pending">Pending (Ditunda/Revisi)</option>
                     <option value="Done">Done (Selesai)</option>
                     <option value="Reject">Reject (Ditolak)</option>
                     <option value="Void">Void (Dibatalkan)</option>
@@ -200,11 +201,12 @@
                         <table class="table table-sm table-borderless mb-0 align-middle">
                             <thead class="text-xs text-danger fw-bold">
                                 <tr>
-                                    <th>Kode</th>
+                                    <th width="90">Kode</th>
                                     <th>Nama Produk</th>
-                                    <th width="80" class="text-center">Qty</th>
-                                    <th>Lot</th>
-                                    <th width="150">Lokasi</th>
+                                    <th width="70" class="text-center">Qty</th>
+                                    <th width="100">Lot</th>
+                                    <th width="90">PJG</th>
+                                    <th width="160">Lokasi</th>
                                     <th width="40"></th>
                                 </tr>
                             </thead>
@@ -223,11 +225,12 @@
                         <table class="table table-sm table-borderless mb-0 align-middle">
                             <thead class="text-xs text-success fw-bold">
                                 <tr>
-                                    <th>Kode</th>
+                                    <th width="90">Kode</th>
                                     <th>Nama Produk</th>
-                                    <th width="80" class="text-center">Qty</th>
-                                    <th>Lot</th>
-                                    <th width="150">Lokasi</th>
+                                    <th width="70" class="text-center">Qty</th>
+                                    <th width="100">Lot</th>
+                                    <th width="90">Pjg</th>
+                                    <th width="160">Lokasi</th>
                                     <th width="40"></th>
                                 </tr>
                             </thead>

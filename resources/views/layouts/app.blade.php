@@ -39,9 +39,11 @@
         /* LAYOUT */
         .content {
             margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
             min-height: 100vh;
-            display: block; /* Removed flex */
-            transition: margin-left 0.3s ease;
+            display: block;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
         .topbar {

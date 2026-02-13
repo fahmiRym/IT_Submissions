@@ -15,6 +15,7 @@ use App\Models\ArsipAdjustItem; // Tambahan
 use App\Models\ArsipBundelItem; // Tambahan
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // Tambahan untuk Transaction
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class ArsipController extends Controller
@@ -200,7 +201,8 @@ class ArsipController extends Controller
             }
 
             $arsip = Arsip::create([
-                'tgl_pengajuan'   => $request->tgl_pengajuan,
+                'no_registrasi'   => Arsip::generateNoRegistrasi($request),
+                'tgl_pengajuan'   => $request->tgl_pengajuan ? \Carbon\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : now(),
                 'tgl_arsip'       => $request->tgl_arsip,
                 'admin_id'        => $request->user_id,
                 'superadmin_id'   => auth()->id(),
@@ -268,9 +270,9 @@ class ArsipController extends Controller
         // 1. Load Arsip
         $arsip = Arsip::with(['department', 'unit'])->findOrFail($id);
 
-        // 🔒 CEK STATUS FINAL
-        if ($arsip->status === 'Done') {
-            return back()->withErrors(['status' => 'Dokumen ini sudah diarsipkan.']);
+        // 🔒 CEK STATUS FINAL - Hanya blokir jika SUDAH PUNYA No Dokumen
+        if ($arsip->status === 'Done' && !empty($arsip->no_doc)) {
+            return back()->withErrors(['status' => 'Dokumen ini sudah diarsipkan dengan No Doc: ' . $arsip->no_doc]);
         }
 
         // --- MULAI TRANSAKSI DATABASE ---
@@ -295,14 +297,23 @@ class ArsipController extends Controller
                 $kodeUnit = str_replace(['Unit ', 'Unit', ' '], ['U', 'U', ''], $unitObj->name);
             }
 
+            // Gunakan Prefix Departemen (Bukan IT) untuk No Registrasi
             $prefixReg = "{$kodeDept}-{$tglCode}-{$kodeUnit}-";
             $lastArsip = Arsip::where('no_registrasi', 'like', $prefixReg . '%')
                 ->where('id', '!=', $id)
-                ->orderBy('id', 'desc')
+                ->orderBy('no_registrasi', 'desc')
                 ->first();
 
-            $newSeq = $lastArsip ? str_pad((int)substr($lastArsip->no_registrasi, -3) + 1, 3, '0', STR_PAD_LEFT) : '001';
-            $noRegistrasiFix = $prefixReg . $newSeq;
+            if ($lastArsip) {
+                // Ambil bagian terakhir setelah dash terakhir
+                $parts = explode('-', $lastArsip->no_registrasi);
+                $lastSegment = end($parts);
+                $newSeq = is_numeric($lastSegment) ? (int)$lastSegment + 1 : 1;
+            } else {
+                $newSeq = 1;
+            }
+            
+            $noRegistrasiFix = $prefixReg . str_pad($newSeq, 3, '0', STR_PAD_LEFT);
 
             /**
              * 2️⃣ GENERATE NO DOC (SWITCH CASE)
@@ -316,7 +327,7 @@ class ArsipController extends Controller
             $padding   = 4;
             $useDay    = false;
 
-            switch ($arsip->jenis_pengajuan) {
+            switch (trim(str_replace(' ', '_', $arsip->jenis_pengajuan))) {
                 case 'Mutasi_Produk':
                     $prefixDoc = 'RPP';
                     $padding   = 4;
@@ -343,23 +354,53 @@ class ArsipController extends Controller
                     $useDay    = false;
                     break;
                 case 'Cancel':
+                case 'Cancelled':
                     $prefixDoc = 'CANCEL';
                     $padding   = 4;
                     $useDay    = false;
                     break;
                 default:
-                    $prefixDoc = strtoupper(substr($arsip->jenis_pengajuan, 0, 3));
+                    $prefixDoc = strtoupper(substr(str_replace(' ', '', $arsip->jenis_pengajuan), 0, 3));
                     $padding   = 4;
                     $useDay    = false;
                     break;
             }
 
-            // --- USE MANUAL SEQUENCE OR AUTO ID ---
-            $rawSeq = $request->sequence_number ?: $arsip->id;
-            $seqDoc = str_pad($rawSeq, $padding, '0', STR_PAD_LEFT);
+            // --- LOGIKA SEQUENCE OTOMATIS (Mencari nomor terakhir dari No Doc) ---
+            $rawSeq = $request->sequence_number;
+            
+            if (!$rawSeq) {
+                // Cari arsip terakhir dengan prefix yang sama untuk tahun ini
+                // Kita cari pattern prefix di awal string no_doc
+                $lastDoc = Arsip::where('jenis_pengajuan', $arsip->jenis_pengajuan)
+                    ->whereNotNull('no_doc')
+                    ->where('no_doc', 'like', "%{$tahun}%")
+                    ->orderBy('id', 'desc')
+                    ->first();
 
-            if ($arsip->jenis_pengajuan === 'Cancel') {
-                $finalNoDoc = "Cancelled No Doc : {$seqDoc}/{$bulan}/{$kodeDept}/{$tahun}";
+                if ($lastDoc) {
+                    $normalizedJenis = trim(str_replace(' ', '_', $arsip->jenis_pengajuan));
+                    if ($normalizedJenis === 'Cancel' || $normalizedJenis === 'Cancelled') {
+                        preg_match('/Cancelled No Doc\s*:\s*(\d+)/', $lastDoc->no_doc, $matches);
+                    } else {
+                        $parts = explode('/', $lastDoc->no_doc);
+                        $lastSegment = end($parts);
+                        if (is_numeric($lastSegment)) {
+                            $matches[1] = $lastSegment;
+                        }
+                    }
+                    $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+                    $rawSeq = $lastNumber + 1;
+                } else {
+                    $rawSeq = 1;
+                }
+            }
+
+            $seqDoc = str_pad($rawSeq, $padding, '0', STR_PAD_LEFT);
+            $normalizedJenisForDoc = trim(str_replace(' ', '_', $arsip->jenis_pengajuan));
+
+            if ($normalizedJenisForDoc === 'Cancel' || $normalizedJenisForDoc === 'Cancelled') {
+                $finalNoDoc = "Cancelled No Doc : {$seqDoc}/{$bulan}/IT/{$tahun}";
             } else {
                 if ($useDay) {
                     $finalNoDoc = "{$prefixDoc}/{$tahun}/{$bulan}/{$hari}/{$seqDoc}";
@@ -368,18 +409,7 @@ class ArsipController extends Controller
                 }
             }
 
-            $noDoc[] = $finalNoDoc;
-
-            if ($arsip->no_transaksi) {
-                $lines = preg_split("/\r\n|\n|\r/", $arsip->no_transaksi);
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if (!$line) continue;
-                    if (preg_match('/^(BPB-|SJF-|BPBI-|SJ-|RTR-BPB)/', $line)) {
-                        $noDoc[] = $line;
-                    }
-                }
-            }
+            $noDoc = [$finalNoDoc];
 
             /**
              * 3️⃣ UPDATE FINAL & NOTIFIKASI
@@ -416,6 +446,49 @@ class ArsipController extends Controller
 
     /**
      * ===============================
+     * CLEANUP STORAGE - DELETE SCAN FILES
+     * ===============================
+     */
+    public function cleanupStorage(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+        ]);
+
+        try {
+            // Cari arsip yang memiliki file bukti_scan dalam range tanggal
+            $arsips = Arsip::whereNotNull('bukti_scan')
+                ->whereBetween('tgl_pengajuan', [$request->start_date, $request->end_date])
+                ->get();
+
+            if ($arsips->isEmpty()) {
+                return back()->with('error', 'Tidak ada file scan yang ditemukan dalam rentang tanggal tersebut.');
+            }
+
+            $count = 0;
+            foreach ($arsips as $arsip) {
+                if ($arsip->bukti_scan) {
+                    $filePath = 'bukti_scan/' . $arsip->bukti_scan;
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
+                    
+                    // Update field database jadi NULL agar tidak ada link 'mati'
+                    $arsip->update(['bukti_scan' => null]);
+                    $count++;
+                }
+            }
+
+            return back()->with('success', "Berhasil membersihkan {$count} file scan dari sistem.");
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal membersihkan storage: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * ===============================
      * UPDATE – REVIEW SUPERADMIN
      * ===============================
      */
@@ -425,7 +498,7 @@ class ArsipController extends Controller
 
         $request->validate([
             'status'      => 'required|in:Check,Process,Pending,Done,Reject,Void',
-            'ket_process' => 'nullable|in:Review,Process,Done,Pending,Void',
+            'ket_process' => 'nullable|in:Review,Process,Done,Pending,Void,Partial Done',
             'ba'          => 'nullable',
             'arsip'       => 'nullable',
             'bukti_scan'  => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
@@ -466,33 +539,42 @@ class ArsipController extends Controller
                 $totalOut += collect($rawItems['adjust'])->sum('qty_out');
             }
 
-            // 3. Update Header Arsip
-            $arsip->update(array_merge(
-                ['status' => $request->status],
-                $map[$request->status] ?? [],
-                [
-                    'admin_id'        => $request->user_id,
-                    'tgl_pengajuan'   => $request->tgl_pengajuan,
-                    'tgl_arsip'       => $request->tgl_arsip,
-                    'department_id'   => $request->department_id,
-                    'manager_id'      => $request->manager_id,
-                    'unit_id'         => $request->unit_id,
-                    'no_transaksi'    => $request->no_transaksi,
-                    'kategori'        => $request->kategori ?? 'None',
-                    'ba'              => $request->ba,
-                    'arsip'           => $request->arsip,
-                    'ket_process'     => $request->ket_process, 
-                    'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,
-                    'pemohon'         => $request->pemohon,
-                    'target_qty'      => $request->target_qty ?? $arsip->target_qty,
-                    'keterangan'      => $request->keterangan ?? $arsip->keterangan,
-                    'sub_jenis'       => $request->sub_jenis ?? $arsip->sub_jenis,
-                    'detail_barang'   => $rawItems, 
-                    'total_qty_in'    => $totalIn,
-                    'total_qty_out'   => $totalOut,
-                    'bukti_scan'      => $filename,
-                ]
-            ));
+            // 3. Siapkan Data Update & Automation
+            $updateData = [
+                'admin_id'        => $request->user_id,
+                'tgl_pengajuan'   => $request->tgl_pengajuan ? \Carbon\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : $arsip->tgl_pengajuan,
+                'tgl_arsip'       => $request->tgl_arsip,
+                'department_id'   => $request->department_id,
+                'manager_id'      => $request->manager_id,
+                'unit_id'         => $request->unit_id,
+                'no_transaksi'    => $request->no_transaksi,
+                'kategori'        => $request->kategori ?? 'None',
+                'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,
+                'pemohon'         => $request->pemohon,
+                'target_qty'      => $request->target_qty ?? $arsip->target_qty,
+                'keterangan'      => $request->keterangan ?? $arsip->keterangan,
+                'sub_jenis'       => $request->sub_jenis ?? $arsip->sub_jenis,
+                'status'          => $request->status,
+                'bukti_scan'      => $filename,
+                'detail_barang'   => $rawItems,
+                'total_qty_in'    => $totalIn,
+                'total_qty_out'   => $totalOut,
+            ];
+
+            // Masukkan Automasi Status (Default)
+            if (isset($map[$request->status])) {
+                $updateData = array_merge($updateData, $map[$request->status]);
+            }
+
+            // IJINKAN OVERRIDE MANUAL (Jika form diisi secara spesifik & tidak kosong)
+            if ($request->filled('ba'))          $updateData['ba'] = $request->ba;
+            if ($request->filled('arsip'))       $updateData['arsip'] = $request->arsip;
+            if ($request->filled('ket_process')) $updateData['ket_process'] = $request->ket_process;
+
+            // JIKA STATUS DI EDIT MENJADI DONE, TAPI NO DOC KOSONG -> BERI PERINGATAN ATAU TETAPKAN
+            // Catatan: Sebaiknya No Doc hanya digenerate lewat tombol Arsip Sistem agar terkontrol.
+            
+            $arsip->update($updateData);
 
             // 4. Sinkronisasi Tabel Relasi (Hapus Lama, Buat Baru)
             ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();

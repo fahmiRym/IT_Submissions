@@ -300,7 +300,8 @@
                             </a>
                         </th>
                         <th style="width: 200px;"><span class="text-uppercase fw-bold">Departemen & Unit</span></th>
-                        <th style="width: 320px;"><span class="text-uppercase fw-bold">Detail Dokumen & Item</span></th>
+                        <th class="text-center" style="width: 100px;"><span class="text-uppercase fw-bold">QTY</span></th>
+                        <th style="width: 320px;"><span class="text-uppercase fw-bold">Detail Dokumen</span></th>
                         <th class="text-center" style="width: 150px;">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'ket_process', 'dir' => (request('sort')=='ket_process' && request('dir')=='asc') ? 'desc' : 'asc']) }}" class="text-secondary text-decoration-none d-flex align-items-center justify-content-center gap-2">
                                 <span class="text-uppercase fw-bold">Status</span>
@@ -371,13 +372,20 @@
                                 {{ optional($a->tgl_pengajuan)->format('d M Y') }}
                             </div>
                             <div class="text-muted fw-bold mt-1" style="font-size: 0.72rem;">
-                                <i class="bi bi-clock me-1 opacity-50 text-primary"></i>{{ optional($a->created_at)->format('H:i') }}
+                                <i class="bi bi-clock me-1 opacity-50 text-primary"></i>{{ optional($a->tgl_pengajuan)->format('H:i') }} WIB
                             </div>
                         </td>
     
                         <td>
                             <div class="fw-bold text-dark lh-sm mb-1 text-truncate" style="max-width: 160px; font-size: 0.88rem;">{{ $a->department->name ?? '-' }}</div>
                             <span class="bg-light text-secondary px-2 py-0 rounded fw-bold" style="font-size: 0.68rem; border: 1px solid #cbd5e1;">{{ $a->unit->name ?? '-' }}</span>
+                        </td>
+
+                        <td class="text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="fw-bold text-success" style="font-size: 0.85rem;">+{{ $a->total_qty_in + 0 }}</span>
+                                <span class="fw-bold text-danger" style="font-size: 0.85rem;">-{{ $a->total_qty_out + 0 }}</span>
+                            </div>
                         </td>
     
                         <td class="ps-3 pe-2">
@@ -417,6 +425,12 @@
                                                 <div class="lh-1 pe-2">
                                                     <div class="fw-extrabold text-dark font-monospace mb-1" style="font-size: 0.82rem;">{{ $item->product_code }}</div>
                                                     <div class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">{{ $item->product_name }}</div>
+                                                    @if($item->panjang || $item->location)
+                                                        <div class="mt-1 d-flex gap-1" style="font-size: 0.62rem;">
+                                                            @if($item->panjang) <span class="badge bg-secondary opacity-75">P: {{ $item->panjang }}</span> @endif
+                                                            @if($item->location) <span class="badge bg-light text-dark border" title="{{ $item->location }}"><i class="bi bi-geo-alt"></i> Loc</span> @endif
+                                                        </div>
+                                                    @endif
                                                 </div>
                                                 <div class="qty-bubble {{ $qClass }}">{{ $qPrefix }}{{ $item->qty + 0 }}</div>
                                             </div>
@@ -450,30 +464,18 @@
 
                                 {{-- PEMOHON --}}
                                 @if($a->pemohon)
-                                    <div class="d-flex flex-column">
-                                        <div class="item-label-prefix d-flex align-items-center gap-2">
-                                            <i class="bi bi-people-fill text-primary" style="font-size: 0.7rem;"></i>
-                                            Daftar Pemohon
-                                        </div>
-                                        <div class="p-2 rounded-3 bg-white border border-primary border-opacity-10 mt-1 mb-1">
-                                            <div class="text-dark fw-bold" style="font-size: 0.78rem;">
-                                                {!! nl2br(e($a->pemohon)) !!}
-                                            </div>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <div class="badge bg-light text-primary border border-primary border-opacity-10 py-1 px-2" style="font-size: 0.65rem;">
+                                            <i class="bi bi-people-fill me-1"></i> {{ Str::limit($a->pemohon, 30) }}
                                         </div>
                                     </div>
                                 @endif
 
                                 {{-- Premium Digital Memo Card for fallback keterangan --}}
                                 @if(!$itemsFound && $a->keterangan)
-                                    <div class="d-flex flex-column">
-                                        <div class="item-label-prefix d-flex align-items-center gap-2">
-                                            <i class="bi bi-chat-left-text-fill text-info" style="font-size: 0.7rem;"></i>
-                                            Informasi Pengajuan
-                                        </div>
-                                        <div class="note-detail-card mt-1">
-                                            <div class="text-primary-dark fw-bold" style="font-size: 0.85rem; line-height: 1.5; font-style: italic; opacity: 0.9;">
-                                                "{{ $a->keterangan }}"
-                                            </div>
+                                    <div class="mt-1">
+                                        <div class="text-muted italic fw-medium" style="font-size: 0.75rem; line-height: 1.2;">
+                                            <i class="bi bi-chat-left-dots me-1"></i> "{{ Str::limit($a->keterangan, 50) }}"
                                         </div>
                                     </div>
                                 @elseif(!$itemsFound)
@@ -641,13 +643,13 @@ $(document).ready(function() {
 
         $(`#${targetId}`).append(`
             <tr>
-                <td><input type="text" name="${prefixName}[${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" required></td>
-                <td><input type="text" name="${prefixName}[${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" required></td>
-                <td><input type="number" step="any" name="${prefixName}[${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold" value="0" required style="min-width: 80px;"></td>
-                <td><input type="text" name="${prefixName}[${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot"></td>
-                <td><input type="text" name="${prefixName}[${idx}][panjang]" class="form-control form-control-sm border-0 bg-light" placeholder="Pjg"></td>
+                <td><input type="text" name="${prefixName}[${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" required style="width: 80px;"></td>
+                <td><input type="text" name="${prefixName}[${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" required style="min-width: 150px;"></td>
+                <td><input type="number" step="any" name="${prefixName}[${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold text-center" value="1" required style="width: 70px;"></td>
+                <td><input type="text" name="${prefixName}[${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" style="width: 90px;"></td>
+                <td><input type="text" name="${prefixName}[${idx}][panjang]" class="form-control form-control-sm border-0 bg-light" placeholder="Pjg" style="width: 80px;"></td>
                 <td>
-                    <select name="${prefixName}[${idx}][location]" class="form-select form-select-sm border-0 bg-light">
+                    <select name="${prefixName}[${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="width: 150px;">
                         ${locationOptions}
                     </select>
                 </td>
@@ -763,13 +765,13 @@ window.addMutasiRowEdit = function(type, code = '', name = '', qty = 1, lot = ''
 
     let html = `
         <tr>
-            <td class="ps-3"><input type="text" name="detail_barang[${key}][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" value="${code}" required style="width: 80px;"></td>
-            <td><input type="text" name="detail_barang[${key}][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" value="${name}" required></td>
-            <td><input type="number" step="any" name="detail_barang[${key}][${idx}][qty]" class="form-control form-control-sm text-center border-0 bg-light" value="${qty}" style="min-width: 80px;"></td>
-            <td><input type="text" name="detail_barang[${key}][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" value="${lot}"></td>
-            <td><input type="text" name="detail_barang[${key}][${idx}][panjang]" class="form-control form-control-sm border-0 bg-light" placeholder="Pjg" value="${panjang}"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" value="${code}" required style="width: 80px;"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" value="${name}" required style="min-width: 150px;"></td>
+            <td><input type="number" step="any" name="detail_barang[${key}][${idx}][qty]" class="form-control form-control-sm text-center border-0 bg-light" value="${qty}" style="width: 70px;"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" value="${lot}" style="width: 90px;"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][panjang]" class="form-control form-control-sm border-0 bg-light" placeholder="Pjg" value="${panjang}" style="width: 80px;"></td>
             <td>
-                <select name="detail_barang[${key}][${idx}][location]" class="form-select form-select-sm border-0 bg-light">
+                <select name="detail_barang[${key}][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="width: 150px;">
                     ${locationOptions}
                 </select>
             </td>

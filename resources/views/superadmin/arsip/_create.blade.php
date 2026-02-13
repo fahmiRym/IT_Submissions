@@ -51,7 +51,18 @@
                                     {{-- 2. TANGGAL PENGAJUAN (Superadmin Only) --}}
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold text-secondary">Tanggal Pengajuan <span class="text-danger">*</span></label>
-                                        <input type="date" name="tgl_pengajuan" class="form-control bg-light border-0" value="{{ old('tgl_pengajuan', date('Y-m-d')) }}" required>
+                                        <input type="date" name="tgl_pengajuan" class="form-control bg-light border-0 fw-bold" value="{{ old('tgl_pengajuan', date('Y-m-d')) }}" required>
+                                    </div>
+
+                                    {{-- PREVIEW FORMAT (Like Admin) --}}
+                                    <div class="border rounded-3 p-3 bg-white mb-3 shadow-sm border-primary border-opacity-10">
+                                        <div class="fw-bold small mb-2 text-primary">📄 Contoh Format No Dokumen:</div>
+                                        <pre class="mb-0 text-dark" style="font-size: 0.65rem;">
+Cancelled: 1599/{{ date('m') }}/IT/{{ date('Y') }}
+Adjust   : DC/{{ date('Y') }}/{{ date('m') }}/{{ date('d') }}/0100
+Mutasi   : RPP/{{ date('Y') }}/{{ date('m') }}/1485
+Bundel   : DO/PL/{{ date('Y') }}/001
+                                        </pre>
                                     </div>
 
                                     <div class="mb-3">
@@ -228,11 +239,12 @@
                                                     <table class="table table-sm table-borderless mb-0 align-middle">
                                                         <thead class="text-xs text-danger fw-bold">
                                                             <tr>
-                                                                <th>Kode</th>
+                                                                <th width="90">Kode</th>
                                                                 <th>Nama Produk</th>
-                                                                <th width="80">Qty</th>
-                                                                <th>Lot</th>
-                                                                <th width="150">Lokasi</th>
+                                                                <th width="70" class="text-center">Qty</th>
+                                                                <th width="100">Lot</th>
+                                                                <th width="90">PJG</th>
+                                                                <th width="160">Lokasi</th>
                                                                 <th width="40"></th>
                                                             </tr>
                                                         </thead>
@@ -252,11 +264,12 @@
                                                     <table class="table table-sm table-borderless mb-0 align-middle">
                                                         <thead class="text-xs text-success fw-bold">
                                                             <tr>
-                                                                <th>Kode</th>
+                                                                <th width="90">Kode</th>
                                                                 <th>Nama Produk</th>
-                                                                <th width="80">Qty</th>
-                                                                <th>Lot</th>
-                                                                <th width="150">Lokasi</th>
+                                                                <th width="70" class="text-center">Qty</th>
+                                                                <th width="100">Lot</th>
+                                                                <th width="90">Pjg</th>
+                                                                <th width="160">Lokasi</th>
                                                                 <th width="40"></th>
                                                             </tr>
                                                         </thead>

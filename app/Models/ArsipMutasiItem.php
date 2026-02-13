@@ -47,11 +47,13 @@ class ArsipMutasiItem extends Model
             'Physical Locations/INK/Unit 3 - Billet Oven 17',
             'Physical Locations/INK/Unit 3 - Billet Oven 19',
             'Physical Locations/INK/Unit 3 - Billet Oven 20',
+            'Physical Locations/INK/Unit 3 - Billet Oven 21',
             'Physical Locations/INK/Unit 3 - Billet Oven 22',
             'Physical Locations/INK/Unit 3 - Billet Oven 23',
             'Physical Locations/INK/Unit 4B - Billet Oven 24',
             'Physical Locations/INK/Unit 4B - Billet Oven 25',
             'Physical Locations/INK/Unit 4B - Billet Oven 26',
+            'INK/Packing',
         ];
     }
 }

@@ -136,6 +136,7 @@ Route::prefix('superadmin')
         
         // Custom Arsip Action
         Route::put('arsip/{id}/arsip-sistem',[SuperArsip::class, 'arsipSistem'])->name('arsip.arsip-sistem');
+        Route::post('arsip/cleanup-storage', [SuperArsip::class, 'cleanupStorage'])->name('arsip.cleanup-storage');
 
         // MASTER DATA
         Route::resource('departments', SuperDepartment::class);

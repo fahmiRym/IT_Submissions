@@ -136,6 +136,7 @@ class ArsipController extends Controller
             'department_id'   => 'required',
             'unit_id'         => 'required',
             'manager_id'      => 'required',
+            'tgl_pengajuan'   => 'nullable|date',
             'bukti_scan'      => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
@@ -154,43 +155,8 @@ class ArsipController extends Controller
                 $file->storeAs('bukti_scan', $filename, 'public');
             }
 
-            // B. GENERATE NO REGISTRASI
-            $deptObj = Department::findOrFail($request->department_id);
-            $unitObj = Unit::findOrFail($request->unit_id);
-            
-            $kodeDept = !empty($deptObj->code) ? $deptObj->code : substr(strtoupper($deptObj->name), 0, 3);
-            $tgl      = date('ymd');
-            
-            if (!empty($unitObj->code)) {
-                $kodeUnit = $unitObj->code;
-            } else {
-                $kodeUnit = str_replace(['Unit ', 'Unit', ' '], ['U', 'U', ''], $unitObj->name);
-            }
-
-            $prefix    = "{$kodeDept}-{$tgl}-{$kodeUnit}-";
-            
-            // Ambil last arsip hari ini untuk unit/dept ini
-            $lastArsip = Arsip::where('no_registrasi', 'like', $prefix . '%')
-                              ->orderBy('id', 'desc')
-                              ->lockForUpdate()
-                              ->first();
-
-            $lastSeq = 0;
-            if ($lastArsip) {
-                // Ambil bagian terakhir setelah dash
-                $parts = explode('-', $lastArsip->no_registrasi);
-                $lastSegment = end($parts);
-                // Pastikan numerik
-                if (is_numeric($lastSegment)) {
-                    $lastSeq = (int) $lastSegment;
-                }
-            }
-
-            $seqCandidate = $lastSeq + 1;
-            while (Arsip::where('no_registrasi', $prefix . str_pad($seqCandidate, 3, '0', STR_PAD_LEFT))->exists()) {
-                $seqCandidate++;
-            }
-            $noRegistrasiFix = $prefix . str_pad($seqCandidate, 3, '0', STR_PAD_LEFT);
+            // B. GENERATE NO REGISTRASI (Gunakan Logic Central di Model)
+            $noRegistrasiFix = Arsip::generateNoRegistrasi($request);
 
             // C. HITUNG TOTAL
             $totalIn  = 0;
@@ -206,7 +172,7 @@ class ArsipController extends Controller
 
             // D. SIMPAN HEADER
             $arsip = Arsip::create([
-                'tgl_pengajuan'   => now(),
+                'tgl_pengajuan'   => $request->tgl_pengajuan ? \Illuminate\Support\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : now(),
                 'admin_id'        => auth()->id(),
                 'department_id'   => $request->department_id,
                 'unit_id'         => $request->unit_id,
@@ -282,18 +248,9 @@ class ArsipController extends Controller
                 $arsip->bukti_scan = $filename;
             }
 
-            // 2. Ambil Data Items dari Form Edit
-            // Perhatikan: Di form edit JS, name inputnya adalah items[bundel], items[adjust], dst.
-            $rawItems = $request->input('items', []); 
+            // 2. Ambil Data Items dari Form Edit (Gunakan key 'detail_barang' agar match dengan JS)
+            $dataToProcess = $request->input('detail_barang', []); 
             
-            // Mapping agar sesuai struktur fungsi saveDetailItems
-            $dataToProcess = [
-                'bundel'        => $rawItems['bundel'] ?? [],
-                'adjust'        => $rawItems['adjust'] ?? [],
-                'mutasi_asal'   => $rawItems['mutasi']['asal'] ?? [],
-                'mutasi_tujuan' => $rawItems['mutasi']['tujuan'] ?? []
-            ];
-
             // 3. Hitung Ulang Total Qty
             $totalIn  = 0;
             $totalOut = 0;

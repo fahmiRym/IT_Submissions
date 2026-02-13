@@ -123,6 +123,63 @@
     .qty-display-large { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.8px; }
     .text-primary-dark { color: #0f172a !important; }
 </style>
+
+{{-- MODAL CLEANUP STORAGE --}}
+<div class="modal fade" id="modalCleanupStorage" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-danger text-white border-0 py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-trash3-fill fs-4"></i>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Manajemen Penyimpanan</h5>
+                        <small class="text-white-50">Hapus file scan untuk menghemat ruang</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('superadmin.arsip.cleanup-storage') }}" method="POST" onsubmit="return confirm('APAKAH ANDA YAKIN? File scan yang dihapus tidak dapat dikembalikan, namun data transaksi tetap ada di sistem.')">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-4">
+                        <div class="d-flex gap-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Informasi Penting</h6>
+                                <p class="small mb-0 opacity-75">Fitur ini akan menghapus **File Fisik (PDF/Gambar)** dari server untuk menghemat ruang. Data detail pengajuan (No Dokumen, No Transaksi, Item) **TIDAK AKAN DIHAPUS**.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Mulai Dari Tanggal</label>
+                            <input type="date" name="start_date" class="form-control border-0 bg-light" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-secondary">Sampai Tanggal</label>
+                            <input type="date" name="end_date" class="form-control border-0 bg-light" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 rounded-3 bg-light border border-dashed border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            <span class="text-xs fw-bold">Tips: Gunakan range tanggal yang sudah sangat lama (misal: 1-2 tahun yang lalu).</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bi bi-trash3 me-2"></i>Bersihkan Sekarang
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endpush
 
 @section('content')
@@ -364,6 +421,11 @@
             </select>
         </div>
 
+        {{-- Management Storage --}}
+        <button class="btn btn-outline-danger rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCleanupStorage">
+            <i class="bi bi-hdd-network me-2"></i>Unit Pembersihan
+        </button>
+
         {{-- Create Button --}}
         <button class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalTambahArsip">
             <i class="bi bi-plus-lg me-2"></i>Buat Baru
@@ -383,41 +445,40 @@
                                 #
                             </a>
                         </th>
-                        <th width="120" class="text-nowrap">
+                        <th width="100" class="text-nowrap ps-4">
                              <a href="{{ request()->fullUrlWithQuery(['sort' => 'tgl_pengajuan', 'dir' => request('sort') == 'tgl_pengajuan' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 TGL PENGAJUAN
                             </a>
                         </th>
-                        <th width="120" class="text-nowrap">
+                        <th width="100" class="text-nowrap">
                              <a href="{{ request()->fullUrlWithQuery(['sort' => 'tgl_arsip', 'dir' => request('sort') == 'tgl_arsip' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 TGL ARSIP
                             </a>
                         </th>
-                        <th width="220" class="text-nowrap">
+                        <th width="180" class="text-nowrap">
                              <a href="{{ request()->fullUrlWithQuery(['sort' => 'no_registrasi', 'dir' => request('sort') == 'no_registrasi' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
-                                NO REGISTRASI & TRANSAKSI
+                                NO REGISTRASI
                             </a>
                         </th>
-                        <th width="100">JENIS</th>
-                        <th width="150" class="text-nowrap">
+                        <th width="80">JENIS</th>
+                        <th width="130" class="text-nowrap">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'admin_id', 'dir' => request('sort') == 'admin_id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 PENGAJU
                             </a>
                         </th>
-                        <th width="180" class="text-nowrap">
+                        <th width="150" class="text-nowrap">
                              <a href="{{ request()->fullUrlWithQuery(['sort' => 'department_id', 'dir' => request('sort') == 'department_id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 DEPT & UNIT
                             </a>
                         </th>
-                        <th width="180" class="text-nowrap">
+                        <th width="150" class="text-nowrap">
                              <a href="{{ request()->fullUrlWithQuery(['sort' => 'ket_process', 'dir' => request('sort') == 'ket_process' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 STATUS DETAIL
                             </a>
                         </th>
-                        <th class="text-center" width="70">QTY IN</th>
-                        <th class="text-center" width="70">QTY OUT</th>
-                        <th style="min-width: 250px;">DETAIL DOKUMEN</th>
-                        <th width="120" class="text-center pe-3">AKSI</th>
+                        <th class="text-center" width="80"><span class="text-uppercase fw-bold">QTY</span></th>
+                        <th style="min-width: 200px;">DETAIL DOKUMEN</th>
+                        <th width="100" class="text-center pe-4">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -427,14 +488,18 @@
                             {{ ($arsips->currentPage() - 1) * $arsips->perPage() + $loop->iteration }}
                         </td>
                         
-                        <td class="text-nowrap position-relative">
-                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">{{ optional($a->tgl_pengajuan)->format('d/m/Y') }}</div>
-                            <small class="text-muted" style="font-size: 0.72rem; font-weight: 600;">{{ optional($a->tgl_pengajuan)->diffForHumans() }}</small>
+                        <td class="text-nowrap ps-4 position-relative">
+                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">{{ optional($a->tgl_pengajuan)->format('d/m/Y') }}</div>
+                            <small class="text-primary fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-clock-history me-1"></i>{{ optional($a->tgl_pengajuan)->format('H:i') }} WIB
+                            </small>
                         </td>
                         <td class="text-nowrap ps-3">
                             @if($a->tgl_arsip)
-                                <div class="text-dark fw-bold" style="font-size: 0.9rem;">{{ $a->tgl_arsip->format('d/m/Y') }}</div>
-                                <small class="text-muted" style="font-size: 0.72rem; font-weight: 600;">{{ $a->tgl_arsip->diffForHumans() }}</small>
+                                <div class="text-dark fw-bold" style="font-size: 0.85rem;">{{ $a->tgl_arsip->format('d/m/Y') }}</div>
+                                <small class="text-success fw-bold" style="font-size: 0.7rem;">
+                                    <i class="bi bi-check-circle-fill me-1"></i>{{ $a->updated_at->format('H:i') }}
+                                </small>
                             @else
                                 <span class="text-muted opacity-30 fw-bold fs-5">-</span>
                             @endif
@@ -525,6 +590,7 @@
                                         'Done'    => ['bg' => '#f0fdf4', 'text' => '#166534', 'border' => '#86efac', 'dot' => '#22c55e'],
                                         'Pending' => ['bg' => '#f8fafc', 'text' => '#334155', 'border' => '#cbd5e1', 'dot' => '#64748b'],
                                         'Void'    => ['bg' => '#fef2f2', 'text' => '#991b1b', 'border' => '#fca5a5', 'dot' => '#ef4444'],
+                                        'Partial Done' => ['bg' => '#eff6ff', 'text' => '#1e40af', 'border' => '#bfdbfe', 'dot' => '#3b82f6'],
                                         default   => ['bg' => '#f8fafc', 'text' => '#475569', 'border' => '#e2e8f0', 'dot' => '#94a3b8'],
                                     };
                                 @endphp
@@ -545,8 +611,12 @@
                             </div>
                         </td>
 
-                        <td class="text-center fw-extrabold text-success fs-5">{{ $a->total_qty_in + 0 }}</td>
-                        <td class="text-center fw-extrabold text-danger fs-5">{{ $a->total_qty_out + 0 }}</td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="fw-bold text-success" style="font-size: 0.85rem;">+{{ $a->total_qty_in + 0 }}</span>
+                                <span class="fw-bold text-danger" style="font-size: 0.85rem;">-{{ $a->total_qty_out + 0 }}</span>
+                            </div>
+                        </td>
     
                         <td class="ps-3 pe-2">
                             <div class="d-flex flex-column gap-2" style="max-width: 320px;">
@@ -585,6 +655,12 @@
                                                 <div class="lh-1 pe-2">
                                                     <div class="fw-extrabold text-dark font-monospace mb-1" style="font-size: 0.82rem;">{{ $item->product_code }}</div>
                                                     <div class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">{{ $item->product_name }}</div>
+                                                    @if($item->panjang || $item->location)
+                                                        <div class="mt-1 d-flex gap-1" style="font-size: 0.62rem;">
+                                                            @if($item->panjang) <span class="badge bg-secondary opacity-75">P: {{ $item->panjang }}</span> @endif
+                                                            @if($item->location) <span class="badge bg-light text-dark border" title="{{ $item->location }}"><i class="bi bi-geo-alt"></i> Loc</span> @endif
+                                                        </div>
+                                                    @endif
                                                 </div>
                                                 <div class="qty-bubble {{ $qClass }}">{{ $qPrefix }}{{ $item->qty + 0 }}</div>
                                             </div>
@@ -618,30 +694,18 @@
 
                                 {{-- PEMOHON --}}
                                 @if($a->pemohon)
-                                    <div class="d-flex flex-column">
-                                        <div class="item-label-prefix d-flex align-items-center gap-2">
-                                            <i class="bi bi-people-fill text-primary" style="font-size: 0.7rem;"></i>
-                                            Daftar Pemohon
-                                        </div>
-                                        <div class="p-2 rounded-3 bg-white border border-primary border-opacity-10 mt-1 mb-1">
-                                            <div class="text-dark fw-bold" style="font-size: 0.78rem;">
-                                                {!! nl2br(e($a->pemohon)) !!}
-                                            </div>
+                                    <div class="d-flex align-items-center gap-2 mt-1">
+                                        <div class="badge bg-light text-primary border border-primary border-opacity-10 py-1 px-2" style="font-size: 0.65rem;">
+                                            <i class="bi bi-people-fill me-1"></i> {{ Str::limit($a->pemohon, 30) }}
                                         </div>
                                     </div>
                                 @endif
 
                                 {{-- Premium Digital Memo Card for fallback keterangan --}}
                                 @if(!$itemsFound && $a->keterangan)
-                                    <div class="d-flex flex-column">
-                                        <div class="item-label-prefix d-flex align-items-center gap-2">
-                                            <i class="bi bi-chat-left-text-fill text-info" style="font-size: 0.7rem;"></i>
-                                            Informasi Pengajuan
-                                        </div>
-                                        <div class="note-detail-card mt-1">
-                                            <div class="text-primary-dark fw-bold" style="font-size: 0.85rem; line-height: 1.5; font-style: italic; opacity: 0.9;">
-                                                "{{ $a->keterangan }}"
-                                            </div>
+                                    <div class="mt-1">
+                                        <div class="text-muted italic fw-medium" style="font-size: 0.75rem; line-height: 1.2;">
+                                            <i class="bi bi-chat-left-dots me-1"></i> "{{ Str::limit($a->keterangan, 50) }}"
                                         </div>
                                     </div>
                                 @elseif(!$itemsFound)
@@ -650,7 +714,7 @@
                             </div>
                         </td>
 
-                        <td class="text-center pe-3">
+                        <td class="text-center pe-4">
                             <div class="d-flex gap-2 justify-content-center">
                                 {{-- VIEW --}}
                                 <button class="btn btn-sm btn-info text-white shadow-sm rounded-3 p-2 d-flex align-items-center" 
@@ -838,12 +902,13 @@ $(document).ready(function() {
 
         $(`#${targetId}`).append(`
             <tr>
-                <td><input type="text" name="detail_barang[mutasi_${type}][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode"></td>
-                <td><input type="text" name="detail_barang[mutasi_${type}][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" required></td>
-                <td><input type="number" step="any" name="detail_barang[mutasi_${type}][${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold" value="0" required></td>
-                <td><input type="text" name="detail_barang[mutasi_${type}][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot"></td>
+                <td><input type="text" name="detail_barang[mutasi_${type}][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" style="width: 80px;"></td>
+                <td><input type="text" name="detail_barang[mutasi_${type}][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" required style="min-width: 150px;"></td>
+                <td><input type="number" step="any" name="detail_barang[mutasi_${type}][${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold text-center" value="1" required style="width: 70px;"></td>
+                <td><input type="text" name="detail_barang[mutasi_${type}][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" style="width: 90px;"></td>
+                <td><input type="text" name="detail_barang[mutasi_${type}][${idx}][panjang]" class="form-control form-control-sm border-0 bg-light" placeholder="Pjg" style="width: 80px;"></td>
                 <td>
-                    <select name="detail_barang[mutasi_${type}][${idx}][location]" class="form-select form-select-sm border-0 bg-light">
+                    <select name="detail_barang[mutasi_${type}][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="width: 150px;">
                         ${locationOptions}
                     </select>
                 </td>
@@ -976,7 +1041,7 @@ $(document).ready(function() {
                 if(data.mutasi_items && data.mutasi_items.length > 0) {
                     data.mutasi_items.forEach(item => {
                         let type = (item.type === 'asal') ? 'asal' : 'tujuan';
-                        window.addMutasiRowEdit(type, item.product_code, item.product_name, item.qty, item.lot, item.location);
+                        window.addMutasiRowEdit(type, item.product_code, item.product_name, item.qty, item.lot, item.panjang, item.location);
                     });
                 }
 
@@ -1006,6 +1071,7 @@ $(document).ready(function() {
         if (val === 'Done') target.val('Process');
         else if (val === 'Void') target.val('Void');
         else if (val === 'Pending') target.val('Pending');
+        else if (val === 'Partial Done') target.val('Process');
         else if (val === 'Process') target.val('Process');
         else if (val === 'Review') target.val('Check');
     });
@@ -1099,7 +1165,7 @@ window.addAdjustRowEdit = function(code='', name='', qtyIn=0, qtyOut=0, lot='') 
     `);
 };
 
-window.addMutasiRowEdit = function(type, code='', name='', qty=0, lot='', location='') {
+window.addMutasiRowEdit = function(type, code='', name='', qty=0, lot='', panjang='', location='') {
     let idx = Date.now() + Math.floor(Math.random() * 1000);
     let wrapper = (type === 'asal') ? '#wrapperAsalEdit' : '#wrapperTujuanEdit';
     let key = (type === 'asal') ? 'mutasi_asal' : 'mutasi_tujuan'; 
@@ -1113,12 +1179,13 @@ window.addMutasiRowEdit = function(type, code='', name='', qty=0, lot='', locati
 
     $(wrapper).append(`
         <tr>
-            <td><input type="text" name="detail_barang[${key}][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" value="${code ?? ''}"></td>
-            <td><input type="text" name="detail_barang[${key}][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" value="${name ?? ''}" required></td>
-            <td><input type="number" step="any" name="detail_barang[${key}][${idx}][qty]" class="form-control form-control-sm border-0 bg-light text-center" value="${qty}"></td>
-            <td><input type="text" name="detail_barang[${key}][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" value="${lot ?? ''}"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" value="${code ?? ''}" style="width: 80px;"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" value="${name ?? ''}" required style="min-width: 150px;"></td>
+            <td><input type="number" step="any" name="detail_barang[${key}][${idx}][qty]" class="form-control form-control-sm border-0 bg-light text-center" value="${qty}" style="width: 70px;"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" value="${lot ?? ''}" style="width: 90px;" placeholder="Lot"></td>
+            <td><input type="text" name="detail_barang[${key}][${idx}][panjang]" class="form-control form-control-sm border-0 bg-light" value="${panjang ?? ''}" placeholder="Pjg" style="width: 80px;"></td>
             <td>
-                <select name="detail_barang[${key}][${idx}][location]" class="form-select form-select-sm border-0 bg-light">
+                <select name="detail_barang[${key}][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="width: 150px;">
                     ${locationOptions}
                 </select>
             </td>

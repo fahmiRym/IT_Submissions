@@ -35,7 +35,7 @@ class Arsip extends Model
     ];
 
     protected $casts = [
-        'tgl_pengajuan' => 'date',
+        'tgl_pengajuan' => 'datetime',
         'tgl_arsip'     => 'date',
         'detail_barang' => 'array'
     ];
@@ -48,50 +48,45 @@ class Arsip extends Model
      * Dipakai saat data DIARSIP oleh Superadmin
      */
     public static function generateNoRegistrasi($request)
-{
-    $jenis = $request->jenis_pengajuan;
-    $now = now();
-
-    // LOGIKA KHUSUS CANCEL (Format: DEPT-DATE-UNIT-SEQ)
-    if ($jenis === 'Cancel') {
-        $deptModel = \App\Models\Department::find($request->department_id);
-        $unitModel = \App\Models\Unit::find($request->unit_id);
-
-        $dept = strtoupper(substr($deptModel?->name ?? 'DEP', 0, 3));
-        $unit = strtoupper(preg_replace('/[^0-9A-Z]/', '', $unitModel?->name ?? 'U'));
+    {
+        $now = now();
         $date = $now->format('ymd');
+        
+        // 1. Ambil Data Departemen untuk Prefix (Contoh: PUR, GBB, dll)
+        $deptModel = \App\Models\Department::find($request->department_id);
+        $kodeDept = 'IT'; // Default jika tidak ditemukan
+        if ($deptModel) {
+            // Gunakan 3 huruf pertama nama departemen sebagai prefix
+            $kodeDept = strtoupper(substr(str_replace(' ', '', $deptModel->name), 0, 3));
+        }
 
-        // Hitung urutan hari ini
-        $seq = self::whereDate('created_at', today())->count() + 1;
+        // 2. Ambil Data Unit
+        $unitModel = \App\Models\Unit::find($request->unit_id);
+        if ($unitModel) {
+            $kodeUnit = str_replace(['Unit ', 'Unit', ' '], ['U', 'U', ''], $unitModel->name);
+        } else {
+            $kodeUnit = 'U';
+        }
 
-        return sprintf('%s-%s-%s-%03d', $dept, $date, $unit, $seq);
+        // Gunakan Prefix Departemen untuk No Registrasi (Badge Biru)
+        $prefix = "{$kodeDept}-{$date}-{$kodeUnit}-";
+        
+        // Cari urutan terakhir hari ini untuk kombinasi tanggal & unit & dept tersebut
+        $lastArsip = self::where('no_registrasi', 'like', $prefix . '%')
+                          ->orderBy('no_registrasi', 'desc')
+                          ->first();
+
+        $lastSeq = 0;
+        if ($lastArsip) {
+            $parts = explode('-', $lastArsip->no_registrasi);
+            $lastSegment = end($parts);
+            if (is_numeric($lastSegment)) {
+                $lastSeq = (int) $lastSegment;
+            }
+        }
+
+        return $prefix . str_pad($lastSeq + 1, 3, '0', STR_PAD_LEFT);
     }
-
-    // LOGIKA UNTUK JENIS LAIN (Format: PREFIX/YYYY/MM/SEQ)
-    $prefix = match ($jenis) {
-        'Adjust'         => 'DC',
-        'Mutasi_Billet'  => 'DCB',
-        'Mutasi_Produk'  => 'RPP',
-        'Internal_Memo'  => 'IM',
-        'Bundel'         => 'BDL',
-        default          => 'DOC',
-    };
-
-    $last = self::where('jenis_pengajuan', $jenis)
-        ->whereYear('created_at', $now->year)
-        ->whereMonth('created_at', $now->month)
-        ->orderByDesc('id')
-        ->first();
-
-    $nextNumber = 1;
-    if ($last && $last->no_registrasi) {
-        $parts = explode('/', $last->no_registrasi);
-        $lastSeq = intval(end($parts));
-        $nextNumber = $lastSeq + 1;
-    }
-
-    return sprintf('%s/%s/%s/%04d', $prefix, $now->format('Y'), $now->format('m'), $nextNumber);
-}
 
     /* ===================== RELATIONS ===================== */
 
