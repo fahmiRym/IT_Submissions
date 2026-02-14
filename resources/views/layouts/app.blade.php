@@ -66,6 +66,14 @@
             .content { margin-left: 0; }
             .sidebar.show { transform: translateX(0); }
         }
+
+        /* GLOBAL TYPOGRAPHY SOFTENING (USER REQUEST) */
+        body { color: #334155; } /* Slate 700 */
+        h1, h2, h3, h4, h5, h6 { color: #1e293b; } /* Slate 800 */
+        .text-dark { color: #1e293b !important; }
+        .text-secondary { color: #64748b !important; } /* Slate 500 */
+        .text-muted { color: #94a3b8 !important; } /* Slate 400 */
+        .fw-bold { font-weight: 600 !important; } /* Reduce harsh boldness */
     </style>
 
     @stack('styles')

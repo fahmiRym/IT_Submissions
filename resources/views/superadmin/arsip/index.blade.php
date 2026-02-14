@@ -293,7 +293,7 @@
     } elseif($fJenis == 'Bundel') {
         $sConfig = [ 'title' => 'TOTAL BUNDEL', 'icon' => 'bi-collection-fill', 'color' => '#8b5cf6', 'bg' => 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)' ];
     } elseif(!$fJenis) {
-        $sConfig = [ 'title' => 'TOTAL ALL DATA', 'icon' => 'bi-grid-fill', 'color' => '#1e293b', 'bg' => 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' ];
+        $sConfig = [ 'title' => 'TOTAL ALL DATA', 'icon' => 'bi-grid-fill', 'color' => '#3b82f6', 'bg' => 'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)' ];
     }
 @endphp
 
@@ -324,16 +324,16 @@
         $mainStats = [
             ['label' => 'REVIEW', 'key' => 'Review', 'icon' => 'bi-clock-history', 'color' => '#3b82f6', 'param' => 'ket_process'],
             ['label' => 'ON PROCESS', 'key' => 'Process', 'icon' => 'bi-hourglass-split', 'color' => '#f59e0b', 'param' => 'ket_process'],
-            ['label' => 'PENDING', 'key' => 'Pending', 'icon' => 'bi-pause-circle-fill', 'color' => '#475569', 'param' => 'ket_process'],
+            ['label' => 'PENDING', 'key' => 'Pending', 'icon' => 'bi-pause-circle-fill', 'color' => '#94a3b8', 'param' => 'ket_process'],
             ['label' => 'DONE', 'key' => 'Done', 'icon' => 'bi-check-circle-fill', 'color' => '#10b981', 'param' => 'ket_process'],
             ['label' => 'VOID / REJECT', 'key' => 'Void', 'icon' => 'bi-slash-circle-fill', 'color' => '#ef4444', 'param' => 'ket_process'],
         ];
 
         $docStats = [
-            ['label' => 'BA PENDING', 'key' => 'ba_pending', 'icon' => 'bi-file-earmark-lock-fill', 'color' => '#64748b', 'param' => 'ba', 'val' => 'Pending'],
+            ['label' => 'BA PENDING', 'key' => 'ba_pending', 'icon' => 'bi-file-earmark-lock-fill', 'color' => '#94a3b8', 'param' => 'ba', 'val' => 'Pending'],
             ['label' => 'BA PROCESS', 'key' => 'ba_process', 'icon' => 'bi-file-earmark-play-fill', 'color' => '#0ea5e9', 'param' => 'ba', 'val' => 'Process'],
             ['label' => 'BA SELESAI', 'key' => 'ba_done', 'icon' => 'bi-file-earmark-check-fill', 'color' => '#0d9488', 'param' => 'ba', 'val' => 'Done'],
-            ['label' => 'ARSIP PENDING', 'key' => 'arsip_pending', 'icon' => 'bi-folder-x', 'color' => '#94a3b8', 'param' => 'arsip', 'val' => 'Pending'],
+            ['label' => 'ARSIP PENDING', 'key' => 'arsip_pending', 'icon' => 'bi-folder-x', 'color' => '#cbd5e1', 'param' => 'arsip', 'val' => 'Pending'],
             ['label' => 'ARSIP SELESAI', 'key' => 'arsip_done', 'icon' => 'bi-folder-check', 'color' => '#84cc16', 'param' => 'arsip', 'val' => 'Done'],
         ];
     @endphp
