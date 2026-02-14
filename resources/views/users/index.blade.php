@@ -169,9 +169,13 @@
                         <td class="ps-4 text-muted fw-bold">{{ $loop->iteration }}</td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="avatar-user me-3 {{ $u->role == 'superadmin' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-primary bg-opacity-10 text-primary' }}">
-                                    {{ substr(strtoupper($u->name), 0, 1) }}
-                                </div>
+                                @if($u->photo && file_exists(public_path('profile_photos/' . $u->photo)))
+                                    <img src="{{ asset('profile_photos/' . $u->photo) }}" alt="{{ $u->name }}" class="avatar-user me-3 rounded-circle shadow-sm" style="object-fit: cover;">
+                                @else
+                                    <div class="avatar-user me-3 {{ $u->role == 'superadmin' ? 'bg-danger bg-opacity-10 text-danger' : 'bg-primary bg-opacity-10 text-primary' }}">
+                                        {{ substr(strtoupper($u->name), 0, 1) }}
+                                    </div>
+                                @endif
                                 <div>
                                     <div class="fw-bold text-dark">{{ $u->name }}</div>
                                     <div class="font-monospace text-muted" style="font-size: 0.75rem;">@<span>{{ $u->username }}</span></div>
