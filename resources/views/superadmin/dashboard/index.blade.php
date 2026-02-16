@@ -375,7 +375,72 @@
     </div>
 </div>
 
-{{-- 7. LATEST DATA TABLE --}}
+{{-- 7. PENGAJUAN PER DEPARTEMEN (BY TYPE) --}}
+<h6 class="fw-bold text-dark mb-3 ps-1">📊 Pengajuan Per Departemen</h6>
+<div class="row g-4 mb-4">
+    {{-- Cancel --}}
+    <div class="col-md-6">
+        <div class="card-chart h-100">
+            <div class="card-header-chart">
+                <span class="chart-legend-box" style="background: #94a3b8;"></span> CANCEL
+            </div>
+            <div class="p-3"><div style="height: 280px;"><canvas id="chartDeptCancel"></canvas></div></div>
+        </div>
+    </div>
+    {{-- Adjustment --}}
+    <div class="col-md-6">
+        <div class="card-chart h-100">
+            <div class="card-header-chart">
+                <span class="chart-legend-box" style="background: #38bdf8;"></span> ADJUSTMENT
+            </div>
+            <div class="p-3"><div style="height: 280px;"><canvas id="chartDeptAdjust"></canvas></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    {{-- Mutasi Produk --}}
+    <div class="col-md-6">
+        <div class="card-chart h-100">
+            <div class="card-header-chart">
+                <span class="chart-legend-box" style="background: #34d399;"></span> MUTASI PRODUK
+            </div>
+            <div class="p-3"><div style="height: 280px;"><canvas id="chartDeptMutasiProduk"></canvas></div></div>
+        </div>
+    </div>
+    {{-- Mutasi Billet --}}
+    <div class="col-md-6">
+        <div class="card-chart h-100">
+            <div class="card-header-chart">
+                <span class="chart-legend-box" style="background: #818cf8;"></span> MUTASI BILLET
+            </div>
+            <div class="p-3"><div style="height: 280px;"><canvas id="chartDeptMutasiBillet"></canvas></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    {{-- Internal Memo --}}
+    <div class="col-md-6">
+        <div class="card-chart h-100">
+            <div class="card-header-chart">
+                <span class="chart-legend-box" style="background: #fbbf24;"></span> INTERNAL MEMO
+            </div>
+            <div class="p-3"><div style="height: 280px;"><canvas id="chartDeptMemo"></canvas></div></div>
+        </div>
+    </div>
+    {{-- Bundel --}}
+    <div class="col-md-6">
+        <div class="card-chart h-100">
+            <div class="card-header-chart">
+                <span class="chart-legend-box" style="background: #f87171;"></span> BUNDEL
+            </div>
+            <div class="p-3"><div style="height: 280px;"><canvas id="chartDeptBundel"></canvas></div></div>
+        </div>
+    </div>
+</div>
+
+{{-- 8. LATEST DATA TABLE --}}
 <div class="card-chart mb-4">
     <div class="card-header-chart d-flex justify-content-between align-items-center">
         <span><i class="bi bi-clock-history me-2 text-primary"></i> Riwayat Pengajuan Terbaru</span>
@@ -529,7 +594,7 @@
             }
         });
 
-        // 3. Dept Chart
+        // 3. Dept Chart - VERTICAL
         new Chart(document.getElementById('deptChart'), {
             type: 'bar',
             data: {
@@ -551,13 +616,14 @@
                         anchor: 'end',
                         align: 'top',
                         color: '#6366f1',
-                        font: { weight: 'bold' },
-                        formatter: function(value) { return value > 0 ? value : ''; }
+                        font: { weight: 'bold', size: 11 },
+                        formatter: function(value) { return value > 0 ? value : ''; },
+                        offset: 4
                     }
                 },
                 scales: { 
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false } }, 
-                    x: { grid: { display: false }, border: { display:false } } 
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9', borderDash: [5,5] }, border: { display: false } }, 
+                    x: { grid: { display: false }, border: { display:false }, ticks: { autoSkip: false, font: {size: 10}, maxRotation: 45, minRotation: 45 } } 
                 }
             }
         });
@@ -635,6 +701,102 @@
         createTrendChart('chartCancel', 'Cancel', '#94a3b8', 'Cancel'); // Slate 400
         createTrendChart('chartMutasiProduk', 'Mutasi_Produk', '#34d399', 'Mutasi Produk'); // Emerald 400
         createTrendChart('chartMutasiBillet', 'Mutasi_Billet', '#818cf8', 'Mutasi Billet'); // Indigo 400
+
+        // 5. Department Charts by Type
+        const deptCancel = @json($deptCancel);
+        const deptAdjust = @json($deptAdjust);
+        const deptBundel = @json($deptBundel);
+        const deptMemo = @json($deptMemo);
+        const deptMutasi = @json($deptMutasi);
+
+        // Helper function to create VERTICAL bar chart for departments
+        function createDeptChart(canvasId, data, color, label) {
+            const canvas = document.getElementById(canvasId);
+            if(!canvas) return;
+            
+            // Filter out departments with 0 submissions and sort by total
+            const filteredData = data.filter(d => d.total > 0).sort((a, b) => b.total - a.total);
+            
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: filteredData.map(d => d.name),
+                    datasets: [{
+                        label: label,
+                        data: filteredData.map(d => d.total),
+                        backgroundColor: color,
+                        hoverBackgroundColor: color + 'dd',
+                        borderRadius: 6,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(255,255,255,0.95)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#64748b',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' Pengajuan';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: color,
+                            font: { weight: 'bold', size: 11 },
+                            formatter: function(value) { 
+                                return value > 0 ? value : ''; 
+                            },
+                            offset: 4
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#f1f5f9', borderDash: [5,5] }, 
+                            border: { display: false },
+                            ticks: { 
+                                stepSize: 1,
+                                font: { size: 10 }
+                            }
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            border: { display: false },
+                            ticks: {
+                                autoSkip: false,
+                                font: { size: 10 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create all department charts
+        createDeptChart('chartDeptCancel', deptCancel, '#94a3b8', 'Cancel');
+        createDeptChart('chartDeptAdjust', deptAdjust, '#38bdf8', 'Adjustment');
+        createDeptChart('chartDeptBundel', deptBundel, '#f87171', 'Bundel');
+        createDeptChart('chartDeptMemo', deptMemo, '#fbbf24', 'Internal Memo');
+        
+        // Mutasi Produk and Billet data from controller
+        const deptMutasiProduk = @json($deptMutasiProduk);
+        const deptMutasiBillet = @json($deptMutasiBillet);
+
+        createDeptChart('chartDeptMutasiProduk', deptMutasiProduk, '#34d399', 'Mutasi Produk');
+        createDeptChart('chartDeptMutasiBillet', deptMutasiBillet, '#818cf8', 'Mutasi Billet');
     });
 </script>
 @endpush

@@ -126,6 +126,8 @@ class DashboardController extends Controller
         $deptBundel = $this->getTopDeptsByType('Bundel');
         $deptMemo   = $this->getTopDeptsByType('Internal_Memo');
         $deptMutasi = $this->getTopDeptsByType('Mutasi');
+        $deptMutasiProduk = $this->getTopDeptsByType('Mutasi_Produk');
+        $deptMutasiBillet = $this->getTopDeptsByType('Mutasi_Billet');
 
         // ================= BULANAN =================
         $monthlyChart = (clone $query)
@@ -174,6 +176,8 @@ class DashboardController extends Controller
             'deptBundel'       => $deptBundel,
             'deptMemo'         => $deptMemo,
             'deptMutasi'       => $deptMutasi,
+            'deptMutasiProduk' => $deptMutasiProduk,
+            'deptMutasiBillet' => $deptMutasiBillet,
 
             // Ket Process Stats
             'ketPending'       => (clone $query)->where('ket_process', 'Pending')->count(),
