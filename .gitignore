@@ -1,24 +1,43 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
+# ===============================
+# LARAVEL
+# ===============================
+/vendor
 /node_modules
-/public/build
-/public/hot
 /public/storage
 /storage/*.key
-/storage/pail
-/vendor
+/storage/app/*
+!/storage/app/public
+/bootstrap/cache/*.php
+.env
+.env.*
+.phpunit.result.cache
 Homestead.json
 Homestead.yaml
+
+# ===============================
+# LOG & DEBUG
+# ===============================
+storage/logs/*
+npm-debug.log
+yarn-error.log
+
+# ===============================
+# DOCKER
+# ===============================
+docker-compose.override.yml
+.env.docker
+
+# ===============================
+# CLOUDFARE
+# ===============================
+/etc/cloudflared/*
+*.json
+*.pem
+*.crt
+*.key
+
+# ===============================
+# OS
+# ===============================
+.DS_Store
 Thumbs.db

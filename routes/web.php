@@ -65,14 +65,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/preview-file/{filename}', function ($filename) {
         $path = storage_path('app/public/bukti_scan/' . $filename);
         
-        // Fallback checks
         if (!file_exists($path)) {
-             abort(404, 'File not found. Searched at: ' . $path);
+            abort(404);
         }
-        
-        // Return file with headers to force inline view instead of download if possible
+
+        $mime = mime_content_type($path);
+
         return response()->file($path, [
-            'Content-Disposition' => 'inline; filename="' . $filename . '"'
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="'.$filename.'"'
         ]);
     })->name('preview.file');
 });

@@ -189,7 +189,7 @@
                          <i class="bi bi-trophy-fill fs-5 text-white"></i>
                     </div>
                     <div>
-                        <h6 class="m-0 fw-bold text-white">Top 5 Staff Setor</h6>
+                        <h6 class="m-0 fw-bold text-white">Top 5 Staff Pengaju</h6>
                         <small class="text-white text-opacity-75">Statistik Pengaju Terbanyak</small>
                     </div>
                 </div>
@@ -204,7 +204,7 @@
                         </div>
                     </div>
                     <span class="badge bg-amber-soft text-warning fw-bold px-3 py-2 rounded-pill bg-opacity-10 border border-warning" style="background: rgba(245, 158, 11, 0.1);">
-                        {{ $stat->total }} Arsip
+                        {{ $stat->total }} Pengajuan
                     </span>
                 </li>
                 @empty
@@ -238,7 +238,7 @@
                         </div>
                     </div>
                     <span class="badge bg-emerald-soft text-success fw-bold px-3 py-2 rounded-pill bg-opacity-10 border border-success" style="background: rgba(16, 185, 129, 0.1);">
-                        {{ $stat->total }} Arsip
+                        {{ $stat->total }} Pengajuan
                     </span>
                 </li>
                 @empty
