@@ -537,29 +537,27 @@
                 datasets: [{
                     label: 'Total',
                     data: deptData.map(d => d.total),
-                    backgroundColor: '#818cf8', 
+                    backgroundColor: '#818cf8', // Indigo 400
                     hoverBackgroundColor: '#6366f1',
-                    borderRadius: 4,
-                    barThickness: 20,
-                    maxBarThickness: 30
+                    borderRadius: 6,
+                    barThickness: 25
                 }]
             },
             options: {
-                indexAxis: 'y', // Convert to Horizontal Bar
                 responsive: true, maintainAspectRatio: false,
                 plugins: { 
                     legend: { display: false },
                     datalabels: {
                         anchor: 'end',
-                        align: 'end',
+                        align: 'top',
                         color: '#6366f1',
-                        font: { weight: 'bold', size: 11 },
+                        font: { weight: 'bold' },
                         formatter: function(value) { return value > 0 ? value : ''; }
                     }
                 },
                 scales: { 
-                    x: { beginAtZero: true, grid: { color: '#f1f5f9', borderDash: [5,5] }, border: { display: false } }, 
-                    y: { grid: { display: false }, border: { display:false }, ticks: { autoSkip: false, font: {size: 11} } } 
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false } }, 
+                    x: { grid: { display: false }, border: { display:false } } 
                 }
             }
         });
