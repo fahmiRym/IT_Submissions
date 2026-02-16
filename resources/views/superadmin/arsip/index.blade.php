@@ -718,7 +718,7 @@
                             <div class="d-flex gap-2 justify-content-center">
                                 {{-- VIEW --}}
                                 <button class="btn btn-sm btn-info text-white shadow-sm rounded-3 p-2 d-flex align-items-center" 
-                                        onclick="showBukti('{{ $a->bukti_scan ? route('preview.file', $a->bukti_scan) : '#' }}')" 
+                                        onclick="showBukti('{{ $a->bukti_scan ? url('/preview-file/'.$a->bukti_scan) : '#' }}')"
                                         {{ !$a->bukti_scan ? 'disabled' : '' }} title="View">
                                     <i class="bi bi-eye-fill"></i>
                                 </button>

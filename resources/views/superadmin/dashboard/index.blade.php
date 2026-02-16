@@ -434,8 +434,10 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        Chart.register(ChartDataLabels);
         const monthData   = @json($monthlyChart);
         const statusData  = @json($statusChart);
         const deptData    = @json($auditByDepartment); 
@@ -481,7 +483,18 @@
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(255,255,255,0.9)', titleColor:'#1e293b', bodyColor:'#64748b', borderColor:'#e2e8f0', borderWidth:1 } },
+                plugins: { 
+                    legend: { display: false }, 
+                    tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(255,255,255,0.9)', titleColor:'#1e293b', bodyColor:'#64748b', borderColor:'#e2e8f0', borderWidth:1 },
+                    datalabels: {
+                        align: 'top',
+                        anchor: 'end',
+                        color: '#0ea5e9',
+                        font: { weight: 'bold', size: 11 },
+                        formatter: function(value) { return value > 0 ? value : ''; },
+                        offset: 4
+                    }
+                },
                 scales: { 
                     y: { beginAtZero: true, grid: { color: '#f1f5f9', borderDash: [5,5] }, border: {display:false} }, 
                     x: { grid: { display: false }, border: {display:false} } 
@@ -505,7 +518,14 @@
             options: {
                 responsive: true, maintainAspectRatio: false,
                 cutout: '75%',
-                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10, padding: 20, font: {size: 11} } } }
+                plugins: { 
+                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10, padding: 20, font: {size: 11} } },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'bold' },
+                        formatter: function(value, ctx) { return value > 0 ? value : ''; }
+                    }
+                }
             }
         });
 
@@ -517,18 +537,29 @@
                 datasets: [{
                     label: 'Total',
                     data: deptData.map(d => d.total),
-                    backgroundColor: '#818cf8', // Indigo 400
+                    backgroundColor: '#818cf8', 
                     hoverBackgroundColor: '#6366f1',
-                    borderRadius: 6,
-                    barThickness: 25
+                    borderRadius: 4,
+                    barThickness: 20,
+                    maxBarThickness: 30
                 }]
             },
             options: {
+                indexAxis: 'y', // Convert to Horizontal Bar
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        color: '#6366f1',
+                        font: { weight: 'bold', size: 11 },
+                        formatter: function(value) { return value > 0 ? value : ''; }
+                    }
+                },
                 scales: { 
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false } }, 
-                    x: { grid: { display: false }, border: { display:false } } 
+                    x: { beginAtZero: true, grid: { color: '#f1f5f9', borderDash: [5,5] }, border: { display: false } }, 
+                    y: { grid: { display: false }, border: { display:false }, ticks: { autoSkip: false, font: {size: 11} } } 
                 }
             }
         });
@@ -572,10 +603,28 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { mode: 'index', intersect: false },
+                        datalabels: {
+                            display: function(context) { return context.dataset.data[context.dataIndex] > 0; },
+                            align: 'top',
+                            anchor: 'end',
+                            color: color,
+                            backgroundColor: 'white',
+                            borderRadius: 4,
+                            padding: { top: 4, bottom: 4, left: 6, right: 6 },
+                            font: { size: 11, weight: 'bold' },
+                            offset: 4,
+                            listeners: {
+                                enter: function(context) { context.hovered = true; return true; },
+                                leave: function(context) { context.hovered = false; return true; }
+                            }
+                        }
+                    },
                     scales: { 
-                        y: { display: false, beginAtZero: true }, 
-                        x: { display: true, grid: { display: false }, ticks: { font: { size: 10 } } } // Show months
+                        y: { display: false, beginAtZero: true, min: 0, grace: '10%' }, // Add grace for label space
+                        x: { display: true, grid: { display: false }, ticks: { font: { size: 10 } } } 
                     },
                     layout: { padding: 5 }
                 }
