@@ -30,11 +30,10 @@ docker-compose.override.yml
 # ===============================
 # CLOUDFARE
 # ===============================
-/etc/cloudflared/*
-*.json
-*.pem
-*.crt
-*.key
+/etc/cloudflared/*.json
+/etc/cloudflared/*.pem
+/etc/cloudflared/*.crt
+/etc/cloudflared/*.key
 
 # ===============================
 # OS
