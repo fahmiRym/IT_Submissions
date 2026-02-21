@@ -98,6 +98,18 @@ class UserController extends Controller
             ->with('success', 'User berhasil dihapus');
     }
 
+    public function toggleIsActive(User $user)
+    {
+        // Jangan biarkan menonaktifkan diri sendiri
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'Anda tidak dapat menonaktifkan akun sendiri.');
+        }
+
+        $user->update(['is_active' => !$user->is_active]);
+        $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->back()->with('success', "User \"{$user->name}\" berhasil {$status}.");
+    }
+
     // ================= PROFILE =================
     public function profile()
     {

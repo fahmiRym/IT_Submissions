@@ -21,6 +21,8 @@ use App\Http\Controllers\Superadmin\UserController as SuperUser;
 use App\Http\Controllers\Superadmin\ProfileController as SuperProfile;
 use App\Http\Controllers\Superadmin\LaporanController as SuperLaporan;
 use App\Http\Controllers\Superadmin\NotificationController as SuperNotification;
+use App\Http\Controllers\Superadmin\BackupController as SuperBackup;
+use App\Http\Controllers\Superadmin\SettingController as SuperSetting;
 
 // Shared Notification Controller (Jika dipakai di middleware auth umum)
 use App\Http\Controllers\NotificationController; 
@@ -138,10 +140,28 @@ Route::prefix('superadmin')
         // Custom Arsip Action
         Route::put('arsip/{id}/arsip-sistem',[SuperArsip::class, 'arsipSistem'])->name('arsip.arsip-sistem');
         Route::post('arsip/cleanup-storage', [SuperArsip::class, 'cleanupStorage'])->name('arsip.cleanup-storage');
+        Route::patch('arsip/{id}/no-registrasi', [SuperBackup::class, 'updateNoRegistrasi'])->name('arsip.update-no-registrasi');
+        Route::get('arsip/search-simple', [SuperArsip::class, 'searchSimple'])->name('arsip.search-simple');
+
+        // Backup & Restore
+        Route::get('backup/export', [SuperBackup::class, 'export'])->name('backup.export');
+        Route::post('backup/import', [SuperBackup::class, 'import'])->name('backup.import');
+        Route::get('backup', fn() => view('superadmin.backup.index'))->name('backup.index');
 
         // MASTER DATA
+        Route::patch('departments/{department}/toggle', [SuperDepartment::class, 'toggleIsActive'])->name('departments.toggle');
         Route::resource('departments', SuperDepartment::class);
+
+        Route::patch('units/{unit}/toggle', [SuperUnit::class, 'toggleIsActive'])->name('units.toggle');
         Route::resource('units', SuperUnit::class);
+
+        Route::patch('managers/{manager}/toggle', [SuperManager::class, 'toggleIsActive'])->name('managers.toggle');
         Route::resource('managers', SuperManager::class);
+
+        Route::patch('users/{user}/toggle', [SuperUser::class, 'toggleIsActive'])->name('users.toggle');
         Route::resource('users', SuperUser::class);
+
+        // ✅ SETTINGS
+        Route::get('settings', [SuperSetting::class, 'index'])->name('settings.index');
+        Route::post('settings', [SuperSetting::class, 'update'])->name('settings.update');
     });

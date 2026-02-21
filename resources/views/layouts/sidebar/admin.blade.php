@@ -3,10 +3,14 @@
     {{-- HEADER --}}
     <div class="sidebar-header p-4 d-flex align-items-center">
         <div class="bg-white rounded p-1 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
-            <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @if($app_logo)
+                <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @else
+                <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @endif
         </div>
         <div>
-            <h6 class="mb-0 fw-bold text-white sidebar-title">IT - Submission</h6>
+            <h6 class="mb-0 fw-bold text-white sidebar-title">{{ $app_name }}</h6>
             <small class="text-slate-500" style="font-size: 0.75rem;">Admin Panel</small>
         </div>
     </div>

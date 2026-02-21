@@ -177,8 +177,16 @@
                                     </div>
                                 @endif
                                 <div>
-                                    <div class="fw-bold text-dark">{{ $u->name }}</div>
-                                    <div class="font-monospace text-muted" style="font-size: 0.75rem;">@<span>{{ $u->username }}</span></div>
+                                <div>
+                                    <div class="fw-bold text-dark {{ !$u->is_active ? 'text-decoration-line-through' : '' }}">{{ $u->name }}</div>
+                                    <div class="font-monospace text-muted d-flex align-items-center gap-2" style="font-size: 0.75rem;">
+                                        @<span>{{ $u->username }}</span>
+                                        @if($u->is_active)
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2" style="font-size: 0.6rem;">Aktif</span>
+                                        @else
+                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2" style="font-size: 0.6rem;">Nonaktif</span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -190,13 +198,13 @@
                                     default      => ['bg' => '#f8fafc', 'text' => '#475569', 'border' => '#e2e8f0', 'icon' => 'bi-person'],
                                 };
                             @endphp
-                            <span class="badge rounded-pill border py-2 px-3 d-inline-flex align-items-center gap-1" style="background: {{ $roleC['bg'] }}; color: {{ $roleC['text'] }}; border-color: {{ $roleC['border'] }} !important; font-size: 0.7rem; font-weight: 800;">
+                            <span class="badge rounded-pill border py-2 px-3 d-inline-flex align-items-center gap-1 {{ !$u->is_active ? 'opacity-50' : '' }}" style="background: {{ $roleC['bg'] }}; color: {{ $roleC['text'] }}; border-color: {{ $roleC['border'] }} !important; font-size: 0.7rem; font-weight: 800;">
                                 <i class="{{ $roleC['icon'] }}"></i> {{ strtoupper($u->role) }}
                             </span>
                         </td>
                         <td>
                             @if($u->department)
-                                <div class="d-flex align-items-center text-muted">
+                                <div class="d-flex align-items-center text-muted {{ !$u->is_active ? 'opacity-50' : '' }}">
                                     <i class="bi bi-building me-2 opacity-50"></i>
                                     <span class="fw-bold" style="font-size: 0.85rem;">{{ $u->department->name }}</span>
                                 </div>
@@ -206,6 +214,16 @@
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-2">
+                                {{-- Toggle Active --}}
+                                @if($u->id !== auth()->id())
+                                <form action="{{ route('superadmin.users.toggle', $u->id) }}" method="POST" class="d-inline">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn-icon {{ $u->is_active ? 'btn-delete' : 'btn-edit' }}" title="{{ $u->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                        <i class="bi {{ $u->is_active ? 'bi-slash-circle' : 'bi-check-circle' }}"></i>
+                                    </button>
+                                </form>
+                                @endif
+
                                 <button class="btn-icon btn-edit" onclick="editUser({{ $u }})" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>

@@ -133,11 +133,11 @@ class ArsipController extends Controller
 
         return view('superadmin.arsip.index', [
             'arsips'      => $arsips,
-            'departments' => Department::orderBy('name')->get(),
-            'managers'    => Manager::orderBy('name')->get(),
-            'units'       => Unit::orderBy('name')->get(),
-            'users'       => User::where('role', 'admin')->orderBy('name')->get(),
-            'superadmins' => User::where('role', 'superadmin')->orderBy('name')->get(),
+            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'managers'    => Manager::where('is_active', true)->orderBy('name')->get(),
+            'units'       => Unit::where('is_active', true)->orderBy('name')->get(),
+            'users'       => User::where('role', 'admin')->where('is_active', true)->orderBy('name')->get(),
+            'superadmins' => User::where('role', 'superadmin')->where('is_active', true)->orderBy('name')->get(),
             'sort'        => $sort,
             'dir'         => $dir,
             'stats'       => $stats
@@ -283,37 +283,42 @@ class ArsipController extends Controller
             $now = Carbon::now();
 
             /**
-             * 1️⃣ GENERATE NO REGISTRASI
+             * 1️⃣ NO REGISTRASI
+             * Hanya generate baru jika BELUM ADA. Jangan overwrite yang sudah ada.
              */
-            $deptObj = $arsip->department;
-            $unitObj = $arsip->unit;
-
-            $kodeDept = $deptObj->code ?? strtoupper(substr($deptObj->name, 0, 3));
-            $tglCode  = $now->format('ymd');
-
-            if (!empty($unitObj->code)) {
-                $kodeUnit = $unitObj->code;
+            if (!empty($arsip->no_registrasi)) {
+                // Sudah punya no_registrasi → pakai yang lama, jangan diubah
+                $noRegistrasiFix = $arsip->no_registrasi;
             } else {
-                $kodeUnit = str_replace(['Unit ', 'Unit', ' '], ['U', 'U', ''], $unitObj->name);
-            }
+                // Belum punya → generate baru
+                $deptObj = $arsip->department;
+                $unitObj = $arsip->unit;
 
-            // Gunakan Prefix Departemen (Bukan IT) untuk No Registrasi
-            $prefixReg = "{$kodeDept}-{$tglCode}-{$kodeUnit}-";
-            $lastArsip = Arsip::where('no_registrasi', 'like', $prefixReg . '%')
-                ->where('id', '!=', $id)
-                ->orderBy('no_registrasi', 'desc')
-                ->first();
+                $kodeDept = $deptObj->code ?? strtoupper(substr($deptObj->name, 0, 3));
+                $tglCode  = $now->format('ymd');
 
-            if ($lastArsip) {
-                // Ambil bagian terakhir setelah dash terakhir
-                $parts = explode('-', $lastArsip->no_registrasi);
-                $lastSegment = end($parts);
-                $newSeq = is_numeric($lastSegment) ? (int)$lastSegment + 1 : 1;
-            } else {
-                $newSeq = 1;
+                if (!empty($unitObj->code)) {
+                    $kodeUnit = $unitObj->code;
+                } else {
+                    $kodeUnit = str_replace(['Unit ', 'Unit', ' '], ['U', 'U', ''], $unitObj->name);
+                }
+
+                $prefixReg = "{$kodeDept}-{$tglCode}-{$kodeUnit}-";
+                $lastArsip = Arsip::where('no_registrasi', 'like', $prefixReg . '%')
+                    ->where('id', '!=', $id)
+                    ->orderBy('no_registrasi', 'desc')
+                    ->first();
+
+                if ($lastArsip) {
+                    $parts = explode('-', $lastArsip->no_registrasi);
+                    $lastSegment = end($parts);
+                    $newSeq = is_numeric($lastSegment) ? (int)$lastSegment + 1 : 1;
+                } else {
+                    $newSeq = 1;
+                }
+
+                $noRegistrasiFix = $prefixReg . str_pad($newSeq, 3, '0', STR_PAD_LEFT);
             }
-            
-            $noRegistrasiFix = $prefixReg . str_pad($newSeq, 3, '0', STR_PAD_LEFT);
 
             /**
              * 2️⃣ GENERATE NO DOC (SWITCH CASE)
@@ -542,6 +547,7 @@ class ArsipController extends Controller
             // 3. Siapkan Data Update & Automation
             $updateData = [
                 'admin_id'        => $request->user_id,
+                'no_registrasi'   => $request->no_registrasi ?? $arsip->no_registrasi,
                 'tgl_pengajuan'   => $request->tgl_pengajuan ? \Carbon\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : $arsip->tgl_pengajuan,
                 'tgl_arsip'       => $request->tgl_arsip,
                 'department_id'   => $request->department_id,

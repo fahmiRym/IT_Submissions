@@ -14,7 +14,12 @@ class User extends Authenticatable
         'username',
         'password',
         'role',
-        'department_id'
+        'department_id',
+        'is_active'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     protected $hidden = ['password'];

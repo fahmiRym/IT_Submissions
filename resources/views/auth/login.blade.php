@@ -2,12 +2,17 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Login | E-Arsip</title>
+    <title>Login | {{ $app_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     {{-- Favicon --}}
-    <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}">
+    @if($app_logo)
+        <link rel="icon" type="image/png" href="{{ asset('storage/settings/' . $app_logo) }}">
+        <link rel="apple-touch-icon" href="{{ asset('storage/settings/' . $app_logo) }}">
+    @else
+        <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}">
+    @endif
     
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -65,10 +70,14 @@
 <div class="login-card animate-on-scroll">
     <div class="login-header">
         <div class="login-icon bg-white p-2">
-            <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @if($app_logo)
+                <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @else
+                <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @endif
         </div>
         <h4 class="fw-bold text-dark mb-1">Selamat Datang</h4>
-        <p class="text-secondary small mb-0">Silakan login untuk mengakses IT Submission</p>
+        <p class="text-secondary small mb-0">Silakan login untuk mengakses {{ $app_name }}</p>
     </div>
     
     <div class="p-4 pt-3">

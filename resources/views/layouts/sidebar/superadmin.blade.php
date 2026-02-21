@@ -4,10 +4,14 @@
     <div class="sidebar-header p-4 d-flex align-items-center">
         <div class="bg-white rounded p-1 me-3 d-flex align-items-center justify-content-center shadow-sm"
              style="width:40px;height:40px">
-            <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @if($app_logo)
+                <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @else
+                <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+            @endif
         </div>
         <div>
-            <h6 class="mb-0 fw-bold text-dark">IT - Submission</h6>
+            <h6 class="mb-0 fw-bold text-dark">{{ $app_name }}</h6>
             <small class="text-slate-500 text-xs">Superadmin Panel</small>
         </div>
     </div>
@@ -136,6 +140,7 @@
                         <li><a href="{{ route('superadmin.units.index') }}" class="nav-link py-2 text-sm">📦 Unit</a></li>
                         <li><a href="{{ route('superadmin.managers.index') }}" class="nav-link py-2 text-sm">🧑‍💼 Manager</a></li>
                         <li><a href="{{ route('superadmin.users.index') }}" class="nav-link py-2 text-sm">👥 User</a></li>
+                        <li><a href="{{ route('superadmin.settings.index') }}" class="nav-link py-2 text-sm fw-bold text-primary">⚙️ Pengaturan</a></li>
                     </ul>
                 </div>
             </li>

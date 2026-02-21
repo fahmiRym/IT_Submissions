@@ -95,9 +95,9 @@ class ArsipController extends Controller
 
         return view('admin.arsip.index', [
             'arsips'      => $arsips,
-            'units'       => Unit::orderBy('name')->get(),
-            'departments' => Department::orderBy('name')->get(),
-            'managers'    => Manager::orderBy('name')->get(),
+            'units'       => Unit::where('is_active', true)->orderBy('name')->get(),
+            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
+            'managers'    => Manager::where('is_active', true)->orderBy('name')->get(),
             'sort'        => $sort,
             'dir'         => $dir,
             'stats'       => $stats

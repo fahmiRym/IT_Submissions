@@ -58,4 +58,11 @@ class UnitController extends Controller
         return redirect()->route('superadmin.units.index')
             ->with('success', 'Unit berhasil dihapus');
     }
+
+    public function toggleIsActive(Unit $unit)
+    {
+        $unit->update(['is_active' => !$unit->is_active]);
+        $status = $unit->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->back()->with('success', "Unit \"{$unit->name}\" berhasil {$status}.");
+    }
 }

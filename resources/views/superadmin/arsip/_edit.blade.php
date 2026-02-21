@@ -7,7 +7,7 @@
         {{-- HIDDEN ID --}}
         <input type="hidden" name="id" id="editArsipId">
 
-        {{-- 1. PILIH USER (Superadmin Only) --}}
+        {{-- 1. PILIH USER & NO REGISTRASI --}}
         <div class="mb-3">
             <label class="form-label small fw-bold text-secondary">Pengaju (Admin)</label>
             <select name="user_id" id="editUserId" class="form-select bg-light border-0" required>
@@ -15,6 +15,12 @@
                     <option value="{{ $u->id }}">{{ $u->name }}</option>
                 @endforeach
             </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label small fw-bold text-info">No Registrasi</label>
+            <input type="text" name="no_registrasi" id="editNoRegistrasi" class="form-control bg-white border-info border-opacity-50 text-dark fw-bold font-monospace" placeholder="Otomatis jika kosong...">
+            <small class="text-muted" style="font-size: 0.65rem;">* Edit nomor registrasi jika diperlukan.</small>
         </div>
 
         {{-- 2. TANGGAL --}}

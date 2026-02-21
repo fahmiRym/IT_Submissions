@@ -423,12 +423,17 @@
 
         {{-- Management Storage --}}
         <button class="btn btn-outline-danger rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCleanupStorage">
-            <i class="bi bi-hdd-network me-2"></i>Unit Pembersihan
+            <i class="bi bi-hdd-network me-1"></i>Pembersihan
         </button>
+
+        {{-- Backup & Restore --}}
+        <a href="{{ route('superadmin.backup.index') }}" class="btn btn-outline-primary rounded-pill shadow-sm px-4 fw-bold">
+            <i class="bi bi-cloud-arrow-down-fill me-1"></i>Backup
+        </a>
 
         {{-- Create Button --}}
         <button class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalTambahArsip">
-            <i class="bi bi-plus-lg me-2"></i>Buat Baru
+            <i class="bi bi-plus-lg me-1"></i>Buat Baru
         </button>
     </div>
 </div>
@@ -990,7 +995,8 @@ $(document).ready(function() {
                 $('#formEditArsip').attr('action', "/superadmin/arsip/" + id);
                 
                 // 4. Fill Data
-                $('#editUserId').val(data.admin_id).trigger('change'); // Jika pakai select2
+                $('#editUserId').val(data.admin_id).trigger('change');
+                $('#editNoRegistrasi').val(data.no_registrasi);
                 $('#editTglPengajuan').val(data.tgl_pengajuan ? data.tgl_pengajuan.substring(0, 10) : '');
                 $('#editTglArsip').val(data.tgl_arsip ? data.tgl_arsip.substring(0, 10) : '');
                 

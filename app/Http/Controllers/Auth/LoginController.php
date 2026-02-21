@@ -32,6 +32,17 @@ class LoginController extends Controller
             ]);
         }
 
+        // 🛡️ CEK STATUS AKTIF
+        if (!auth()->user()->is_active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors([
+                'username' => 'Akun Anda telah dinonaktifkan. Silakan hubungi Superadmin.',
+            ]);
+        }
+
         $request->session()->regenerate();
 
         // 🔁 REDIRECT BERDASARKAN ROLE

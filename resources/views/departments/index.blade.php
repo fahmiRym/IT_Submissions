@@ -131,21 +131,29 @@
                     <tr>
                         <th class="ps-4" width="80">#</th>
                         <th>Nama Departemen</th>
+                        <th>Status</th>
                         <th>Tanggal Registrasi</th>
-                        <th class="text-center" width="150">Aksi</th>
+                        <th class="text-center" width="180">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($departments as $d)
-                    <tr>
+                    <tr class="{{ !$d->is_active ? 'bg-light opacity-75' : '' }}">
                         <td class="ps-4 text-muted fw-bold">{{ $loop->iteration }}</td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2 me-3">
                                     <i class="bi bi-building"></i>
                                 </div>
-                                <div class="fw-bold text-dark">{{ $d->name }}</div>
+                                <div class="fw-bold text-dark {{ !$d->is_active ? 'text-decoration-line-through' : '' }}">{{ $d->name }}</div>
                             </div>
+                        </td>
+                        <td>
+                            @if($d->is_active)
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Aktif</span>
+                            @else
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Nonaktif</span>
+                            @endif
                         </td>
                         <td>
                             <div class="small fw-semibold text-muted">
@@ -155,6 +163,14 @@
                         </td>
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-2">
+                                {{-- Toggle Active --}}
+                                <form action="{{ route('superadmin.departments.toggle', $d->id) }}" method="POST" class="d-inline">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn-icon {{ $d->is_active ? 'btn-delete' : 'btn-edit' }}" title="{{ $d->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                        <i class="bi {{ $d->is_active ? 'bi-slash-circle' : 'bi-check-circle' }}"></i>
+                                    </button>
+                                </form>
+
                                 <button class="btn-icon btn-edit" onclick="editDept('{{ $d->id }}', '{{ $d->name }}')" title="Edit">
                                     <i class="bi bi-pencil-fill"></i>
                                 </button>

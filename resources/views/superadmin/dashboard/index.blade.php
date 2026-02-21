@@ -797,6 +797,11 @@
 
         createDeptChart('chartDeptMutasiProduk', deptMutasiProduk, '#34d399', 'Mutasi Produk');
         createDeptChart('chartDeptMutasiBillet', deptMutasiBillet, '#818cf8', 'Mutasi Billet');
+
+        // Auto Refresh setiap 1 menit (60000ms)
+        setTimeout(function() {
+            window.location.reload();
+        }, 60000);
     });
 </script>
 @endpush

@@ -54,9 +54,28 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        // Hitung pengajuan yang terkait (untuk info kepada user)
+        $jumlahArsip = \App\Models\Arsip::where('department_id', $department->id)->count();
+
+        $nama = $department->name;
         $department->delete();
+        // Catatan: department_id pada tabel arsips akan otomatis di-set NULL
+        // (bukan dihapus) karena foreign key sudah menggunakan nullOnDelete().
+
+        $pesan = "Departemen \"{$nama}\" berhasil dihapus.";
+        if ($jumlahArsip > 0) {
+            $pesan .= " {$jumlahArsip} pengajuan terkait tetap tersimpan (departemen di-set kosong).";
+        }
 
         return redirect()->route('superadmin.departments.index')
-            ->with('success', 'Departemen berhasil dihapus');
+            ->with('success', $pesan);
+    }
+
+    public function toggleIsActive(Department $department)
+    {
+        $department->update(['is_active' => !$department->is_active]);
+        
+        $status = $department->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->back()->with('success', "Departemen \"{$department->name}\" berhasil {$status}.");
     }
 }

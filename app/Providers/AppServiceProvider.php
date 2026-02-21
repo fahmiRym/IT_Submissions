@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
@@ -23,15 +24,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-    //    if(config('app.env') === 'production') {
-    //        URL::forceScheme('https');
-    //    }
         View::composer('*', function ($view) {
+            // Data pengaturan global
+            $view->with([
+                'app_logo' => Setting::get('app_logo'),
+                'app_name' => Setting::get('app_name', config('app.name')),
+            ]);
+
+            // Data notifikasi untuk user yang login
             if (auth()->check()) {
                 $user = auth()->user();
                 $role = $user->role;
 
-                // Ambil notifikasi untuk User ID ini ATAU untuk Role User ini
                 $query = Notification::where(function($q) use ($user, $role) {
                     $q->where('user_id', $user->id)
                       ->orWhere('role_target', $role);

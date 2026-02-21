@@ -58,4 +58,11 @@ class ManagerController extends Controller
         return redirect()->route('superadmin.managers.index')
             ->with('success', 'Manager berhasil dihapus');
     }
+
+    public function toggleIsActive(Manager $manager)
+    {
+        $manager->update(['is_active' => !$manager->is_active]);
+        $status = $manager->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->back()->with('success', "Manager \"{$manager->name}\" berhasil {$status}.");
+    }
 }
