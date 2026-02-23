@@ -126,12 +126,12 @@
 <div class="card border-0 shadow-sm mb-4 animate-on-scroll" style="border-radius: 12px;">
     <div class="card-body p-4">
         <form method="GET" class="row g-3">
-            {{-- Search & Date --}}
+            {{-- ROW 1 --}}
             <div class="col-md-3">
                 <label class="form-label small fw-bold text-secondary mb-1">🔍 Pencarian</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light border-0 px-3"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" name="q" value="{{ request('q') }}" class="form-control bg-light border-0 px-2" placeholder="Cari No. Dokumen / Transaksi..." style="border-radius: 0 8px 8px 0;">
+                    <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="q" value="{{ request('q') }}" class="form-control bg-light border-0 px-3" placeholder="No Dok, Transaksi..." style="border-radius: 0 8px 8px 0;">
                 </div>
             </div>
 
@@ -144,9 +144,8 @@
                 <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control bg-light border-0 px-3" style="border-radius: 8px;">
             </div>
 
-            {{-- Jenis & Status --}}
             <div class="col-md-2">
-                <label class="form-label small fw-bold text-secondary mb-1">📄 Jenis Pengajuan</label>
+                <label class="form-label small fw-bold text-secondary mb-1">📄 Jenis</label>
                 <select name="jenis_pengajuan" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
                     <option value="">Semua Jenis</option>
                     @foreach(['Cancel','Adjust','Mutasi_Billet','Mutasi_Produk','Internal_Memo','Bundel'] as $jp)
@@ -155,8 +154,8 @@
                 </select>
             </div>
 
-            <div class="col-md-2">
-                 <label class="form-label small fw-bold text-secondary mb-1">⚙️ Status Process</label>
+            <div class="col-md-3">
+                 <label class="form-label small fw-bold text-secondary mb-1">⚙️ Status</label>
                  <select name="ket_process" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
                      <option value="">Semua Status</option>
                      @foreach(['Review','Process','Done','Pending','Void'] as $st)
@@ -165,11 +164,51 @@
                  </select>
             </div>
 
-            <div class="col-md-1 d-flex gap-2">
-                <button type="submit" class="btn btn-primary fw-bold shadow-sm flex-fill d-flex align-items-center justify-content-center" style="background: #4f46e5; border-color: #4f46e5; border-radius: 10px;">
-                    <i class="bi bi-funnel-fill"></i>
+            {{-- ROW 2 --}}
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-secondary mb-1">🏢 Departemen</label>
+                <select name="department_id" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
+                    <option value="">Semua</option>
+                    @foreach($departments as $d)
+                        <option value="{{ $d->id }}" {{ request('department_id')==$d->id?'selected':'' }}>{{ $d->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-secondary mb-1">📦 Unit</label>
+                <select name="unit_id" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
+                    <option value="">Semua</option>
+                    @foreach($units as $u)
+                        <option value="{{ $u->id }}" {{ request('unit_id')==$u->id?'selected':'' }}>{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-secondary mb-1">👤 Manager</label>
+                <select name="manager_id" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
+                    <option value="">Semua</option>
+                    @foreach($managers as $m)
+                        <option value="{{ $m->id }}" {{ request('manager_id')==$m->id?'selected':'' }}>{{ $m->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-1">
+                <label class="form-label small fw-bold text-secondary mb-1">🏷️ Kategori</label>
+                <select name="kategori" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
+                    <option value="">Semua</option>
+                    <option value="Human" {{ request('kategori')=='Human'?'selected':'' }}>Human</option>
+                    <option value="System" {{ request('kategori')=='System'?'selected':'' }}>System</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2 align-items-end">
+                <button type="submit" class="btn btn-primary fw-bold shadow-sm flex-fill d-flex align-items-center justify-content-center" style="background: #4f46e5; border-color: #4f46e5; border-radius: 10px; height: 38px;">
+                    <i class="bi bi-funnel-fill me-1"></i> Filter
                 </button>
-                <a href="{{ route('admin.arsip.index') }}" class="btn btn-white border bg-white shadow-sm d-flex align-items-center justify-content-center" style="border-radius: 10px; width: 42px;" title="Reset">
+                <a href="{{ route('admin.arsip.index') }}" class="btn btn-white border bg-white shadow-sm d-flex align-items-center justify-content-center" style="border-radius: 10px; width: 42px; height: 38px;" title="Reset">
                     <i class="bi bi-arrow-counterclockwise text-secondary fw-bold"></i>
                 </a>
             </div>

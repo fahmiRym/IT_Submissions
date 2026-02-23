@@ -11,21 +11,36 @@ class LaporanController extends Controller
 {
     private function getFilteredArsips(Request $request)
     {
-        $query = Arsip::with(['admin.department', 'department', 'unit', 'manager']); // Eager load relations including admin department
+        $query = Arsip::with(['admin.department', 'department', 'unit', 'manager']); 
 
-        if ($request->from && $request->to) {
-            $query->whereBetween('tgl_pengajuan', [$request->from, $request->to]);
+        if ($request->filled('from')) {
+            $query->whereDate('tgl_pengajuan', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('tgl_pengajuan', '<=', $request->to);
         }
 
-        if ($request->department_id) {
+        if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        if ($request->admin_id) {
+        if ($request->filled('manager_id')) {
+            $query->where('manager_id', $request->manager_id);
+        }
+
+        if ($request->filled('unit_id')) {
+            $query->where('unit_id', $request->unit_id);
+        }
+
+        if ($request->filled('admin_id')) {
             $query->where('admin_id', $request->admin_id);
         }
 
-        if ($request->pemohon) {
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        if ($request->filled('pemohon')) {
             $query->where('pemohon', 'like', '%' . $request->pemohon . '%');
         }
 
@@ -47,14 +62,26 @@ class LaporanController extends Controller
         // Initialize queries for stats
         $statsQuery = Arsip::query();
 
-        if ($request->from && $request->to) {
-            $statsQuery->whereBetween('tgl_pengajuan', [$request->from, $request->to]);
+        if ($request->from) {
+            $statsQuery->whereDate('tgl_pengajuan', '>=', $request->from);
+        }
+        if ($request->to) {
+            $statsQuery->whereDate('tgl_pengajuan', '<=', $request->to);
         }
         if ($request->department_id) {
             $statsQuery->where('department_id', $request->department_id);
         }
+        if ($request->manager_id) {
+            $statsQuery->where('manager_id', $request->manager_id);
+        }
+        if ($request->unit_id) {
+            $statsQuery->where('unit_id', $request->unit_id);
+        }
         if ($request->admin_id) {
             $statsQuery->where('admin_id', $request->admin_id);
+        }
+        if ($request->kategori) {
+            $statsQuery->where('kategori', $request->kategori);
         }
         if ($request->pemohon) {
             $statsQuery->where('pemohon', 'like', '%' . $request->pemohon . '%');
@@ -82,6 +109,8 @@ class LaporanController extends Controller
             ->get();
 
         $departments = Department::orderBy('name')->get();
+        $managers = \App\Models\Manager::orderBy('name')->get();
+        $units = \App\Models\Unit::orderBy('name')->get();
         $admins = \App\Models\User::where('role', 'Admin')->orderBy('name')->get();
 
         return view('laporan.index', compact(
@@ -89,6 +118,8 @@ class LaporanController extends Controller
             'byUser',
             'byDepartment',
             'departments',
+            'managers',
+            'units',
             'admins'
         ));
     }

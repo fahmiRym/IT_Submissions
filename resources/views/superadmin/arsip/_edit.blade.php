@@ -20,7 +20,13 @@
         <div class="mb-3">
             <label class="form-label small fw-bold text-info">No Registrasi</label>
             <input type="text" name="no_registrasi" id="editNoRegistrasi" class="form-control bg-white border-info border-opacity-50 text-dark fw-bold font-monospace" placeholder="Otomatis jika kosong...">
-            <small class="text-muted" style="font-size: 0.65rem;">* Edit nomor registrasi jika diperlukan.</small>
+            <small class="text-muted" style="font-size: 0.65rem;">* Internal System ID.</small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label small fw-bold text-primary" style="color: #6366f1 !important;">No Doc / No Arsip</label>
+            <input type="text" name="no_doc" id="editNoDoc" class="form-control bg-white border-primary border-opacity-50 text-dark fw-bold" placeholder="Contoh: 1234/02/IT/2026">
+            <small class="text-muted" style="font-size: 0.65rem;">* Nomor dokumen resmi/fisik.</small>
         </div>
 
         {{-- 2. TANGGAL --}}

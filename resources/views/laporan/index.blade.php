@@ -106,51 +106,31 @@
 <div class="card card-modern mb-4">
     <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
         <h6 class="fw-bold text-soft-dark m-0 d-flex align-items-center">
-            <i class="bi bi-sliders2 me-2 text-primary"></i> Filter Data
+            <i class="bi bi-sliders2 me-2 text-primary"></i> Filter Data Laporan
         </h6>
     </div>
     <div class="card-body px-4 pb-4 pt-3">
         <form action="{{ route('superadmin.laporan.index') }}" method="GET" class="row g-3">
+            {{-- ROW 1 --}}
             <div class="col-md-2">
                 <label class="form-label fw-bold">DARI TANGGAL</label>
                 <div class="input-group input-group-sm shadow-sm">
-                    <span class="input-group-text border-end-0"><i class="bi bi-calendar"></i></span>
-                    <input type="date" name="from" class="form-control border-start-0 ps-0" value="{{ request('from') }}">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-calendar"></i></span>
+                    <input type="date" name="from" class="form-control border-start-0 ps-0 bg-light" value="{{ request('from') }}">
                 </div>
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-bold">SAMPAI TANGGAL</label>
                 <div class="input-group input-group-sm shadow-sm">
-                    <span class="input-group-text border-end-0"><i class="bi bi-calendar-check"></i></span>
-                    <input type="date" name="to" class="form-control border-start-0 ps-0" value="{{ request('to') }}">
-                </div>
-            </div>
-             <div class="col-md-2">
-                <label class="form-label fw-bold">PENGAJU (STAFF)</label>
-                 <div class="input-group input-group-sm shadow-sm">
-                    <span class="input-group-text border-end-0"><i class="bi bi-person-badge"></i></span>
-                    <select name="admin_id" class="form-select border-start-0 ps-0">
-                        <option value="">Semua Pengaju</option>
-                        @foreach($admins as $admin)
-                        <option value="{{ $admin->id }}" {{ request('admin_id') == $admin->id ? 'selected' : '' }}>
-                            {{ $admin->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-             <div class="col-md-2">
-                <label class="form-label fw-bold">PEMOHON</label>
-                <div class="input-group input-group-sm shadow-sm">
-                    <span class="input-group-text border-end-0"><i class="bi bi-person-circle"></i></span>
-                    <input type="text" name="pemohon" class="form-control border-start-0 ps-0" placeholder="Nama..." value="{{ request('pemohon') }}">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-calendar-check"></i></span>
+                    <input type="date" name="to" class="form-control border-start-0 ps-0 bg-light" value="{{ request('to') }}">
                 </div>
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-bold">DEPT. PEMOHON</label>
                  <div class="input-group input-group-sm shadow-sm">
-                    <span class="input-group-text border-end-0"><i class="bi bi-building"></i></span>
-                    <select name="department_id" class="form-select border-start-0 ps-0">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-building"></i></span>
+                    <select name="department_id" class="form-select border-start-0 ps-0 bg-light">
                         <option value="">Semua Dept</option>
                         @foreach($departments as $dept)
                         <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
@@ -161,18 +141,86 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-bold">OPSI & ACTION</label>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-fill shadow-sm rounded-3">
-                        <i class="bi bi-search me-1"></i> Cari
-                    </button>
-                    <button type="submit" formaction="{{ route('superadmin.laporan.pdf') }}" formtarget="_blank" class="btn btn-danger btn-sm flex-fill shadow-sm rounded-3">
-                        <i class="bi bi-file-earmark-pdf"></i>
-                    </button>
-                    <a href="{{ route('superadmin.laporan.index') }}" class="btn btn-light btn-sm border shadow-sm rounded-3" title="Reset">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </a>
+                <label class="form-label fw-bold">UNIT</label>
+                 <div class="input-group input-group-sm shadow-sm">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-box-seam"></i></span>
+                    <select name="unit_id" class="form-select border-start-0 ps-0 bg-light">
+                        <option value="">Semua Unit</option>
+                        @foreach($units as $u)
+                        <option value="{{ $u->id }}" {{ request('unit_id') == $u->id ? 'selected' : '' }}>
+                            {{ $u->name }}
+                        </option>
+                        @endforeach
+                    </select>
                 </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">MANAGER</label>
+                 <div class="input-group input-group-sm shadow-sm">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-person-check"></i></span>
+                    <select name="manager_id" class="form-select border-start-0 ps-0 bg-light">
+                        <option value="">Semua Manager</option>
+                        @foreach($managers as $m)
+                        <option value="{{ $m->id }}" {{ request('manager_id') == $m->id ? 'selected' : '' }}>
+                            {{ $m->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">PENGAJU (STAFF)</label>
+                 <div class="input-group input-group-sm shadow-sm">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-person-badge"></i></span>
+                    <select name="admin_id" class="form-select border-start-0 ps-0 bg-light">
+                        <option value="">Semua Staff</option>
+                        @foreach($admins as $admin)
+                        <option value="{{ $admin->id }}" {{ request('admin_id') == $admin->id ? 'selected' : '' }}>
+                            {{ $admin->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            {{-- ROW 2 --}}
+            <div class="col-md-2">
+                <label class="form-label fw-bold">KATEGORI</label>
+                 <div class="input-group input-group-sm shadow-sm">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-list-task"></i></span>
+                    <select name="kategori" class="form-select border-start-0 ps-0 bg-light">
+                        <option value="">Semua</option>
+                        <option value="Human" {{ request('kategori')=='Human'?'selected':'' }}>Human Error</option>
+                        <option value="System" {{ request('kategori')=='System'?'selected':'' }}>System Error</option>
+                        <option value="None" {{ request('kategori')=='None'?'selected':'' }}>None/Adjust</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">PEMOHON (USER)</label>
+                <div class="input-group input-group-sm shadow-sm">
+                    <span class="input-group-text border-end-0 bg-light"><i class="bi bi-person-circle"></i></span>
+                    <input type="text" name="pemohon" class="form-control border-start-0 ps-0 bg-light" placeholder="Nama..." value="{{ request('pemohon') }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">BUKTI SCAN</label>
+                <select name="has_scan" class="form-select form-select-sm bg-light shadow-sm">
+                    <option value="">Tampilkan Semua</option>
+                    <option value="yes" {{ request('has_scan') == 'yes' ? 'selected' : '' }}>Ada Scan</option>
+                    <option value="no" {{ request('has_scan') == 'no' ? 'selected' : '' }}>Tanpa Scan</option>
+                </select>
+            </div>
+            <div class="col-md-5 d-flex gap-2 align-items-end">
+                <button type="submit" class="btn btn-primary fw-extrabold flex-fill shadow-sm rounded-3">
+                    <i class="bi bi-search me-1"></i> CARI DATA
+                </button>
+                <button type="submit" formaction="{{ route('superadmin.laporan.pdf') }}" formtarget="_blank" class="btn btn-danger fw-bold shadow-sm rounded-3 px-4">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> CETAK PDF
+                </button>
+                <a href="{{ route('superadmin.laporan.index') }}" class="btn btn-light border shadow-sm rounded-3 px-3" title="Reset Filters">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
             </div>
         </form>
     </div>

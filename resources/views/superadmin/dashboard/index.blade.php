@@ -56,6 +56,7 @@
     .status-process { color: #fbbf24; }
     .status-partial { color: #818cf8; }
     .status-done { color: #34d399; }
+    .status-void { color: #f43f5e; }
 
     .icon-pipeline {
         width: 48px; height: 48px;
@@ -130,18 +131,19 @@
 {{-- FILTER SECTION --}}
 <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
     <div class="card-body p-4">
-        <form method="GET" action="{{ route('superadmin.dashboard') }}" class="row g-3 align-items-end">
-            <div class="col-md-2">
+        <form method="GET" action="{{ route('superadmin.dashboard') }}" class="row g-3 px-1">
+            {{-- ROW 1 --}}
+            <div class="col-md-3">
                 <label class="small fw-bold text-muted mb-2">DARI TANGGAL</label>
-                <input type="date" name="from" value="{{ request('from') }}" class="form-control bg-light border-0 py-2 rounded-3">
+                <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control bg-light border-0 py-2 rounded-3 shadow-none">
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <label class="small fw-bold text-muted mb-2">SAMPAI TANGGAL</label>
-                <input type="date" name="to" value="{{ request('to') }}" class="form-control bg-light border-0 py-2 rounded-3">
+                <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control bg-light border-0 py-2 rounded-3 shadow-none">
             </div>
             <div class="col-md-3">
                 <label class="small fw-bold text-muted mb-2">DEPARTEMEN</label>
-                <select name="department_id" class="form-select bg-light border-0 py-2 rounded-3">
+                <select name="department_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
                     <option value="">-- Semua Departemen --</option>
                     @foreach($departments as $d)
                         <option value="{{ $d->id }}" {{ request('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
@@ -149,18 +151,59 @@
                 </select>
             </div>
             <div class="col-md-3">
-                 <label class="small fw-bold text-muted mb-2">JENIS PENGAJUAN</label>
-                <select name="jenis_pengajuan" class="form-select bg-light border-0 py-2 rounded-3">
-                    <option value="">-- Semua Jenis --</option>
+                <label class="small fw-bold text-muted mb-2">UNIT</label>
+                <select name="unit_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua Unit --</option>
+                    @foreach($units as $u)
+                        <option value="{{ $u->id }}" {{ request('unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- ROW 2 --}}
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-2">MANAGER</label>
+                <select name="manager_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua Manager --</option>
+                    @foreach($managers as $m)
+                        <option value="{{ $m->id }}" {{ request('manager_id') == $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-2">PENGAJU (STAFF)</label>
+                <select name="user_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua Staff --</option>
+                    @foreach($users as $u)
+                        <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="small fw-bold text-muted mb-2">KATEGORI</label>
+                <select name="kategori" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua --</option>
+                    <option value="Human" {{ request('kategori')=='Human'?'selected':'' }}>Human Error</option>
+                    <option value="System" {{ request('kategori')=='System'?'selected':'' }}>System Error</option>
+                    <option value="None" {{ request('kategori')=='None'?'selected':'' }}>None/Adjust</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                 <label class="small fw-bold text-muted mb-2">JENIS</label>
+                <select name="jenis_pengajuan" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua --</option>
                      @foreach(['Adjust', 'Mutasi_Billet', 'Mutasi_Produk', 'Internal_Memo', 'Bundel', 'Cancel'] as $jenis)
                     <option value="{{ $jenis }}" {{ request('jenis_pengajuan') == $jenis ? 'selected' : '' }}>{{ str_replace('_', ' ', $jenis) }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100 fw-bold shadow-sm py-2 rounded-3" style="background: linear-gradient(to right, #4f46e5, #4338ca); border:none;">
-                    <i class="bi bi-funnel-fill me-2"></i> FILTER
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill fw-extrabold shadow-sm py-2 rounded-3" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border:none;">
+                    <i class="bi bi-funnel-fill me-1"></i> FILTER
                 </button>
+                <a href="{{ route('superadmin.dashboard') }}" class="btn btn-light border bg-white shadow-sm py-2 px-3 rounded-3" title="Reset Filter">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
             </div>
         </form>
     </div>
@@ -170,64 +213,73 @@
 <div class="row g-4 mb-4">
     <!-- Terarsip -->
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-indigo h-100 p-4">
-            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Pengajuan Terarsip</h6>
-            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalArsip) }}</h2>
-            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-all me-1"></i> DONE</div>
-            <i class="bi bi-archive-fill stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['arsip' => 'Done'])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-indigo h-100 p-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Pengajuan Terarsip</h6>
+                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalArsip) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-all me-1"></i> DONE</div>
+                <i class="bi bi-archive-fill stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
     <!-- Total -->
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-blue h-100 p-4">
-             <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Total Pengajuan</h6>
-             <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalPengajuan) }}</h2>
-             <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-inbox-fill me-1"></i> ALL DATA</div>
-             <i class="bi bi-layers-fill stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('superadmin.arsip.index', request()->all()) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-blue h-100 p-4">
+                 <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Total Pengajuan</h6>
+                 <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalPengajuan) }}</h2>
+                 <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-inbox-fill me-1"></i> ALL DATA</div>
+                 <i class="bi bi-layers-fill stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
     <!-- Selesai -->
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-green h-100 p-4">
-             <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Pengajuan Selesai</h6>
-             <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($arsipDone) }}</h2>
-             <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-circle-fill me-1"></i> FINALIZED</div>
-             <i class="bi bi-check-circle-fill stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Done'])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-green h-100 p-4">
+                 <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Pengajuan Selesai</h6>
+                 <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($arsipDone) }}</h2>
+                 <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-circle-fill me-1"></i> FINALIZED</div>
+                 <i class="bi bi-check-circle-fill stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
     <!-- Proses -->
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-orange h-100 p-4">
-             <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Dinamika Proses</h6>
-             <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($arsipProcess) }}</h2>
-             <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-activity me-1"></i> ON GOING</div>
-             <i class="bi bi-graph-up-arrow stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Process'])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-orange h-100 p-4">
+                 <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Dinamika Proses</h6>
+                 <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($arsipProcess) }}</h2>
+                 <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-activity me-1"></i> ON GOING</div>
+                 <i class="bi bi-graph-up-arrow stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
 </div>
 
 {{-- 2. STATUS PROCESS --}}
 <h6 class="fw-bold text-dark mb-3 ps-1">Status Proses Pengerjaan</h6>
-<div class="row g-4 mb-4">
+<div class="row g-3 mb-4">
     @php
         $proc = [
-            ['label'=>'PENDING', 'val'=>$ketPending, 'color'=>'status-pending'],
-            ['label'=>'REVIEW', 'val'=>$ketReview, 'color'=>'status-review'],
-            ['label'=>'PROCESS', 'val'=>$ketProcess, 'color'=>'status-process'],
-            ['label'=>'PARTIAL DONE', 'val'=>$ketPartial, 'color'=>'status-partial'],
-            ['label'=>'SELESAI', 'val'=>$ketDone, 'color'=>'status-done']
+            ['label'=>'PENDING', 'val'=>$ketPending, 'db'=>'Pending', 'color'=>'status-pending'],
+            ['label'=>'REVIEW', 'val'=>$ketReview, 'db'=>'Review', 'color'=>'status-review'],
+            ['label'=>'PROCESS', 'val'=>$ketProcess, 'db'=>'Process', 'color'=>'status-process'],
+            ['label'=>'PARTIAL DONE', 'val'=>$ketPartial, 'db'=>'Partial Done', 'color'=>'status-partial'],
+            ['label'=>'SELESAI', 'val'=>$ketDone, 'db'=>'Done', 'color'=>'status-done'],
+            ['label'=>'VOID / REJECT', 'val'=>$ketVoid, 'db'=>'Void', 'color'=>'status-void']
         ];
     @endphp
     @foreach($proc as $p)
-    <div class="col">
-        <a href="{{ route('superadmin.arsip.index', ['ket_process' => ucfirst(strtolower(str_replace(' (DONE)','',$p['label']))) ]) }}" class="text-decoration-none">
-            <div class="card-pipeline {{ $p['color'] }} h-100 p-4">
+    <div class="col-md-2">
+        <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['ket_process' => $p['db']])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-pipeline {{ $p['color'] }} h-100 p-3">
                 <div class="d-flex flex-column align-items-center text-center">
-                    <div class="icon-pipeline {{ $p['color'] }} bg-opacity-10 mb-2">
+                    <div class="icon-pipeline {{ $p['color'] }} bg-opacity-10 mb-2" style="width: 40px; height: 40px;">
                          <i class="bi bi-circle-fill fs-6"></i>
                     </div>
-                     <h3 class="mb-1 fw-bold {{ $p['color'] }}">{{ number_format($p['val']) }}</h3>
-                     <div class="small fw-bold text-muted text-uppercase tracking-wider">{{ $p['label'] }}</div>
+                     <h4 class="mb-1 fw-bold {{ $p['color'] }}">{{ number_format($p['val']) }}</h4>
+                     <div class="fw-bold text-muted text-uppercase tracking-wider" style="font-size: 0.6rem;">{{ $p['label'] }}</div>
                 </div>
             </div>
         </a>
@@ -287,13 +339,15 @@
         $val = $trendByType->where('jenis_pengajuan', $c['code'])->sum('total');
     @endphp
     <div class="col-md-2">
-        <div class="card-category h-100">
-            <div class="icon-category-circle" style="background: {{ $c['color'] }}">
-                <i class="bi bi-folder2-open"></i>
+        <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['jenis_pengajuan' => $c['code']])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-category h-100">
+                <div class="icon-category-circle" style="background: {{ $c['color'] }}">
+                    <i class="bi bi-folder2-open"></i>
+                </div>
+                <div class="small fw-bold text-muted mb-1 text-uppercase">{{ $c['label'] }}</div>
+                <div class="cat-count" style="color: {{ $c['color'] }}">{{ number_format($val) }}</div>
             </div>
-            <div class="small fw-bold text-muted mb-1 text-uppercase">{{ $c['label'] }}</div>
-            <div class="cat-count" style="color: {{ $c['color'] }}">{{ number_format($val) }}</div>
-        </div>
+        </a>
     </div>
     @endforeach
 </div>

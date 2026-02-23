@@ -29,58 +29,46 @@ class ArsipController extends Controller
     {
         $query = Arsip::with(['admin', 'department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems']);
 
-        /* ================= SEARCH ================= */
-        if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where(function ($x) use ($q) {
-                $x->where('no_doc', 'like', "%{$q}%")
-                    ->orWhere('no_transaksi', 'like', "%{$q}%")
-                    ->orWhere('no_registrasi', 'like', "%{$q}%")
-                    ->orWhereHas('admin', fn($a) => $a->where('name', 'like', "%{$q}%"));
-            });
+        /* ================= FILTER LOGIC ================= */
+        // Use a helper array to store filters that should apply to stats too
+        $filters = [
+            'q'               => $request->q,
+            'department_id'   => $request->department_id,
+            'manager_id'      => $request->manager_id,
+            'unit_id'         => $request->unit_id,
+            'kategori'        => $request->kategori,
+            'jenis_pengajuan' => $request->jenis_pengajuan ?? $request->jenis,
+            'admin_id'        => $request->admin_id ?? $request->user_id,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date,
+        ];
+
+        foreach ($filters as $key => $value) {
+            if (empty($value)) continue;
+
+            if ($key === 'q') {
+                $query->where(function ($x) use ($value) {
+                    $x->where('no_doc', 'like', "%{$value}%")
+                        ->orWhere('no_transaksi', 'like', "%{$value}%")
+                        ->orWhere('no_registrasi', 'like', "%{$value}%")
+                        ->orWhereHas('admin', fn($a) => $a->where('name', 'like', "%{$value}%"));
+                });
+            } elseif ($key === 'start_date') {
+                $query->whereDate('tgl_pengajuan', '>=', $value);
+            } elseif ($key === 'end_date') {
+                $query->whereDate('tgl_pengajuan', '<=', $value);
+            } else {
+                $query->where($key, $value);
+            }
         }
 
-        /* ================= FILTER ================= */
-        // 1. Departemen
-        if ($request->filled('department_id')) {
-            $query->where('department_id', $request->department_id);
-        }
-
-        // 2. Kategori (Error Type)
-        if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
-        }
-
-        // 3. Jenis Pengajuan (Support both 'jenis' and 'jenis_pengajuan' params)
-        $jenis = $request->get('jenis') ?? $request->get('jenis_pengajuan');
-        if ($jenis) {
-            $query->where('jenis_pengajuan', $jenis);
-        }
-
-        // 4. Status Process (Review, Process, Done, Pending, Void)
+        // Filters that should NOT apply to stats (or should be handled per-stat)
         if ($request->filled('ket_process')) {
             $query->where('ket_process', $request->ket_process);
         }
-
-        // 5. Date Range (Tgl Pengajuan)
-        if ($request->filled('start_date')) {
-            $query->whereDate('tgl_pengajuan', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('tgl_pengajuan', '<=', $request->end_date);
-        }
-
-        // 6. User (Pengaju)
-        if ($request->filled('admin_id')) {
-            $query->where('admin_id', $request->admin_id);
-        }
-
-        // 7. BA Status (Khusus dashboard click)
         if ($request->filled('ba')) {
             $query->where('ba', $request->ba);
         }
-
-        // 8. Arsip Status (Khusus dashboard click)
         if ($request->filled('arsip')) {
             $query->where('arsip', $request->arsip);
         }
@@ -89,45 +77,46 @@ class ArsipController extends Controller
         $allowedSort = ['id', 'tgl_pengajuan', 'tgl_arsip', 'no_registrasi', 'ket_process', 'department_id', 'admin_id'];
         $sort = in_array($request->get('sort'), $allowedSort) ? $request->get('sort') : 'id';
         $dir = $request->get('dir') === 'asc' ? 'asc' : 'desc';
-
         $query->orderBy($sort, $dir);
 
         /* ================= DATA ================= */
         $perPage = $request->input('per_page', 10);
-        $arsips = $query
-            ->paginate($perPage)
-            ->withQueryString();
+        $arsips = $query->paginate($perPage)->withQueryString();
 
-        /* ================= STATS ================= */
-        // Base query for stats (should respect current non-status filters if needed, but usually stats are broad)
-        // For now, let's keep stats somewhat independent or just filtered by 'jenis' as before to not confuse the user with disappearing stats.
-        // However, if the user requested "Filter", usually they want to see stats for that filter? 
-        // Let's stick to the previous pattern of filtering stats only by 'jenis' to show "Global Context" of that type.
-        
+        /* ================= STATS (Dynamic) ================= */
+        // Stats should respect all filters EXCEPT status-specific ones
         $statsQuery = Arsip::query();
-        if ($jenis) {
-            $statsQuery->where('jenis_pengajuan', $jenis);
+        foreach ($filters as $key => $value) {
+            if (empty($value)) continue;
+
+            if ($key === 'q') {
+                $statsQuery->where(function ($x) use ($value) {
+                    $x->where('no_doc', 'like', "%{$value}%")
+                        ->orWhere('no_transaksi', 'like', "%{$value}%")
+                        ->orWhere('no_registrasi', 'like', "%{$value}%")
+                        ->orWhereHas('admin', fn($a) => $a->where('name', 'like', "%{$value}%"));
+                });
+            } elseif ($key === 'start_date') {
+                $statsQuery->whereDate('tgl_pengajuan', '>=', $value);
+            } elseif ($key === 'end_date') {
+                $statsQuery->whereDate('tgl_pengajuan', '<=', $value);
+            } else {
+                $statsQuery->where($key, $value);
+            }
         }
 
-        // Clone for counts
-        $total    = (clone $statsQuery)->count();
-        $review   = (clone $statsQuery)->where('ket_process', 'Review')->count();
-        $process  = (clone $statsQuery)->where('ket_process', 'Process')->count();
-        $done     = (clone $statsQuery)->where('ket_process', 'Done')->count();
-        $pending  = (clone $statsQuery)->where('ket_process', 'Pending')->count();
-        $void     = (clone $statsQuery)->where('ket_process', 'Void')->count();
-
         $stats = [
-            'total'   => $total,
-            'Review'  => $review,
-            'Process' => $process,
-            'Done'    => $done,
-            'Pending' => $pending,
-            'Void'    => $void,
-            'ba_pending' => (clone $statsQuery)->where('ba', 'Pending')->count(),
-            'ba_process' => (clone $statsQuery)->where('ba', 'Process')->count(),
-            'ba_done'    => (clone $statsQuery)->where('ba', 'Done')->count(),
+            'total'         => (clone $statsQuery)->count(),
+            'Review'        => (clone $statsQuery)->where('ket_process', 'Review')->count(),
+            'Process'       => (clone $statsQuery)->where('ket_process', 'Process')->count(),
+            'Done'          => (clone $statsQuery)->where('ket_process', 'Done')->count(),
+            'Pending'       => (clone $statsQuery)->where('ket_process', 'Pending')->count(),
+            'Void'          => (clone $statsQuery)->where('ket_process', 'Void')->count(),
+            'ba_pending'    => (clone $statsQuery)->where('ba', 'Pending')->count(),
+            'ba_process'    => (clone $statsQuery)->where('ba', 'Process')->count(),
+            'ba_done'       => (clone $statsQuery)->where('ba', 'Done')->count(),
             'arsip_pending' => (clone $statsQuery)->where('arsip', 'Pending')->count(),
+            'arsip_process' => (clone $statsQuery)->where('arsip', 'Process')->count(),
             'arsip_done'    => (clone $statsQuery)->where('arsip', 'Done')->count(),
         ];
 
@@ -464,7 +453,8 @@ class ArsipController extends Controller
         try {
             // Cari arsip yang memiliki file bukti_scan dalam range tanggal
             $arsips = Arsip::whereNotNull('bukti_scan')
-                ->whereBetween('tgl_pengajuan', [$request->start_date, $request->end_date])
+                ->whereDate('tgl_pengajuan', '>=', $request->start_date)
+                ->whereDate('tgl_pengajuan', '<=', $request->end_date)
                 ->get();
 
             if ($arsips->isEmpty()) {
@@ -553,6 +543,7 @@ class ArsipController extends Controller
                 'department_id'   => $request->department_id,
                 'manager_id'      => $request->manager_id,
                 'unit_id'         => $request->unit_id,
+                'no_doc'          => $request->no_doc,
                 'no_transaksi'    => $request->no_transaksi,
                 'kategori'        => $request->kategori ?? 'None',
                 'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,

@@ -59,6 +59,7 @@
     .status-process { color: #fbbf24; }
     .status-partial { color: #818cf8; }
     .status-done    { color: #34d399; }
+    .status-void    { color: #f43f5e; }
 
     .icon-pipeline {
         width: 48px; height: 48px;
@@ -155,65 +156,139 @@
 
 @section('content')
 
+{{-- ── FILTER SECTION ────────────────────────────────────────── --}}
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <form method="GET" action="{{ route('admin.dashboard') }}" class="row g-3">
+            {{-- ROW 1 --}}
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-2">DARI TANGGAL</label>
+                <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control bg-light border-0 py-2 rounded-3 shadow-none">
+            </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-2">SAMPAI TANGGAL</label>
+                <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control bg-light border-0 py-2 rounded-3 shadow-none">
+            </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-2">DEPARTEMEN</label>
+                <select name="department_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua Departemen --</option>
+                    @foreach($departments as $d)
+                        <option value="{{ $d->id }}" {{ request('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-2">UNIT</label>
+                <select name="unit_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua Unit --</option>
+                    @foreach($units as $u)
+                        <option value="{{ $u->id }}" {{ request('unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- ROW 2 --}}
+            <div class="col-md-4">
+                <label class="small fw-bold text-muted mb-2">MANAGER</label>
+                <select name="manager_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua Manager --</option>
+                    @foreach($managers as $m)
+                        <option value="{{ $m->id }}" {{ request('manager_id') == $m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="small fw-bold text-muted mb-2">KATEGORI</label>
+                <select name="kategori" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
+                    <option value="">-- Semua Kategori --</option>
+                    <option value="Human" {{ request('kategori')=='Human'?'selected':'' }}>Human Error</option>
+                    <option value="System" {{ request('kategori')=='System'?'selected':'' }}>System Error</option>
+                    <option value="None" {{ request('kategori')=='None'?'selected':'' }}>None/Adjust</option>
+                </select>
+            </div>
+            <div class="col-md-5 d-flex gap-2 align-items-end">
+                <button type="submit" class="btn btn-primary flex-fill fw-extrabold shadow-sm py-2 rounded-3" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border:none;">
+                    <i class="bi bi-funnel-fill me-1"></i> TERAPKAN FILTER
+                </button>
+                <a href="{{ route('admin.dashboard') }}" class="btn btn-light border bg-white shadow-sm py-2 px-3 rounded-3" title="Reset Filter">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- ── 1. TOP STAT CARDS ──────────────────────────────────────── --}}
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-indigo h-100 p-4">
-            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Total Pengajuan</h6>
-            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($total) }}</h2>
-            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-layers-fill me-1"></i> ALL SUBMISSION</div>
-            <i class="bi bi-layers-fill stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('admin.arsip.index', request()->all()) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-indigo h-100 p-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Total Pengajuan</h6>
+                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($total) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-layers-fill me-1"></i> ALL SUBMISSION</div>
+                <i class="bi bi-layers-fill stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-blue h-100 p-4">
-            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Need Review</h6>
-            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($Review) }}</h2>
-            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-clock-history me-1"></i> WAITING</div>
-            <i class="bi bi-clock-history stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Review'])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-blue h-100 p-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Need Review</h6>
+                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($Review) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-clock-history me-1"></i> WAITING</div>
+                <i class="bi bi-clock-history stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-orange h-100 p-4">
-            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">In Process</h6>
-            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($process) }}</h2>
-            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-gear-fill me-1"></i> ON GOING</div>
-            <i class="bi bi-gear-fill stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Process'])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-orange h-100 p-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">In Process</h6>
+                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($process) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-gear-fill me-1"></i> ON GOING</div>
+                <i class="bi bi-gear-fill stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <div class="card-stat-vibrant bg-gradient-green h-100 p-4">
-            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Completed</h6>
-            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($done) }}</h2>
-            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-circle-fill me-1"></i> FINALIZED</div>
-            <i class="bi bi-check-circle-fill stat-overlay-icon"></i>
-        </div>
+        <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Done'])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-stat-vibrant bg-gradient-green h-100 p-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Completed</h6>
+                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($done) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-circle-fill me-1"></i> FINALIZED</div>
+                <i class="bi bi-check-circle-fill stat-overlay-icon"></i>
+            </div>
+        </a>
     </div>
 </div>
 
 {{-- ── 2. PIPELINE STATUS ──────────────────────────────────────── --}}
 <h6 class="fw-bold text-dark mb-3 ps-1">Status Proses Pengerjaan</h6>
-<div class="row g-4 mb-4">
+<div class="row g-3 mb-4">
     @php
         $proc = [
-            ['label' => 'PENDING',      'val' => $pending, 'color' => 'status-pending'],
-            ['label' => 'REVIEW',       'val' => $Review,  'color' => 'status-review'],
-            ['label' => 'PROCESS',      'val' => $process, 'color' => 'status-process'],
-            ['label' => 'PARTIAL DONE', 'val' => $partial, 'color' => 'status-partial'],
-            ['label' => 'SELESAI',      'val' => $done,    'color' => 'status-done'],
+            ['label' => 'PENDING',      'val' => $pending ?? 0, 'db' => 'Pending', 'color' => 'status-pending'],
+            ['label' => 'REVIEW',       'val' => $Review ?? 0,  'db' => 'Review',  'color' => 'status-review'],
+            ['label' => 'PROCESS',      'val' => $process ?? 0, 'db' => 'Process', 'color' => 'status-process'],
+            ['label' => 'PARTIAL DONE', 'val' => $partial ?? 0, 'db' => 'Partial Done', 'color' => 'status-partial'],
+            ['label' => 'SELESAI',      'val' => $done ?? 0,    'db' => 'Done',    'color' => 'status-done'],
+            ['label' => 'VOID / REJECT','val' => $void ?? 0,    'db' => 'Void',    'color' => 'status-void'],
         ];
     @endphp
     @foreach($proc as $p)
-    <div class="col">
-        <div class="card-pipeline {{ $p['color'] }} h-100 p-4">
-            <div class="d-flex flex-column align-items-center text-center">
-                <div class="icon-pipeline {{ $p['color'] }} bg-opacity-10 mb-2">
-                    <i class="bi bi-circle-fill fs-6"></i>
+    <div class="col-md-2">
+        <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => $p['db']])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-pipeline {{ $p['color'] }} h-100 p-3">
+                <div class="d-flex flex-column align-items-center text-center">
+                    <div class="icon-pipeline {{ $p['color'] }} bg-opacity-10 mb-2" style="width: 40px; height: 40px;">
+                        <i class="bi bi-circle-fill fs-6"></i>
+                    </div>
+                    <h4 class="mb-1 fw-bold {{ $p['color'] }}">{{ number_format($p['val']) }}</h4>
+                    <div class="fw-bold text-muted text-uppercase tracking-wider" style="font-size: 0.6rem;">{{ $p['label'] }}</div>
                 </div>
-                <h3 class="mb-1 fw-bold {{ $p['color'] }}">{{ number_format($p['val']) }}</h3>
-                <div class="small fw-bold text-muted text-uppercase">{{ $p['label'] }}</div>
             </div>
-        </div>
+        </a>
     </div>
     @endforeach
 </div>
@@ -255,23 +330,25 @@
 <div class="row g-3 mb-4">
     @php
         $cats = [
-            ['label' => 'CANCEL',       'val' => $cancelCount,       'color' => '#94a3b8'],
-            ['label' => 'ADJUST',       'val' => $adjustCount,       'color' => '#38bdf8'],
-            ['label' => 'INT. MEMO',    'val' => $internalMemoCount, 'color' => '#fbbf24'],
-            ['label' => 'MUTASI PROD',  'val' => $mutasiProdukCount, 'color' => '#34d399'],
-            ['label' => 'BUNDEL',       'val' => $bundelCount,       'color' => '#f87171'],
-            ['label' => 'MUTASI BIL',   'val' => $mutasiBilletCount, 'color' => '#818cf8'],
+            ['label' => 'CANCEL',       'val' => $cancelCount,       'code' => 'Cancel',        'color' => '#94a3b8'],
+            ['label' => 'ADJUST',       'val' => $adjustCount,       'code' => 'Adjust',        'color' => '#38bdf8'],
+            ['label' => 'INT. MEMO',    'val' => $internalMemoCount, 'code' => 'Internal_Memo', 'color' => '#fbbf24'],
+            ['label' => 'MUTASI PROD',  'val' => $mutasiProdukCount, 'code' => 'Mutasi_Produk', 'color' => '#34d399'],
+            ['label' => 'BUNDEL',       'val' => $bundelCount,       'code' => 'Bundel',        'color' => '#f87171'],
+            ['label' => 'MUTASI BIL',   'val' => $mutasiBilletCount, 'code' => 'Mutasi_Billet',  'color' => '#818cf8'],
         ];
     @endphp
     @foreach($cats as $c)
     <div class="col-md-2">
-        <div class="card-category h-100">
-            <div class="icon-category-circle" style="background: {{ $c['color'] }}">
-                <i class="bi bi-folder2-open"></i>
+        <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['jenis_pengajuan' => $c['code']])) }}" class="text-decoration-none h-100 d-block">
+            <div class="card-category h-100">
+                <div class="icon-category-circle" style="background: {{ $c['color'] }}">
+                    <i class="bi bi-folder2-open"></i>
+                </div>
+                <div class="small fw-bold text-muted mb-1 text-uppercase">{{ $c['label'] }}</div>
+                <div class="cat-count" style="color: {{ $c['color'] }}">{{ number_format($c['val']) }}</div>
             </div>
-            <div class="small fw-bold text-muted mb-1 text-uppercase">{{ $c['label'] }}</div>
-            <div class="cat-count" style="color: {{ $c['color'] }}">{{ number_format($c['val']) }}</div>
-        </div>
+        </a>
     </div>
     @endforeach
 </div>

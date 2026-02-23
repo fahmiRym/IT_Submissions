@@ -221,7 +221,7 @@
                  <label class="form-label small fw-bold text-secondary mb-1">⚙️ Status Proses</label>
                  <select name="ket_process" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
                      <option value="">Semua</option>
-                     @foreach(['Review','Process','Done','Pending','Void'] as $st)
+                     @foreach(['Review','Process','Done','Partial Done','Pending','Void'] as $st)
                          <option value="{{ $st }}" {{ request('ket_process')==$st?'selected':'' }}>{{ $st }}</option>
                      @endforeach
                  </select>
@@ -231,9 +231,29 @@
             <div class="col-md-2">
                 <label class="form-label small fw-bold text-secondary mb-1">🏢 Departemen</label>
                 <select name="department_id" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
-                    <option value="">-- Semua --</option>
+                    <option value="">Semua</option>
                     @foreach($departments as $d)
                         <option value="{{ $d->id }}" {{ request('department_id')==$d->id?'selected':'' }}>{{ $d->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-secondary mb-1">📦 Unit</label>
+                <select name="unit_id" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
+                    <option value="">Semua</option>
+                    @foreach($units as $u)
+                        <option value="{{ $u->id }}" {{ request('unit_id')==$u->id?'selected':'' }}>{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-secondary mb-1">🧑‍💼 Manager</label>
+                <select name="manager_id" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
+                    <option value="">Semua</option>
+                    @foreach($managers as $m)
+                        <option value="{{ $m->id }}" {{ request('manager_id')==$m->id?'selected':'' }}>{{ $m->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -241,9 +261,9 @@
              <div class="col-md-2">
                 <label class="form-label small fw-bold text-secondary mb-1">👤 Pengaju</label>
                 <select name="admin_id" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
-                    <option value="">-- Semua --</option>
+                    <option value="">Semua</option>
                     @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ (request('admin_id') ?? request('user_id')) == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                        <option value="{{ $u->id }}" {{ request('admin_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -258,11 +278,11 @@
                 </select>
             </div>
 
-            <div class="col-md-5 d-flex gap-2 align-items-end">
+            <div class="col-md-2 d-flex gap-2 align-items-end">
                 <button type="submit" class="btn btn-primary fw-bold shadow-sm flex-fill" style="background: #4f46e5; border-color: #4f46e5; border-radius: 8px; height: 38px;">
                     <i class="bi bi-funnel-fill me-1"></i> Filter
                 </button>
-                <a href="{{ route('superadmin.arsip.index') }}" class="btn btn-light border" style="border-radius: 8px; width: 45px; height: 38px;" title="Reset Filter">
+                <a href="{{ route('superadmin.arsip.index') }}" class="btn btn-light border px-2" style="border-radius: 8px; height: 38px;" title="Reset Filter">
                     <i class="bi bi-arrow-counterclockwise"></i>
                 </a>
             </div>
@@ -300,23 +320,28 @@
 <div class="row g-3 mb-4 animate-on-scroll">
     {{-- Main Stat Card - Premium Refined --}}
     <div class="col-xl-3 col-lg-4 col-md-6">
-        <div class="card border-0 stat-card-main text-white h-100 p-1" style="background: {{ $sConfig['bg'] }}; min-height: 160px;">
-            <div class="mesh-gradient"></div>
-            <div class="pattern-overlay"></div>
-            
-            <div class="card-body d-flex flex-column justify-content-between p-4 position-relative" style="z-index: 2;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 56px; height: 56px; backdrop-filter: blur(4px);">
-                        <i class="bi {{ $sConfig['icon'] }} fs-3 text-white"></i>
+        @php
+            $resetFilters = array_diff_key(request()->all(), array_flip(['ket_process', 'ba', 'arsip']));
+        @endphp
+        <a href="{{ route('superadmin.arsip.index', $resetFilters) }}" class="text-decoration-none h-100 d-block">
+            <div class="card border-0 stat-card-main text-white h-100 p-1 shadow-sm transform-scale" style="background: {{ $sConfig['bg'] }}; min-height: 160px; cursor: pointer;">
+                <div class="mesh-gradient"></div>
+                <div class="pattern-overlay"></div>
+                
+                <div class="card-body d-flex flex-column justify-content-between p-4 position-relative" style="z-index: 2;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 56px; height: 56px; backdrop-filter: blur(4px);">
+                            <i class="bi {{ $sConfig['icon'] }} fs-3 text-white"></i>
+                        </div>
+                        <div class="glass-badge">ACTIVE</div>
                     </div>
-                    <div class="glass-badge">ACTIVE</div>
-                </div>
-                <div>
-                    <h1 class="fw-extrabold mb-0 lh-1 stat-card-text-large" style="font-size: 2.8rem; letter-spacing: -2px;">{{ number_format($stats['total'] ?? 0) }}</h1>
-                    <p class="mb-0 small fw-extrabold opacity-75 mt-2 letter-spacing-1 text-uppercase text-white" style="font-size: 0.72rem;">{{ $sConfig['title'] }}</p>
+                    <div>
+                        <h1 class="fw-extrabold mb-0 lh-1 stat-card-text-large" style="font-size: 2.8rem; letter-spacing: -2px;">{{ number_format($stats['total'] ?? 0) }}</h1>
+                        <p class="mb-0 small fw-extrabold opacity-75 mt-2 letter-spacing-1 text-uppercase text-white" style="font-size: 0.72rem;">{{ $sConfig['title'] }}</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     {{-- Tiny Stat Cards matching Mockup --}}
@@ -334,6 +359,7 @@
             ['label' => 'BA PROCESS', 'key' => 'ba_process', 'icon' => 'bi-file-earmark-play-fill', 'color' => '#0ea5e9', 'param' => 'ba', 'val' => 'Process'],
             ['label' => 'BA SELESAI', 'key' => 'ba_done', 'icon' => 'bi-file-earmark-check-fill', 'color' => '#0d9488', 'param' => 'ba', 'val' => 'Done'],
             ['label' => 'ARSIP PENDING', 'key' => 'arsip_pending', 'icon' => 'bi-folder-x', 'color' => '#cbd5e1', 'param' => 'arsip', 'val' => 'Pending'],
+            ['label' => 'ARSIP PROCESS', 'key' => 'arsip_process', 'icon' => 'bi-folder-plus', 'color' => '#0ea5e9', 'param' => 'arsip', 'val' => 'Process'],
             ['label' => 'ARSIP SELESAI', 'key' => 'arsip_done', 'icon' => 'bi-folder-check', 'color' => '#84cc16', 'param' => 'arsip', 'val' => 'Done'],
         ];
     @endphp
@@ -344,8 +370,13 @@
             <div class="row g-2 flex-fill">
                 @foreach($mainStats as $ts)
                 <div class="col">
-                    <a href="{{ request()->fullUrlWithQuery([$ts['param'] => $ts['key']]) }}" class="text-decoration-none h-100 d-block">
-                        <div class="card mini-stat-card border-0 shadow-sm h-100 py-1" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease;">
+                    @php
+                        // Klik status utama membersihkan filter BA dan ARSIP agar data muncul (sesuai angka di kartu)
+                        $cleanParams = array_diff_key(request()->all(), array_flip(['ba', 'arsip']));
+                        $cleanParams[$ts['param']] = $ts['key'];
+                    @endphp
+                    <a href="{{ route('superadmin.arsip.index', $cleanParams) }}" class="text-decoration-none h-100 d-block">
+                        <div class="card mini-stat-card border-0 shadow-sm h-100 py-1" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease; cursor: pointer;">
                             <div class="card-body p-3 d-flex flex-column justify-content-center gap-1">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h5 class="fw-extrabold text-primary-dark mb-0" style="letter-spacing: -1px;">{{ number_format($stats[$ts['key']] ?? 0) }}</h5>
@@ -365,8 +396,13 @@
             <div class="row g-2 flex-fill">
                 @foreach($docStats as $ts)
                 <div class="col">
-                    <a href="{{ request()->fullUrlWithQuery([$ts['param'] => $ts['val']]) }}" class="text-decoration-none h-100 d-block">
-                        <div class="card mini-stat-card border-0 shadow-sm h-100 py-1" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease; border-left: 3px solid {{ $ts['color'] }} !important;">
+                    @php
+                        // Klik status dokumen membersihkan filter STATUS UTAMA agar data muncul
+                        $cleanParams = array_diff_key(request()->all(), array_flip(['ket_process']));
+                        $cleanParams[$ts['param']] = $ts['val'];
+                    @endphp
+                    <a href="{{ route('superadmin.arsip.index', $cleanParams) }}" class="text-decoration-none h-100 d-block">
+                        <div class="card mini-stat-card border-0 shadow-sm h-100 py-1" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease; border-left: 3px solid {{ $ts['color'] }} !important; cursor: pointer;">
                             <div class="card-body p-3 d-flex flex-column justify-content-center gap-1">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h5 class="fw-extrabold text-primary-dark mb-0" style="letter-spacing: -1px;">{{ number_format($stats[$ts['key']] ?? 0) }}</h5>
@@ -997,6 +1033,7 @@ $(document).ready(function() {
                 // 4. Fill Data
                 $('#editUserId').val(data.admin_id).trigger('change');
                 $('#editNoRegistrasi').val(data.no_registrasi);
+                $('#editNoDoc').val(data.no_doc);
                 $('#editTglPengajuan').val(data.tgl_pengajuan ? data.tgl_pengajuan.substring(0, 10) : '');
                 $('#editTglArsip').val(data.tgl_arsip ? data.tgl_arsip.substring(0, 10) : '');
                 

@@ -14,8 +14,36 @@ class DashboardController extends Controller
     {
         $adminId = auth()->id();
 
-        $query = Arsip::with(['department', 'adjustItems', 'mutasiItems', 'bundelItems'])
+        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems'])
             ->where('admin_id', $adminId);
+
+        // FILTER TANGGAL
+        if ($request->filled('start_date')) {
+            $query->whereDate('tgl_pengajuan', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('tgl_pengajuan', '<=', $request->end_date);
+        }
+
+        // FILTER DEPARTEMEN
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // FILTER MANAGER
+        if ($request->filled('manager_id')) {
+            $query->where('manager_id', $request->manager_id);
+        }
+
+        // FILTER UNIT
+        if ($request->filled('unit_id')) {
+            $query->where('unit_id', $request->unit_id);
+        }
+
+        // FILTER KATEGORI
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
 
         // ================= BASIC STATS =================
         $total   = (clone $query)->count();
@@ -24,6 +52,7 @@ class DashboardController extends Controller
         $done    = (clone $query)->where('ket_process', 'Done')->count();
         $pending = (clone $query)->where('ket_process', 'Pending')->count();
         $partial = (clone $query)->where('ket_process', 'Partial Done')->count();
+        $void    = (clone $query)->where('ket_process', 'Void')->count();
 
         // ================= STATUS CHART (ket_process) =================
         $statusChart = (clone $query)
@@ -56,10 +85,7 @@ class DashboardController extends Controller
         $cancelCount       = (clone $query)->where('jenis_pengajuan', 'Cancel')->count();
 
         // ================= HISTORY =================
-        $arsips = Arsip::with(['department', 'adjustItems', 'mutasiItems', 'bundelItems'])
-            ->where('admin_id', $adminId)
-            ->latest()
-            ->paginate(10);
+        $arsips = (clone $query)->latest()->paginate(10);
 
         return view('admin.dashboard.index', [
             // Basic stats
@@ -69,6 +95,7 @@ class DashboardController extends Controller
             'done'    => $done,
             'pending' => $pending,
             'partial' => $partial,
+            'void'    => $void,
 
             // Jenis Pengajuan Stats
             'adjustCount'       => $adjustCount,
@@ -85,6 +112,11 @@ class DashboardController extends Controller
 
             // History
             'arsips' => $arsips,
+
+            // Dropdowns
+            'departments' => Department::orderBy('name')->get(),
+            'managers'    => \App\Models\Manager::orderBy('name')->get(),
+            'units'       => \App\Models\Unit::orderBy('name')->get(),
         ]);
     }
 }

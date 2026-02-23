@@ -36,16 +36,36 @@ class DashboardController extends Controller
         $query = Arsip::with(['admin','department','unit','manager']);
 
         // FILTER TANGGAL
-        if ($request->filled('from') && $request->filled('to')) {
-            $query->whereBetween('tgl_pengajuan', [
-                $request->from,
-                $request->to
-            ]);
+        if ($request->filled('start_date')) {
+            $query->whereDate('tgl_pengajuan', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('tgl_pengajuan', '<=', $request->end_date);
         }
 
         // FILTER DEPARTEMEN
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
+        }
+
+        // FILTER MANAGER
+        if ($request->filled('manager_id')) {
+            $query->where('manager_id', $request->manager_id);
+        }
+
+        // FILTER UNIT
+        if ($request->filled('unit_id')) {
+            $query->where('unit_id', $request->unit_id);
+        }
+
+        // FILTER USER (PENGAJU)
+        if ($request->filled('user_id')) {
+            $query->where('admin_id', $request->user_id);
+        }
+
+        // FILTER KATEGORI
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
         }
 
         // FILTER JENIS PENGAJUAN
@@ -56,10 +76,10 @@ class DashboardController extends Controller
         // ================= BASIC STATS =================
         // Total Arsip: Hanya yang status fisiknya 'Done' (Sudah diarsip)
         $totalArsip   = (clone $query)->where('arsip', 'Done')->count();
-        $arsipDone    = (clone $query)->where('status','Done')->count();
-        $arsipProcess = (clone $query)->where('status','Process')->count();
+        $arsipDone    = (clone $query)->where('ket_process', 'Done')->count();
+        $arsipProcess = (clone $query)->where('ket_process', 'Process')->count();
 
-        $totalPengajuan = Arsip::count(); // Total seluruh pengajuan tanpa filter
+        $totalPengajuan = (clone $query)->count(); // Total pengajuan SESUAI filter
         $totalDept = Department::count();
         $totalUser = User::count();
 
@@ -73,14 +93,16 @@ class DashboardController extends Controller
 
         // ================= BA & ARSIP STATUS =================
         $baDone = (clone $query)->where('ba', 'Done')->count();
+        $baProcess = (clone $query)->where('ba', 'Process')->count();
         $baPending = (clone $query)->where('ba', 'Pending')->count();
         $arsipStatusDone = (clone $query)->where('arsip', 'Done')->count();
+        $arsipStatusProcess = (clone $query)->where('arsip', 'Process')->count();
         $arsipStatusPending = (clone $query)->where('arsip', 'Pending')->count();
 
         // ================= STATUS CHART =================
         $statusChart = (clone $query)
-            ->select('status', DB::raw('COUNT(*) as total'))
-            ->groupBy('status')
+            ->select('ket_process as status', DB::raw('COUNT(*) as total'))
+            ->groupBy('ket_process')
             ->get();
 
         // ================= JENIS PENGAJUAN CHART =================
@@ -93,11 +115,11 @@ class DashboardController extends Controller
         $auditByDepartment = Department::leftJoin('arsips', function ($join) use ($request) {
                 $join->on('departments.id','=','arsips.department_id');
 
-                if ($request->filled('from') && $request->filled('to')) {
-                    $join->whereBetween('arsips.tgl_pengajuan', [
-                        $request->from,
-                        $request->to
-                    ]);
+                if ($request->filled('start_date')) {
+                    $join->whereDate('arsips.tgl_pengajuan', '>=', $request->start_date);
+                }
+                if ($request->filled('end_date')) {
+                    $join->whereDate('arsips.tgl_pengajuan', '<=', $request->end_date);
                 }
 
                 if ($request->filled('jenis_pengajuan')) {
@@ -161,8 +183,10 @@ class DashboardController extends Controller
             
             // BA & Arsip Status
             'baDone'           => $baDone,
+            'baProcess'        => $baProcess,
             'baPending'        => $baPending,
             'arsipStatusDone'  => $arsipStatusDone,
+            'arsipStatusProcess'=> $arsipStatusProcess,
             'arsipStatusPending'=> $arsipStatusPending,
             
             // Charts
@@ -185,12 +209,16 @@ class DashboardController extends Controller
             'ketDone'          => (clone $query)->where('ket_process', 'Done')->count(),
             'ketPartial'       => (clone $query)->where('ket_process', 'Partial Done')->count(),
             'ketReview'        => (clone $query)->where('ket_process', 'Review')->count(), // Assuming Review exists based on table logic
+            'ketVoid'          => (clone $query)->where('ket_process', 'Void')->count(),
 
             'monthlyChart'     => $monthlyChart,
             
             // Others
             'latestArsip'      => $latestArsip,
             'departments'      => Department::orderBy('name')->get(),
+            'managers'         => \App\Models\Manager::orderBy('name')->get(),
+            'units'            => \App\Models\Unit::orderBy('name')->get(),
+            'users'            => \App\Models\User::where('role', 'admin')->orderBy('name')->get(),
         ]);
     }
 }
