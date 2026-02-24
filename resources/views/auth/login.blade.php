@@ -15,9 +15,7 @@
     @endif
     
     {{-- Google Fonts --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     {{-- Bootstrap & Icons --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -33,7 +31,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
         .login-card {
             width: 100%;
@@ -81,7 +79,7 @@
     </div>
     
     <div class="p-4 pt-3">
-        @error('login')
+        @error('username')
             <div class="alert alert-danger d-flex align-items-center mb-4 border-0 shadow-sm" role="alert">
                 <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
                 <div>{{ $message }}</div>

@@ -13,24 +13,30 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // SUPERADMIN
-        User::create([
-            'name' => 'Fahmi',
-            'username' => 'fahmi',
-            'email' => 'superadmin@inkalum.com',
-            'password' => Hash::make('123456'),
-            'role' => 'superadmin',
-            'department_id' => 18
-        ]);
+        User::updateOrCreate(
+            ['username' => 'fahmi'],
+            [
+                'name' => 'Fahmi',
+                'email' => 'superadmin@inkalum.com',
+                'password' => Hash::make('bismillah'),
+                'role' => 'superadmin',
+                'department_id' => 18,
+                'is_active' => true
+            ]
+        );
 
         // ADMIN
-        User::create([
-            'name' => 'Admin Produksi',
-            'username' => 'admin',
-            'email' => 'admin@inkalum.com',
-            'password' => Hash::make('admin'),
-            'role' => 'admin',
-            'department_id' => 1
-        ]);
+        User::updateOrCreate(
+            ['username' => 'admin'],
+            [
+                'name' => 'Admin Produksi',
+                'email' => 'admin@inkalum.com',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+                'department_id' => 1,
+                'is_active' => true
+            ]
+        );
     }
 
 }

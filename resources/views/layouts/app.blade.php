@@ -17,8 +17,7 @@
 
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     {{-- Bootstrap & Icons --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -104,7 +103,7 @@
             <button class="btn btn-light d-md-none" onclick="document.querySelector('.sidebar').classList.toggle('show')" style="border-radius: 10px;">
                 <i class="bi bi-list fs-5"></i>
             </button>
-            <span class="fw-bold fs-5 text-dark">@yield('page-title')</span>
+            <span class="fw-semibold fs-5 text-dark">@yield('page-title')</span>
         </div>
         
         @auth

@@ -81,17 +81,9 @@ function showBukti(url) {
     const openTab = document.getElementById('btnOpenTab');
     const dl      = document.getElementById('btnDownload');
 
-    // --- TAMBAHAN: Pengecekan Path ---
-    // Jika URL tidak diawali http/https dan tidak ada kata 'storage', tambahkan manual
-    if (!url.startsWith('http') && !url.includes('storage/')) {
-        url = '/storage/' + url;
-    }
-    // ---------------------------------
-
-    // reset
     frame.classList.add('d-none');
     img.classList.add('d-none');
-    frame.src = ''; // Kosongkan dulu biar gak loading file lama
+    frame.src = '';
     img.src = '';
 
     openTab.href = url;
@@ -99,12 +91,10 @@ function showBukti(url) {
 
     const ext = url.split('.').pop().toLowerCase();
 
-    // Deteksi ekstensi gambar
     if (['jpg','jpeg','png','gif','webp','bmp'].includes(ext)) {
         img.src = url;
         img.classList.remove('d-none');
     } else {
-        // Asumsi PDF
         frame.src = url;
         frame.classList.remove('d-none');
     }
