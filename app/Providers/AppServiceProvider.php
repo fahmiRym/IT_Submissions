@@ -24,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS di server produksi (mencegah Mixed Content Error di browser)
+        if (config('app.env') !== 'local') {
+            URL::forceScheme('https');
+        }
+
         View::composer('*', function ($view) {
             // Data pengaturan global
             $view->with([
