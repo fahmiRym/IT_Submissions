@@ -43,9 +43,28 @@ Route::post('/logout', [LoginController::class,'logout'])->name('logout');
 */
 Route::get('/', fn () => redirect()->route('login'));
 
-Route::get('/debug-db', function() {
-    return Schema::getColumnListing('arsips');
-});
+// FILE PREVIEW — Tidak perlu auth karena filename tidak bisa ditebak
+// Ini agar preview bisa jalan di HTTP maupun HTTPS tanpa masalah session cookie
+Route::get('/preview-file/{filename}', function ($filename) {
+    // Hanya izinkan nama file yang aman (alfanumeric, -, _, .)
+    if (!preg_match('/^[a-zA-Z0-9_\-\.]+$/', $filename)) {
+        abort(403);
+    }
+
+    $path = storage_path('app/public/bukti_scan/' . $filename);
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    $mime = mime_content_type($path);
+
+    return response()->file($path, [
+        'Content-Type'        => $mime,
+        'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        'Cache-Control'       => 'private, max-age=3600',
+    ]);
+})->name('preview.file');
 
 /*
 |--------------------------------------------------------------------------
@@ -62,22 +81,6 @@ Route::middleware('auth')->group(function () {
         ->name('notifications.index');
     Route::put('/notifications/{notification}/read', [NotificationController::class, 'read'])
         ->name('notifications.read');
-
-    // SECURE FILE VIEW (Bypass Symlink Issues)
-    Route::get('/preview-file/{filename}', function ($filename) {
-        $path = storage_path('app/public/bukti_scan/' . $filename);
-        
-        if (!file_exists($path)) {
-            abort(404);
-        }
-
-        $mime = mime_content_type($path);
-
-        return response()->file($path, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="'.$filename.'"'
-        ]);
-    })->name('preview.file');
 });
 
 /*
