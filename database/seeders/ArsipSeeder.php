@@ -21,8 +21,8 @@ class ArsipSeeder extends Seeder
             'manager_id'    => 1,
             'unit_id'       => 1,
 
-            'eror'          => 'Human',
-            'ket_eror'      => 'Salah input nomor transaksi',
+            'kategori'      => 'Human',
+            'keterangan'    => 'Salah input nomor transaksi',
 
             'no_doc'        => null,
             'no_transaksi'  => "MO/PF/25/10/105867\nINK/PR/25700803\nBPB-25/12/0100",
