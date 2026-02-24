@@ -24,8 +24,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force HTTPS di server produksi (mencegah Mixed Content Error di browser)
-        if (config('app.env') !== 'local') {
+        // Auto-detect HTTPS dari Cloudflare Tunnel / Reverse Proxy
+        // Cloudflare mengirim header X-Forwarded-Proto: https
+        // Saat di local (HTTP biasa), header ini tidak ada jadi tidak di-force
+        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             URL::forceScheme('https');
         }
 
