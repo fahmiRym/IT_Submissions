@@ -1132,11 +1132,74 @@ $(document).ready(function() {
         else if (val === 'Check') target.val('Review');
     });
 
-    // 3. ARSIP SISTEM
+    // 3. ARSIP SISTEM - AJAX SUBMIT
+    let _arsipSistemCurrentId = null;
+
     $('.btn-arsip-sistem').on('click', function() {
-         const id = $(this).data('id');
-         const f = document.getElementById('formArsipSistem');
-         if(f) f.action = `/superadmin/arsip/${id}/arsip-sistem`;
+        _arsipSistemCurrentId = $(this).data('id');
+        $('#arsipSistemSeqInput').val('');
+    });
+
+    $('#formArsipSistem').on('submit', function(e) {
+        e.preventDefault();
+
+        if (!_arsipSistemCurrentId) return;
+
+        const btn = $('#btnSubmitArsipSistem');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Memproses...');
+
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: `/superadmin/arsip/${_arsipSistemCurrentId}/arsip-sistem`,
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(res) {
+                // Tutup modal arsip sistem
+                bootstrap.Modal.getInstance(document.getElementById('modalArsipSistem')).hide();
+
+                const isCancel = (res.jenis_pengajuan === 'Cancel' || res.jenis_pengajuan === 'Cancelled');
+
+                // Isi no_doc & no_registrasi (untuk section non-cancel)
+                $('#resultNoDoc').text(res.no_doc || '-');
+                $('#resultNoReg').text(res.no_registrasi || '-');
+
+                if (isCancel) {
+                    // Section Cancel: tampilkan preview gabungan
+                    $('#sectionCancelResult').removeClass('d-none');
+                    $('#sectionNonCancelResult').addClass('d-none');
+
+                    // Isi teks Copy All: No Doc + baris sub transaksi
+                    const copyAll = res.copy_all_text || res.no_doc || '';
+                    $('#resultCopyAll').text(copyAll);
+
+                } else {
+                    // Section non-Cancel: tampilkan no_doc + no_registrasi
+                    $('#sectionCancelResult').addClass('d-none');
+                    $('#sectionNonCancelResult').removeClass('d-none');
+                }
+
+                // Tampilkan modal hasil
+                new bootstrap.Modal(document.getElementById('modalHasilArsip')).show();
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html('✔ Arsipkan Sekarang');
+                let msg = 'Gagal mengarsipkan data.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                alert(msg);
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('✔ Arsipkan Sekarang');
+            }
+        });
     });
 
     // 4. AJAX SUBMIT EDIT FORM
@@ -1248,6 +1311,72 @@ window.addBundelRowEdit = function(no_doc='', qty=1, ket='') {
         </tr>
     `);
 };
+
+// =========================================================================
+// HELPER: COPY TEXT ke clipboard
+// =========================================================================
+window.copyText = function(elementId, btn) {
+    const el = document.getElementById(elementId);
+    const text = el ? el.textContent.trim() : '';
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(function() {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-clipboard-check-fill me-1"></i>Disalin!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-warning', 'btn-outline-info');
+        setTimeout(function() {
+            btn.innerHTML = original;
+            btn.classList.remove('btn-success');
+        }, 2000);
+    }).catch(function() {
+        // Fallback untuk browser lama
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        try { document.execCommand('copy'); } catch(err) {}
+        sel.removeAllRanges();
+    });
+};
+
+// =========================================================================
+// HELPER: COPY ALL (untuk tombol di section Cancel)
+// =========================================================================
+window.copyAllResult = function(btn) {
+    const el = document.getElementById('resultCopyAll');
+    const text = el ? el.textContent.trim() : '';
+    if (!text) return;
+
+    const doCopy = function() {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-clipboard-check-fill me-1"></i>Disalin!';
+        btn.classList.replace('btn-success', 'btn-dark');
+        setTimeout(function() {
+            btn.innerHTML = original;
+            btn.classList.replace('btn-dark', 'btn-success');
+        }, 2500);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(doCopy).catch(function() {
+            fallbackCopy(el, doCopy);
+        });
+    } else {
+        fallbackCopy(el, doCopy);
+    }
+};
+
+function fallbackCopy(el, callback) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try { document.execCommand('copy'); callback(); } catch(err) {}
+    sel.removeAllRanges();
+}
 
 </script>
 @endpush

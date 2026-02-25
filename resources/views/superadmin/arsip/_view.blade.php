@@ -83,7 +83,7 @@ function showBukti(url) {
 
     frame.classList.add('d-none');
     img.classList.add('d-none');
-    frame.src = '';
+    frame.src = ''; 
     img.src = '';
 
     openTab.href = url;

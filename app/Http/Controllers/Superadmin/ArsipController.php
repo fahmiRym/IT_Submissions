@@ -360,34 +360,39 @@ class ArsipController extends Controller
                     break;
             }
 
-            // --- LOGIKA SEQUENCE OTOMATIS (Mencari nomor terakhir dari No Doc) ---
+            // --- LOGIKA SEQUENCE OTOMATIS (Mencari nomor urut TERBESAR dari No Doc) ---
             $rawSeq = $request->sequence_number;
-            
+
             if (!$rawSeq) {
-                // Cari arsip terakhir dengan prefix yang sama untuk tahun ini
-                // Kita cari pattern prefix di awal string no_doc
-                $lastDoc = Arsip::where('jenis_pengajuan', $arsip->jenis_pengajuan)
+                $normalizedJenis = trim(str_replace(' ', '_', $arsip->jenis_pengajuan));
+
+                // Ambil SEMUA record jenis yang sama yang sudah punya no_doc di tahun ini
+                $allDocs = Arsip::where('jenis_pengajuan', $arsip->jenis_pengajuan)
                     ->whereNotNull('no_doc')
                     ->where('no_doc', 'like', "%{$tahun}%")
-                    ->orderBy('id', 'desc')
-                    ->first();
+                    ->pluck('no_doc');
 
-                if ($lastDoc) {
-                    $normalizedJenis = trim(str_replace(' ', '_', $arsip->jenis_pengajuan));
+                $maxNumber = 0;
+
+                foreach ($allDocs as $docStr) {
                     if ($normalizedJenis === 'Cancel' || $normalizedJenis === 'Cancelled') {
-                        preg_match('/Cancelled No Doc\s*:\s*(\d+)/', $lastDoc->no_doc, $matches);
+                        // Format: "Cancelled No Doc : 0025/02/IT/2026"
+                        // Ambil angka tepat setelah ": "
+                        if (preg_match('/Cancelled No Doc\s*:\s*(\d+)/', $docStr, $m)) {
+                            $maxNumber = max($maxNumber, (int)$m[1]);
+                        }
                     } else {
-                        $parts = explode('/', $lastDoc->no_doc);
+                        // Format: "PREFIX/TAHUN/BULAN/NNNN" atau "PREFIX/TAHUN/BULAN/HARI/NNNN"
+                        // Nomor urut selalu merupakan segmen TERAKHIR
+                        $parts = explode('/', $docStr);
                         $lastSegment = end($parts);
                         if (is_numeric($lastSegment)) {
-                            $matches[1] = $lastSegment;
+                            $maxNumber = max($maxNumber, (int)$lastSegment);
                         }
                     }
-                    $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
-                    $rawSeq = $lastNumber + 1;
-                } else {
-                    $rawSeq = 1;
                 }
+
+                $rawSeq = $maxNumber + 1;
             }
 
             $seqDoc = str_pad($rawSeq, $padding, '0', STR_PAD_LEFT);
@@ -427,6 +432,45 @@ class ArsipController extends Controller
             ]);
 
             DB::commit(); // Simpan semua perubahan jika sukses
+
+            if ($request->wantsJson() || $request->ajax()) {
+                $isCancel = in_array(trim($arsip->jenis_pengajuan), ['Cancel', 'Cancelled']);
+
+                $noTransaksiSub = '';
+                $copyAllText    = '';
+
+                if ($isCancel) {
+                    // Filter Sub Transaksi (buang baris yang diawali MO atau PO)
+                    $indukPrefixes  = ['MO', 'PO'];
+                    $noTransaksiRaw = $arsip->no_transaksi ?? '';
+                    $allLines       = preg_split('/\r\n|\n|\r/', $noTransaksiRaw);
+                    $subLines       = array_filter($allLines, function ($line) use ($indukPrefixes) {
+                        $trimmed = trim($line);
+                        if ($trimmed === '') return false;
+                        foreach ($indukPrefixes as $prefix) {
+                            if (str_starts_with($trimmed, $prefix)) return false;
+                        }
+                        return true;
+                    });
+                    $noTransaksiSub = implode("\n", array_values($subLines));
+
+                    // Gabungan siap copy: No Doc + newline + sub transaksi
+                    $copyAllText = $finalNoDoc;
+                    if ($noTransaksiSub !== '') {
+                        $copyAllText .= "\n" . $noTransaksiSub;
+                    }
+                }
+
+                return response()->json([
+                    'status'           => 'success',
+                    'no_doc'           => $finalNoDoc,
+                    'no_registrasi'    => $noRegistrasiFix,
+                    'jenis_pengajuan'  => $arsip->jenis_pengajuan,
+                    'no_transaksi_sub' => $noTransaksiSub,
+                    'copy_all_text'    => $copyAllText,
+                    'message'          => "Berhasil diarsipkan!",
+                ]);
+            }
 
             return redirect()
                 ->route('superadmin.arsip.index')
