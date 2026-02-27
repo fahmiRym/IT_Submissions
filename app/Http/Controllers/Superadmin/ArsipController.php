@@ -735,4 +735,15 @@ class ArsipController extends Controller
             }
         }
     }
+
+    /**
+     * ===============================
+     * PRINT DRAFT
+     * ===============================
+     */
+    public function printDraft($id)
+    {
+        $arsip = Arsip::with(['department', 'unit', 'admin'])->findOrFail($id);
+        return view('print.arsip_draft', compact('arsip'));
+    }
 }

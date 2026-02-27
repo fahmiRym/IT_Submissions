@@ -120,20 +120,17 @@
                             ->where('is_read', false)
                             ->count();
                     @endphp
-                    @if($unreadCount > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                    <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {{ $unreadCount == 0 ? 'd-none' : '' }}" 
                           style="font-size: 0.65rem; padding: 0.25em 0.5em;">
                         {{ $unreadCount > 9 ? '9+' : $unreadCount }}
                     </span>
-                    @endif
                 </button>
+
                 
                 <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-0" style="width: 320px; max-height: 400px; overflow-y: auto; border-radius: 12px;">
                     <div class="p-3 border-bottom bg-primary text-white d-flex justify-content-between align-items-center">
                         <h6 class="mb-0 fw-bold"><i class="bi bi-bell-fill me-2"></i>Notifikasi</h6>
-                        @if($unreadCount > 0)
-                        <span class="badge bg-white text-primary rounded-pill">{{ $unreadCount }}</span>
-                        @endif
+                        <span id="dropdown-notification-badge" class="badge bg-white text-primary rounded-pill {{ $unreadCount == 0 ? 'd-none' : '' }}">{{ $unreadCount }}</span>
                     </div>
                     <div style="max-height: 300px; overflow-y: auto;">
                         @php
@@ -240,6 +237,55 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')
+
+@auth
+<audio id="notification-sound" src="{{ asset('audio/notif.mp3') }}" preload="auto"></audio>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let lastUnreadCount = {{ $unreadCount ?? 0 }};
+        
+        setInterval(function() {
+            $.ajax({
+                url: "{{ route('notifications.check') }}",
+                type: "GET",
+                success: function(response) {
+                    let currentCount = response.unreadCount;
+                    
+                    if (currentCount > lastUnreadCount) {
+                        let audio = document.getElementById("notification-sound");
+                        if(audio) {
+                            // Coba mainkan suara (catatan: browser mungkin memblokir auto-play tanpa interaksi user)
+                            audio.play().catch(function(error) {
+                                console.log("Suara dinonaktifkan oleh browser:", error);
+                            });
+                        }
+                    }
+                    
+                    lastUnreadCount = currentCount;
+                    
+                    // Update badge UI
+                    let badge = document.getElementById("notification-badge");
+                    let ddBadge = document.getElementById("dropdown-notification-badge");
+                    
+                    if (currentCount > 0) {
+                        if (badge) {
+                            badge.classList.remove('d-none');
+                            badge.innerText = currentCount > 9 ? '9+' : currentCount;
+                        }
+                        if (ddBadge) {
+                            ddBadge.classList.remove('d-none');
+                            ddBadge.innerText = currentCount;
+                        }
+                    } else {
+                        if (badge) badge.classList.add('d-none');
+                        if (ddBadge) ddBadge.classList.add('d-none');
+                    }
+                }
+            });
+        }, 10000); // Mengecek ada pengajuan baru tiap 10 detik
+    });
+</script>
+@endauth
 
 </body>
 </html>

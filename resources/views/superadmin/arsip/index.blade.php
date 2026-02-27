@@ -757,6 +757,11 @@
 
                         <td class="text-center pe-4">
                             <div class="d-flex gap-2 justify-content-center">
+                                {{-- PRINT DRAFT --}}
+                                <a href="{{ route('superadmin.arsip.print-draft', $a->id) }}" target="_blank" class="btn btn-sm btn-secondary text-white shadow-sm rounded-3 p-2 d-flex align-items-center" title="Print Draft">
+                                    <i class="bi bi-printer-fill"></i>
+                                </a>
+
                                 {{-- VIEW --}}
                                 <button class="btn btn-sm btn-info text-white shadow-sm rounded-3 p-2 d-flex align-items-center" 
                                         onclick="showBukti('{{ $a->bukti_scan ? url('/preview-file/'.$a->bukti_scan) : '#' }}')"
@@ -916,6 +921,19 @@ $(document).ready(function() {
     // Helper Random Index
     function getIndex() { return Math.floor(Math.random() * 100000); }
 
+    // Helper Add Row Counter
+    function refreshAllItemCounts() {
+        ['wrapperAdjust', 'wrapperAsal', 'wrapperTujuan', 'wrapperBundel'].forEach(id => {
+            let count = $(`#${id} tr`).length;
+            let badgeId = id.replace('wrapper', 'badgeCount');
+            if (count > 0) {
+                $(`#${badgeId}`).text(`1-${count} of ${count}`).removeClass('d-none');
+            } else {
+                $(`#${badgeId}`).addClass('d-none');
+            }
+        });
+    }
+
     // 2. TAMBAH BARIS ITEM (CREATE)
     // -- ADJUST --
     $('#btnAddAdjust').on('click', function() {
@@ -930,6 +948,7 @@ $(document).ready(function() {
                 <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
             </tr>
         `);
+        refreshAllItemCounts();
     });
 
     // -- MUTASI --
@@ -957,8 +976,8 @@ $(document).ready(function() {
             </tr>
         `);
     }
-    $('#btnAddAsal').on('click', () => window.addMutasiRow('wrapperAsal', 'asal'));
-    $('#btnAddTujuan').on('click', () => window.addMutasiRow('wrapperTujuan', 'tujuan'));
+    $('#btnAddAsal').on('click', () => { window.addMutasiRow('wrapperAsal', 'asal'); refreshAllItemCounts(); });
+    $('#btnAddTujuan').on('click', () => { window.addMutasiRow('wrapperTujuan', 'tujuan'); refreshAllItemCounts(); });
 
     // -- BUNDEL --
     $('#btnAddBundel').on('click', function() {
@@ -966,15 +985,16 @@ $(document).ready(function() {
         $('#wrapperBundel').append(`
             <tr>
                 <td><input type="text" name="detail_barang[bundel][${idx}][no_doc]" class="form-control form-control-sm border-0 bg-light" placeholder="No Dokumen" required></td>
-                <td><input type="number" step="any" name="detail_barang[bundel][${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold" value="1" required></td>
+                <td><input type="number" step="any" name="detail_barang[bundel][${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold text-center" value="1" required></td>
                 <td><input type="text" name="detail_barang[bundel][${idx}][keterangan]" class="form-control form-control-sm border-0 bg-light" placeholder="Keterangan"></td>
                 <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
             </tr>
         `);
+        refreshAllItemCounts();
     });
 
     // -- HAPUS BARIS --
-    $(document).on('click', '.btnRemove', function() { $(this).closest('tr').remove(); });
+    $(document).on('click', '.btnRemove', function() { $(this).closest('tr').remove(); refreshAllItemCounts(); });
 
 
     // =========================================================================

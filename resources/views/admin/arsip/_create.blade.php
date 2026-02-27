@@ -135,7 +135,10 @@ BPB-25/12/0327
                             <div id="sectionAdjust" class="d-none dynamic-section mb-4">
                                 <div class="card border-0 shadow-sm overflow-hidden border-start border-4 border-info">
                                     <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
-                                        <span class="fw-bold text-info"><i class="bi bi-sliders me-1"></i> ITEM ADJUSTMENT</span>
+                                        <div>
+                                            <span class="fw-bold text-info"><i class="bi bi-sliders me-1"></i> ITEM ADJUSTMENT</span>
+                                            <span id="badgeCountAdjust" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                        </div>
                                         <button type="button" class="btn btn-sm btn-info text-white rounded-pill px-3" id="btnAddAdjust">
                                             <i class="bi bi-plus-circle me-1"></i> Tambah Item
                                         </button>
@@ -165,9 +168,12 @@ BPB-25/12/0327
                                 <div class="row g-3">
                                     <div class="col-12">
                                         <div class="card border-0 shadow-sm border-start border-4 border-danger">
-                                            <div class="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between">
-                                                <span class="fw-bold text-danger small"><i class="bi bi-box-arrow-right me-1"></i> ASAL (OUT)</span>
-                                                <button type="button" class="btn btn-xs btn-outline-danger rounded-pill" id="btnAddAsal"><i class="bi bi-plus"></i></button>
+                                            <div class="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="fw-bold text-danger small"><i class="bi bi-box-arrow-right me-1"></i> ASAL (OUT)</span>
+                                                    <span id="badgeCountAsal" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                                </div>
+                                                <button type="button" class="btn btn-xs btn-outline-danger rounded-pill flex-shrink-0" id="btnAddAsal"><i class="bi bi-plus"></i></button>
                                             </div>
                                             <div class="card-body p-0 table-responsive">
                                                 <table class="table table-sm table-hover mb-0">
@@ -189,9 +195,12 @@ BPB-25/12/0327
                                     </div>
                                     <div class="col-12">
                                         <div class="card border-0 shadow-sm border-start border-4 border-success">
-                                            <div class="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between">
-                                                <span class="fw-bold text-success small"><i class="bi bi-box-arrow-in-left me-1"></i> TUJUAN (IN)</span>
-                                                <button type="button" class="btn btn-xs btn-outline-success rounded-pill" id="btnAddTujuan"><i class="bi bi-plus"></i></button>
+                                            <div class="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="fw-bold text-success small"><i class="bi bi-box-arrow-in-left me-1"></i> TUJUAN (IN)</span>
+                                                    <span id="badgeCountTujuan" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                                </div>
+                                                <button type="button" class="btn btn-xs btn-outline-success rounded-pill flex-shrink-0" id="btnAddTujuan"><i class="bi bi-plus"></i></button>
                                             </div>
                                             <div class="card-body p-0 table-responsive">
                                                 <table class="table table-sm table-hover mb-0">
@@ -218,7 +227,10 @@ BPB-25/12/0327
                             <div id="sectionBundel" class="d-none dynamic-section mb-4">
                                 <div class="card border-0 shadow-sm border-start border-4 border-info">
                                     <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
-                                        <span class="fw-bold text-info small"><i class="bi bi-files me-1"></i> BUNDEL DOKUMEN</span>
+                                        <div>
+                                            <span class="fw-bold text-info small"><i class="bi bi-files me-1"></i> BUNDEL DOKUMEN</span>
+                                            <span id="badgeCountBundel" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                        </div>
                                         <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3" id="btnAddBundel">
                                             <i class="bi bi-plus-circle me-1"></i> Tambah
                                         </button>
@@ -228,7 +240,7 @@ BPB-25/12/0327
                                             <thead class="bg-light text-muted small">
                                                 <tr>
                                                     <th class="ps-3">No Dokumen / Item</th>
-                                                    <th width="80">Qty</th>
+                                                    <th class="text-center" width="120">Qty</th>
                                                     <th>Keterangan</th>
                                                     <th width="40"></th>
                                                 </tr>
@@ -247,12 +259,12 @@ BPB-25/12/0327
                                         <label class="text-muted"><i class="bi bi-chat-text me-1"></i> Keterangan / Alasan Pengajuan</label>
                                     </div>
                                     
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Upload Bukti Scan <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Upload Bukti Scan (Opsional jika ingin Draft)</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-0"><i class="bi bi-file-earmark-pdf text-danger"></i></span>
-                                        <input type="file" name="bukti_scan" class="form-control border-white bg-light shadow-none" required>
+                                        <input type="file" name="bukti_scan" accept=".pdf" class="form-control border-white bg-light shadow-none">
                                     </div>
-                                    <div class="form-text small opacity-75 mt-1 fst-italic">Format: PDF, JPG, PNG (Max 5MB)</div>
+                                    <div class="form-text small opacity-75 mt-1 fst-italic">Format: PDF (Max 5MB)</div>
                                 </div>
                             </div>
                         </div>

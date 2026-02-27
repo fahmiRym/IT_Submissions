@@ -545,20 +545,25 @@
                         </td>
 
                         <td class="text-end pe-4">
-                            <div class="d-flex gap-2 justify-content-end">
-                                {{-- VIEW BUKTI SCAN --}}
-                                <button class="btn btn-sm btn-info text-white shadow-sm rounded-3 p-2 d-flex align-items-center" 
-                                        onclick="showBukti('{{ $a->bukti_scan ? url('/preview-file/'.$a->bukti_scan) : '#' }}')" 
-                                        {{ !$a->bukti_scan ? 'disabled' : '' }} title="View Bukti Scan">
-                                    <i class="bi bi-eye-fill"></i>
-                                 </button>
-                                 @if(!in_array($a->status, ['Done', 'Reject', 'Void']) && !in_array($a->ket_process, ['Done', 'Void']))
-                                    <button class="btn btn-sm btn-warning text-dark shadow-sm rounded-3 p-2 d-flex align-items-center px-3 fw-bold" 
-                                            onclick="editArsip({{ $a->id }})" title="Edit Data">
-                                        <i class="bi bi-pencil-fill me-2"></i> EDIT
-                                    </button>
-                                 @endif
-                             </div>
+                             <div class="d-flex gap-2 justify-content-end">
+                                 {{-- CETAK ANTRIAN --}}
+                                 <a href="{{ route('admin.arsip.print-draft', $a->id) }}" target="_blank" class="btn btn-sm btn-secondary text-white shadow-sm rounded-3 p-2 d-flex align-items-center" title="Print Draft">
+                                     <i class="bi bi-printer-fill"></i>
+                                 </a>
+
+                                 {{-- VIEW BUKTI SCAN --}}
+                                 <button class="btn btn-sm btn-info text-white shadow-sm rounded-3 p-2 d-flex align-items-center" 
+                                         onclick="showBukti('{{ $a->bukti_scan ? url('/preview-file/'.$a->bukti_scan) : '#' }}')" 
+                                         {{ !$a->bukti_scan ? 'disabled' : '' }} title="View Bukti Scan">
+                                     <i class="bi bi-eye-fill"></i>
+                                  </button>
+                                  @if(!in_array($a->status, ['Done', 'Reject', 'Void']) && !in_array($a->ket_process, ['Done', 'Void']))
+                                     <button class="btn btn-sm btn-warning text-dark shadow-sm rounded-3 p-2 d-flex align-items-center px-3 fw-bold" 
+                                             onclick="editArsip({{ $a->id }})" title="Edit Data">
+                                         <i class="bi bi-pencil-fill me-2"></i> EDIT
+                                     </button>
+                                  @endif
+                              </div>
                         </td>
                     </tr>   
                 @empty
@@ -655,6 +660,19 @@ $(document).ready(function() {
     // Helper Random Index
     function getIndex() { return Math.floor(Math.random() * 100000); }
 
+    // Helper Add Row
+    function refreshAllItemCounts() {
+        ['wrapperAdjust', 'wrapperAsal', 'wrapperTujuan', 'wrapperBundel'].forEach(id => {
+            let count = $(`#${id} tr`).length;
+            let badgeId = id.replace('wrapper', 'badgeCount');
+            if (count > 0) {
+                $(`#${badgeId}`).text(`1-${count} of ${count}`).removeClass('d-none');
+            } else {
+                $(`#${badgeId}`).addClass('d-none');
+            }
+        });
+    }
+
     // 2. TAMBAH BARIS ITEM (CREATE)
     // -- ADJUST --
     $('#btnAddAdjust').on('click', function() {
@@ -669,6 +687,7 @@ $(document).ready(function() {
                 <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
             </tr>
         `);
+        refreshAllItemCounts();
     });
 
     // -- MUTASI --
@@ -697,8 +716,8 @@ $(document).ready(function() {
         `);
     }
     // Bind click events
-    $('#btnAddAsal').on('click', () => window.addMutasiRow('wrapperAsal', 'mutasi_asal'));
-    $('#btnAddTujuan').on('click', () => window.addMutasiRow('wrapperTujuan', 'mutasi_tujuan'));
+    $('#btnAddAsal').on('click', () => { window.addMutasiRow('wrapperAsal', 'mutasi_asal'); refreshAllItemCounts(); });
+    $('#btnAddTujuan').on('click', () => { window.addMutasiRow('wrapperTujuan', 'mutasi_tujuan'); refreshAllItemCounts(); });
 
     // -- BUNDEL --
     $('#btnAddBundel').on('click', function() {
@@ -706,15 +725,16 @@ $(document).ready(function() {
         $('#wrapperBundel').append(`
             <tr>
                 <td><input type="text" name="bundel[${idx}][no_doc]" class="form-control form-control-sm border-0 bg-light" placeholder="No Dokumen" required></td>
-                <td><input type="number" step="any" name="bundel[${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold" value="1" required></td>
+                <td><input type="number" step="any" name="bundel[${idx}][qty]" class="form-control form-control-sm border-0 bg-light fw-bold text-center" value="1" required></td>
                 <td><input type="text" name="bundel[${idx}][keterangan]" class="form-control form-control-sm border-0 bg-light" placeholder="Keterangan"></td>
                 <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
             </tr>
         `);
+        refreshAllItemCounts();
     });
 
     // -- HAPUS BARIS --
-    $(document).on('click', '.btnRemove', function() { $(this).closest('tr').remove(); });
+    $(document).on('click', '.btnRemove', function() { $(this).closest('tr').remove(); refreshAllItemCounts(); });
     
     // Trigger change saat load agar form create bersih
     if($jenisSelect.length) $jenisSelect.trigger('change');

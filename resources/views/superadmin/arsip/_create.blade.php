@@ -182,13 +182,24 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                     {{-- B. BUNDEL SECTION --}}
                                     <div class="mb-4 d-none dynamic-section" id="sectionBundel">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <label class="form-label small fw-bold text-secondary mb-0">Daftar Dokumen dalam Bundel</label>
+                                            <div>
+                                                <label class="form-label small fw-bold text-secondary mb-0">Daftar Dokumen dalam Bundel</label>
+                                                <span id="badgeCountBundel" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                            </div>
                                             <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="btnAddBundel">
                                                 <i class="bi bi-plus-lg me-1"></i> Tambah
                                             </button>
                                         </div>
                                         <div class="table-responsive rounded-3 border border-light">
                                             <table class="table table-sm table-borderless mb-0 align-middle">
+                                                <thead class="bg-light text-secondary">
+                                                    <tr class="text-xs">
+                                                        <th class="ps-3">No Dokumen / Item</th>
+                                                        <th class="text-center" width="120">Qty</th>
+                                                        <th>Keterangan</th>
+                                                        <th width="5%"></th>
+                                                    </tr>
+                                                </thead>
                                                 <tbody id="wrapperBundel" class="dynamic-row-container">
                                                     {{-- JS generated rows --}}
                                                 </tbody>
@@ -199,7 +210,10 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                     {{-- C. ADJUST SECTION --}}
                                     <div class="mb-4 d-none dynamic-section" id="sectionAdjust">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <label class="form-label small fw-bold text-secondary mb-0">Item Adjustment</label>
+                                            <div>
+                                                <label class="form-label small fw-bold text-secondary mb-0">Item Adjustment</label>
+                                                <span id="badgeCountAdjust" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                            </div>
                                             <button type="button" class="btn btn-sm btn-info text-white rounded-pill px-3" id="btnAddAdjust">
                                                 <i class="bi bi-plus-lg me-1"></i> Tambah Item
                                             </button>
@@ -230,7 +244,10 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                             {{-- ASAL --}}
                                             <div class="col-12">
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <label class="form-label small fw-bold text-danger mb-0"><i class="bi bi-box-arrow-up me-1"></i>DARI (Sumber/Out)</label>
+                                                    <div>
+                                                        <label class="form-label small fw-bold text-danger mb-0"><i class="bi bi-box-arrow-up me-1"></i>DARI (Sumber/Out)</label>
+                                                        <span id="badgeCountAsal" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                                    </div>
                                                     <button type="button" class="btn btn-sm btn-danger bg-opacity-10 text-danger rounded-pill px-3 border-0" id="btnAddAsal">
                                                         <i class="bi bi-plus-lg me-1"></i> Add Source
                                                     </button>
@@ -255,7 +272,10 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                             {{-- TUJUAN --}}
                                             <div class="col-12">
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <label class="form-label small fw-bold text-success mb-0"><i class="bi bi-box-arrow-in-down me-1"></i>KE (Tujuan/In)</label>
+                                                    <div>
+                                                        <label class="form-label small fw-bold text-success mb-0"><i class="bi bi-box-arrow-in-down me-1"></i>KE (Tujuan/In)</label>
+                                                        <span id="badgeCountTujuan" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                                    </div>
                                                     <button type="button" class="btn btn-sm btn-success bg-opacity-10 text-success rounded-pill px-3 border-0" id="btnAddTujuan">
                                                         <i class="bi bi-plus-lg me-1"></i> Add Target
                                                     </button>
@@ -287,9 +307,9 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold text-secondary">Upload Bukti (Scan/Foto) <span class="text-danger">*</span></label>
-                                        <input type="file" name="bukti_scan" class="form-control bg-light border-0" accept=".pdf,.jpg,.jpeg,.png" required>
-                                        <div class="form-text text-xs">Maks 2MB. Format: PDF, JPG, PNG.</div>
+                                        <label class="form-label small fw-bold text-secondary">Upload Bukti (Scan/Foto) - (Opsional jika ingin Draft)</label>
+                                        <input type="file" name="bukti_scan" accept=".pdf" class="form-control bg-light border-0">
+                                        <div class="form-text text-xs">Maks 2MB. Format: PDF.</div>
                                     </div>
 
                                 </div>

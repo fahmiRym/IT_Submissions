@@ -7,6 +7,19 @@ use App\Models\Notification;
 
 class NotificationController extends Controller
 {
+    public function checkUnread()
+    {
+        $user = Auth::user();
+        
+        $unreadCount = Notification::where('role_target', $user->role)
+            ->where('is_read', false)
+            ->count();
+            
+        return response()->json([
+            'unreadCount' => $unreadCount
+        ]);
+    }
+
     public function index()
     {
         $user = Auth::user();

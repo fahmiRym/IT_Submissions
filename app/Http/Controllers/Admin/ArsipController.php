@@ -164,7 +164,7 @@ class ArsipController extends Controller
             'unit_id'         => 'required',
             'manager_id'      => 'required',
             'tgl_pengajuan'   => 'nullable|date',
-            'bukti_scan'      => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'bukti_scan'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -397,5 +397,14 @@ class ArsipController extends Controller
                 ]);
             }
         }
+    }
+
+    // ========================================================================
+    // PRINT DRAFT
+    // ========================================================================
+    public function printDraft($id)
+    {
+        $arsip = Arsip::with(['department', 'unit', 'admin'])->findOrFail($id);
+        return view('print.arsip_draft', compact('arsip'));
     }
 }

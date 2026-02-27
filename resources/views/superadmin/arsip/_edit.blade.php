@@ -260,8 +260,8 @@
 
         <div class="mb-3">
             <label class="form-label small fw-bold text-secondary">Bukti Scan</label>
-            <input type="file" name="bukti_scan" class="form-control bg-light border-0 mb-1" accept=".pdf,.jpg,.jpeg,.png">
-            <div id="linkBuktiSaatIni" class="mt-1 ps-1"></div>
+            <input type="file" name="bukti_scan" class="form-control bg-light border-0 mb-1" accept=".pdf">
+            <div id="linkBuktiSaatIni" class="mt-1 ps-1 text-xs"></div>
         </div>
 
     </div>

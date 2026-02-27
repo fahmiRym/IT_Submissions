@@ -224,11 +224,11 @@
                                     
                                     <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light border border-dashed border-secondary border-opacity-25">
                                         <div>
-                                            <label class="fw-bold small text-muted d-block text-uppercase mb-1">Bukti Scan (PDF/IMG)</label>
+                                            <label class="fw-bold small text-muted d-block text-uppercase mb-1">Bukti Scan (PDF)</label>
                                             <span id="linkBuktiSaatIni"></span>
                                         </div>
                                         <div class="w-50">
-                                            <input type="file" name="bukti_scan" class="form-control form-control-sm border-white">
+                                            <input type="file" name="bukti_scan" accept=".pdf" class="form-control form-control-sm border-white">
                                         </div>
                                     </div>
                                 </div>

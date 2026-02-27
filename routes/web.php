@@ -79,6 +79,8 @@ Route::get('/preview-file/{filename}', function ($filename) {
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
+    Route::get('/notifications/check', [NotificationController::class, 'checkUnread'])
+        ->name('notifications.check');
     Route::put('/notifications/{notification}/read', [NotificationController::class, 'read'])
         ->name('notifications.read');
 });
@@ -104,6 +106,8 @@ Route::prefix('admin')
         // dan mengarah ke method edit() di controller.
         Route::resource('arsip', AdminArsip::class)
             ->only(['index', 'store', 'update', 'edit']); 
+
+        Route::get('arsip/{id}/print-draft', [AdminArsip::class, 'printDraft'])->name('arsip.print-draft');
 
         // ✅ PROFILE ADMIN
         Route::get('profile', [AdminProfile::class,'index'])->name('profile');
@@ -141,6 +145,7 @@ Route::prefix('superadmin')
         Route::put('notifications/{notification}/read',[SuperNotification::class,'read'])->name('notifications.read');
         
         // Custom Arsip Action
+        Route::get('arsip/{id}/print-draft', [SuperArsip::class, 'printDraft'])->name('arsip.print-draft');
         Route::put('arsip/{id}/arsip-sistem',[SuperArsip::class, 'arsipSistem'])->name('arsip.arsip-sistem');
         Route::post('arsip/cleanup-storage', [SuperArsip::class, 'cleanupStorage'])->name('arsip.cleanup-storage');
         Route::patch('arsip/{id}/no-registrasi', [SuperBackup::class, 'updateNoRegistrasi'])->name('arsip.update-no-registrasi');
