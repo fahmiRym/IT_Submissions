@@ -73,33 +73,61 @@
 </div>
 
 
+@push('scripts')
 <script>
-function showBukti(url) {
-    const modalEl = document.getElementById('modalViewBukti');
-    const frame   = document.getElementById('buktiFrame');
-    const img     = document.getElementById('buktiImage');
-    const openTab = document.getElementById('btnOpenTab');
-    const dl      = document.getElementById('btnDownload');
+// Pastikan hanya didefinisikan sekali
+if (typeof window.showBukti !== 'function') {
+    window.showBukti = function(url) {
+        if (!url || url === '#' || url.trim() === '') return;
 
-    frame.classList.add('d-none');
-    img.classList.add('d-none');
-    frame.src = ''; 
-    img.src = '';
+        const modalEl = document.getElementById('modalViewBukti');
+        const frame   = document.getElementById('buktiFrame');
+        const img     = document.getElementById('buktiImage');
+        const openTab = document.getElementById('btnOpenTab');
+        const dl      = document.getElementById('btnDownload');
 
-    openTab.href = url;
-    dl.href = url;
+        if (!modalEl) {
+            console.error("Element #modalViewBukti tidak ditemukan.");
+            return;
+        }
 
-    const ext = url.split('.').pop().toLowerCase();
+        // Reset state
+        if (frame) { frame.classList.add('d-none'); frame.src = ''; }
+        if (img) { img.classList.add('d-none'); img.src = ''; }
+        if (openTab) openTab.href = url;
+        if (dl) dl.href = url;
 
-    if (['jpg','jpeg','png','gif','webp','bmp'].includes(ext)) {
-        img.src = url;
-        img.classList.remove('d-none');
-    } else {
-        frame.src = url;
-        frame.classList.remove('d-none');
-    }
+        // Cek ekstensi
+        const urlPart = url.split('?')[0]; // buang query string jika ada
+        const ext = urlPart.split('.').pop().toLowerCase();
 
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
+        if (['jpg','jpeg','png','gif','webp','bmp'].includes(ext)) {
+            if (img) {
+                img.src = url;
+                img.classList.remove('d-none');
+            }
+        } else {
+            if (frame) {
+                frame.src = url;
+                frame.classList.remove('d-none');
+            }
+        }
+
+        // Tampilkan Modal menggunakan Vanilla JS Bootstrap 5
+        try {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            } else {
+                // Fallback ke jQuery jika bootstrap global tidak ditemukan
+                $(modalEl).modal('show');
+            }
+        } catch (e) {
+            console.error("Gagal membuka modal:", e);
+            // Last resort: buka di tab baru saja jika modal gagal
+            window.open(url, '_blank');
+        }
+    };
 }
 </script>
+@endpush

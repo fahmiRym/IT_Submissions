@@ -210,8 +210,8 @@
         @endif
 
         @php 
-            $keteranganLines = $isAdjust ? 6 : 12;
-            $tindakanLines = $isAdjust ? 6 : 14;
+            $keteranganLines = 6;
+            $tindakanLines = 6;
 
             // Jika item adjust sangat banyak (makan banyak ruang baris > 4)
             if ($isAdjust) {
