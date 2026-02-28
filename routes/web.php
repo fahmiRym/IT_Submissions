@@ -54,6 +54,7 @@ Route::get('/preview-file/{filename}', function ($filename) {
     $path = storage_path('app/public/bukti_scan/' . $filename);
 
     if (!file_exists($path)) {
+        \Illuminate\Support\Facades\Log::warning("File Bukti Scan 404: " . $path);
         abort(404);
     }
 

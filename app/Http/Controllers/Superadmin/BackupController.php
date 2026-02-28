@@ -13,6 +13,9 @@ use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class BackupController extends Controller
@@ -295,10 +298,25 @@ class BackupController extends Controller
                     foreach ($row['bundel_items'] ?? [] as $i) ArsipBundelItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
 
                     if ($ext === 'zip' && $arsip->bukti_scan) {
-                        $srcFile = $tempDir . '/files/' . $arsip->bukti_scan;
-                        $dstDir  = storage_path('app/public/bukti_scan');
-                        if (!is_dir($dstDir)) mkdir($dstDir, 0777, true);
-                        if (file_exists($srcFile)) copy($srcFile, $dstDir . '/' . $arsip->bukti_scan);
+                        // Coba di files/ atau di root zip
+                        $pathsToTry = [
+                            $tempDir . '/files/' . $arsip->bukti_scan,
+                            $tempDir . '/' . $arsip->bukti_scan
+                        ];
+
+                        foreach ($pathsToTry as $srcFile) {
+                            if (file_exists($srcFile)) {
+                                $content = file_get_contents($srcFile);
+                                Storage::disk('public')->put('bukti_scan/' . $arsip->bukti_scan, $content);
+                                
+                                // Set permission (Linux/Docker)
+                                $dstPath = storage_path('app/public/bukti_scan/' . $arsip->bukti_scan);
+                                @chmod($dstPath, 0664);
+
+                                Log::info("Backup: Berhasil memulihkan file {$arsip->bukti_scan}");
+                                break;
+                            }
+                        }
                     }
 
                     $imported++;
