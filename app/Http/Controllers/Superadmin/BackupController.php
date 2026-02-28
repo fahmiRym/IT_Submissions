@@ -22,6 +22,11 @@ class BackupController extends Controller
      * EXPORT – Download semua data arsip + items sebagai JSON
      * ─────────────────────────────────────────────────────────
      */
+    /**
+     * ─────────────────────────────────────────────────────────
+     * EXPORT – Download data arsip (JSON) + File Bukti Scan (ZIP)
+     * ─────────────────────────────────────────────────────────
+     */
     public function export(Request $request)
     {
         $query = Arsip::with([
@@ -34,7 +39,6 @@ class BackupController extends Controller
             'bundelItems',
         ]);
 
-        // Opsional: filter range tanggal
         if ($request->filled('from')) {
             $query->whereDate('tgl_pengajuan', '>=', $request->from);
         }
@@ -44,102 +48,144 @@ class BackupController extends Controller
 
         $arsips = $query->latest()->get();
 
+        $data = $arsips->map(function ($a) {
+            return [
+                'id'              => $a->id,
+                'no_registrasi'   => $a->no_registrasi,
+                'jenis_pengajuan' => $a->jenis_pengajuan,
+                'keterangan'      => $a->keterangan,
+                'ket_eror'        => $a->ket_eror,
+                'kategori'        => $a->kategori,
+                'pemohon'         => $a->pemohon,
+                'tgl_pengajuan'   => optional($a->tgl_pengajuan)->toIso8601String(),
+                'tgl_arsip'       => optional($a->tgl_arsip)->toDateString(),
+                'no_doc'          => $a->no_doc,
+                'no_transaksi'    => $a->no_transaksi,
+                'ba'              => $a->ba,
+                'arsip'           => $a->arsip,
+                'ket_process'     => $a->ket_process,
+                'status'          => $a->status,
+                'total_qty_in'    => $a->total_qty_in,
+                'total_qty_out'   => $a->total_qty_out,
+                'detail_barang'   => $a->detail_barang,
+                'bukti_scan'      => $a->bukti_scan,
+                'created_at'      => optional($a->created_at)->toIso8601String(),
+                'updated_at'      => optional($a->updated_at)->toIso8601String(),
+
+                'admin_name'       => $a->admin->name ?? null,
+                'admin_email'      => $a->admin->email ?? null,
+                'department_name'  => $a->department->name ?? null,
+                'manager_name'     => $a->manager->name ?? null,
+                'unit_name'        => $a->unit->name ?? null,
+
+                'adjust_items' => $a->adjustItems->map(fn($i) => [
+                    'product_code' => $i->product_code,
+                    'product_name' => $i->product_name,
+                    'qty_in'       => $i->qty_in,
+                    'qty_out'      => $i->qty_out,
+                    'lot'          => $i->lot,
+                ])->toArray(),
+
+                'mutasi_items' => $a->mutasiItems->map(fn($i) => [
+                    'type'         => $i->type,
+                    'product_code' => $i->product_code,
+                    'product_name' => $i->product_name,
+                    'qty'          => $i->qty,
+                    'lot'          => $i->lot,
+                    'panjang'      => $i->panjang,
+                    'location'     => $i->location,
+                ])->toArray(),
+
+                'bundel_items' => $a->bundelItems->map(fn($i) => [
+                    'no_doc'     => $i->no_doc,
+                    'qty'        => $i->qty,
+                    'keterangan' => $i->keterangan,
+                ])->toArray(),
+            ];
+        })->toArray();
+
         $payload = [
             'meta' => [
                 'app'         => config('app.name'),
                 'version'     => '1.0',
                 'exported_at' => now()->toIso8601String(),
-                'total'       => $arsips->count(),
+                'total'       => count($data),
                 'exported_by' => auth()->user()->name,
             ],
-            'data' => $arsips->map(function ($a) {
-                return [
-                    // Core fields
-                    'id'              => $a->id,
-                    'no_registrasi'   => $a->no_registrasi,
-                    'jenis_pengajuan' => $a->jenis_pengajuan,
-                    'keterangan'      => $a->keterangan,
-                    'ket_eror'        => $a->ket_eror,
-                    'kategori'        => $a->kategori,
-                    'pemohon'         => $a->pemohon,
-                    'tgl_pengajuan'   => optional($a->tgl_pengajuan)->toIso8601String(),
-                    'tgl_arsip'       => optional($a->tgl_arsip)->toDateString(),
-                    'no_doc'          => $a->no_doc,
-                    'no_transaksi'    => $a->no_transaksi,
-                    'ba'              => $a->ba,
-                    'arsip'           => $a->arsip,
-                    'ket_process'     => $a->ket_process,
-                    'status'          => $a->status,
-                    'total_qty_in'    => $a->total_qty_in,
-                    'total_qty_out'   => $a->total_qty_out,
-                    'detail_barang'   => $a->detail_barang,
-                    'created_at'      => optional($a->created_at)->toIso8601String(),
-                    'updated_at'      => optional($a->updated_at)->toIso8601String(),
-
-                    // Relasi (nama, bukan ID — agar portable)
-                    'admin_name'       => $a->admin->name ?? null,
-                    'admin_email'      => $a->admin->email ?? null,
-                    'department_name'  => $a->department->name ?? null,
-                    'manager_name'     => $a->manager->name ?? null,
-                    'unit_name'        => $a->unit->name ?? null,
-
-                    // Items
-                    'adjust_items' => $a->adjustItems->map(fn($i) => [
-                        'product_code' => $i->product_code,
-                        'product_name' => $i->product_name,
-                        'qty_in'       => $i->qty_in,
-                        'qty_out'      => $i->qty_out,
-                        'lot'          => $i->lot,
-                    ])->toArray(),
-
-                    'mutasi_items' => $a->mutasiItems->map(fn($i) => [
-                        'type'         => $i->type,
-                        'product_code' => $i->product_code,
-                        'product_name' => $i->product_name,
-                        'qty'          => $i->qty,
-                        'lot'          => $i->lot,
-                        'panjang'      => $i->panjang,
-                        'location'     => $i->location,
-                    ])->toArray(),
-
-                    'bundel_items' => $a->bundelItems->map(fn($i) => [
-                        'no_doc'     => $i->no_doc,
-                        'qty'        => $i->qty,
-                        'keterangan' => $i->keterangan,
-                    ])->toArray(),
-                ];
-            })->toArray(),
+            'data' => $data
         ];
 
-        $filename = 'backup-arsip-' . now()->format('Ymd-His') . '.json';
+        // Buat ZIP
+        $zipName = 'backup-arsip-' . now()->format('Ymd-His') . '.zip';
+        $tempDir = storage_path('app/temp-backup-' . uniqid());
+        if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
 
-        return response()->json($payload, 200, [
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Content-Type'        => 'application/json',
-        ]);
+        $jsonPath = $tempDir . '/data.json';
+        file_put_contents($jsonPath, json_encode($payload, JSON_PRETTY_PRINT));
+
+        $zipPath = storage_path('app/' . $zipName);
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            // Tambahkan JSON
+            $zip->addFile($jsonPath, 'data.json');
+
+            // Tambahkan Bukti Scan
+            foreach ($arsips as $a) {
+                if ($a->bukti_scan) {
+                    $filePath = storage_path('app/public/bukti_scan/' . $a->bukti_scan);
+                    if (file_exists($filePath)) {
+                        $zip->addFile($filePath, 'files/' . $a->bukti_scan);
+                    }
+                }
+            }
+            $zip->close();
+        }
+
+        // Cleanup temp
+        @unlink($jsonPath);
+        @rmdir($tempDir);
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 
     /**
      * ─────────────────────────────────────────────────────────
-     * IMPORT – Upload file JSON dan restore data
+     * IMPORT – Upload file ZIP/JSON dan restore data + file
      * ─────────────────────────────────────────────────────────
      */
     public function import(Request $request)
     {
         $request->validate([
-            'backup_file' => 'required|file|mimes:json|max:51200', // max 50MB
+            'backup_file' => 'required|file|max:102400', // max 100MB
         ]);
 
-        $json = file_get_contents($request->file('backup_file')->getRealPath());
-        $payload = json_decode($json, true);
+        $file    = $request->file('backup_file');
+        $ext     = $file->getClientOriginalExtension();
+        $tempDir = storage_path('app/temp-import-' . uniqid());
+        $payload = null;
 
-        if (!$payload || !isset($payload['data']) || !is_array($payload['data'])) {
-            return back()->withErrors(['backup_file' => 'File JSON tidak valid atau format salah.']);
+        if ($ext === 'zip') {
+            $zip = new \ZipArchive();
+            if ($zip->open($file->getRealPath()) === TRUE) {
+                if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+                $zip->extractTo($tempDir);
+                $zip->close();
+
+                $jsonPath = $tempDir . '/data.json';
+                if (file_exists($jsonPath)) {
+                    $payload = json_decode(file_get_contents($jsonPath), true);
+                }
+            }
+        } else {
+            // Legacy JSON Import
+            $payload = json_decode(file_get_contents($file->getRealPath()), true);
         }
 
-        // Validasi versi
-        if (($payload['meta']['version'] ?? null) !== '1.0') {
-            return back()->withErrors(['backup_file' => 'Versi backup tidak kompatibel.']);
+        if (!$payload || !isset($payload['data'])) {
+            // Cleanup jika gagal
+            if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
+            return back()->withErrors(['backup_file' => 'Format backup tidak valid. Gunakan file .zip hasil export terbaru.']);
         }
 
         $imported = 0;
@@ -150,25 +196,25 @@ class BackupController extends Controller
         try {
             foreach ($payload['data'] as $idx => $row) {
                 try {
-                    // Resolve relasi berdasarkan nama. Jika tidak ada, buat otomatis agar import sukses.
+                    // 1. Resolve Admin
                     $adminId = User::where('email', $row['admin_email'] ?? '')
                                    ->orWhere('name', $row['admin_name'] ?? '')
                                    ->orWhere('username', strtolower(str_replace(' ', '', $row['admin_name'] ?? '')))
                                    ->value('id');
 
                     if (!$adminId && !empty($row['admin_name'])) {
-                        $newUser = User::create([
+                        $adminId = User::create([
                             'name'          => $row['admin_name'],
                             'username'      => strtolower(str_replace(' ', '', $row['admin_name'])),
                             'email'         => $row['admin_email'] ?? (strtolower(str_replace(' ', '', $row['admin_name'])) . '@system.com'),
-                            'password'      => bcrypt('password123'), // Default password
+                            'password'      => bcrypt('password123'),
                             'role'          => 'admin',
-                            'department_id' => 1, // Fallback to first dept
+                            'department_id' => 1,
                             'is_active'     => true
-                        ]);
-                        $adminId = $newUser->id;
+                        ])->id;
                     }
 
+                    // 2. Resolve Master Data
                     $deptId = Department::where('name', $row['department_name'] ?? '')->value('id');
                     if (!$deptId && !empty($row['department_name'])) {
                         $deptId = Department::create(['name' => $row['department_name'], 'is_active' => true])->id;
@@ -186,16 +232,12 @@ class BackupController extends Controller
 
                     if (!$adminId) {
                         $skipped++;
-                        $errors[] = "Row #{$idx}: Data User tidak lengkap. Dilewati.";
+                        $errors[] = "Row #{$idx}: User data incomplete.";
                         continue;
                     }
 
-                    // Upsert berdasarkan no_registrasi (jika ada) atau id asli
-                    $existing = null;
-                    if (!empty($row['no_registrasi'])) {
-                        $existing = Arsip::where('no_registrasi', $row['no_registrasi'])->first();
-                    }
-
+                    // 3. Upsert Arsip
+                    $existing = Arsip::where('no_registrasi', $row['no_registrasi'])->first();
                     $arsipData = [
                         'no_registrasi'   => $row['no_registrasi'] ?? null,
                         'jenis_pengajuan' => $row['jenis_pengajuan'] ?? 'Cancel',
@@ -218,12 +260,12 @@ class BackupController extends Controller
                         'total_qty_in'    => $row['total_qty_in'] ?? 0,
                         'total_qty_out'   => $row['total_qty_out'] ?? 0,
                         'detail_barang'   => $row['detail_barang'] ?? null,
+                        'bukti_scan'      => $row['bukti_scan'] ?? null,
                     ];
 
                     if ($existing) {
                         $existing->update($arsipData);
                         $arsip = $existing;
-                        // Hapus items lama dan buat ulang
                         $arsip->adjustItems()->delete();
                         $arsip->mutasiItems()->delete();
                         $arsip->bundelItems()->delete();
@@ -231,76 +273,55 @@ class BackupController extends Controller
                         $arsip = Arsip::create($arsipData);
                     }
 
-                    // Restore items
-                    foreach ($row['adjust_items'] ?? [] as $item) {
-                        ArsipAdjustItem::create([
-                            'arsip_id'     => $arsip->id,
-                            'product_code' => $item['product_code'] ?? null,
-                            'product_name' => $item['product_name'] ?? '-',
-                            'qty_in'       => $item['qty_in'] ?? 0,
-                            'qty_out'      => $item['qty_out'] ?? 0,
-                            'lot'          => $item['lot'] ?? null,
-                        ]);
+                    // 4. Restore Items (Adjust, Mutasi, Bundel)
+                    foreach ($row['adjust_items'] ?? [] as $i) {
+                        ArsipAdjustItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
+                    }
+                    foreach ($row['mutasi_items'] ?? [] as $i) {
+                        ArsipMutasiItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
+                    }
+                    foreach ($row['bundel_items'] ?? [] as $i) {
+                        ArsipBundelItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
                     }
 
-                    foreach ($row['mutasi_items'] ?? [] as $item) {
-                        ArsipMutasiItem::create([
-                            'arsip_id'     => $arsip->id,
-                            'type'         => $item['type'] ?? 'asal',
-                            'product_code' => $item['product_code'] ?? null,
-                            'product_name' => $item['product_name'] ?? '-',
-                            'qty'          => $item['qty'] ?? 0,
-                            'lot'          => $item['lot'] ?? null,
-                            'panjang'      => $item['panjang'] ?? null,
-                            'location'     => $item['location'] ?? null,
-                        ]);
-                    }
+                    // 5. Restore Physical File (Jika ini ZIP)
+                    if ($ext === 'zip' && $arsip->bukti_scan) {
+                        $srcFile = $tempDir . '/files/' . $arsip->bukti_scan;
+                        $dstDir  = storage_path('app/public/bukti_scan');
+                        if (!file_exists($dstDir)) mkdir($dstDir, 0777, true);
 
-                    foreach ($row['bundel_items'] ?? [] as $item) {
-                        ArsipBundelItem::create([
-                            'arsip_id'   => $arsip->id,
-                            'no_doc'     => $item['no_doc'] ?? '-',
-                            'qty'        => $item['qty'] ?? 1,
-                            'keterangan' => $item['keterangan'] ?? null,
-                        ]);
+                        if (file_exists($srcFile)) {
+                            copy($srcFile, $dstDir . '/' . $arsip->bukti_scan);
+                        }
                     }
 
                     $imported++;
-
                 } catch (\Exception $e) {
                     $errors[] = "Row #{$idx}: " . $e->getMessage();
                     $skipped++;
                 }
             }
-
             DB::commit();
-
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['backup_file' => 'Gagal import: ' . $e->getMessage()]);
+            if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
+            return back()->withErrors(['backup_file' => 'Critical Import Failure: ' . $e->getMessage()]);
         }
 
-        $msg = "Import selesai: {$imported} data berhasil diimpor, {$skipped} dilewati.";
-        if ($errors) {
-            session()->flash('import_errors', $errors);
-        }
+        // Cleanup
+        if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
+
+        $msg = "Import Berhasil! {$imported} data + bukti scan dipulihkan. {$skipped} gagal/dilewati.";
+        if ($errors) session()->flash('import_errors', $errors);
 
         return back()->with('success', $msg);
     }
 
-    /**
-     * ─────────────────────────────────────────────────────────
-     * UPDATE NO REGISTRASI – Update hanya field no_registrasi
-     * ─────────────────────────────────────────────────────────
-     */
     public function updateNoRegistrasi(Request $request, $id)
     {
         $request->validate([
             'no_registrasi' => [
-                'required',
-                'string',
-                'max:100',
-                // Harus unik kecuali untuk arsip yg sama
+                'required', 'string', 'max:100',
                 \Illuminate\Validation\Rule::unique('arsips', 'no_registrasi')->ignore($id),
             ],
         ]);
@@ -309,15 +330,6 @@ class BackupController extends Controller
         $old = $arsip->no_registrasi;
         $arsip->update(['no_registrasi' => $request->no_registrasi]);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'No Registrasi berhasil diperbarui.',
-                'old'     => $old,
-                'new'     => $arsip->no_registrasi,
-            ]);
-        }
-
-        return back()->with('success', "No Registrasi berhasil diubah dari \"{$old}\" menjadi \"{$arsip->no_registrasi}\".");
+        return back()->with('success', "No Registrasi diubah: {$old} -> {$arsip->no_registrasi}");
     }
 }
