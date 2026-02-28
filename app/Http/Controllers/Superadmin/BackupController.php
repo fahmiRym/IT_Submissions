@@ -27,8 +27,18 @@ class BackupController extends Controller
      * EXPORT – Download data arsip (JSON) + File Bukti Scan (ZIP)
      * ─────────────────────────────────────────────────────────
      */
+    /**
+     * ─────────────────────────────────────────────────────────
+     * EXPORT – Download data arsip (JSON) + File Bukti Scan (ZIP)
+     * ─────────────────────────────────────────────────────────
+     */
     public function export(Request $request)
     {
+        // 1. Cek Ekstensi ZIP (Kritikal untuk Server)
+        if (!class_exists('ZipArchive')) {
+            return back()->withErrors(['backup_file' => 'Ekstensi PHP ZIP tidak terpasang di server ini. Silakan hubungi admin IT atau aktifkan php-zip.']);
+        }
+
         $query = Arsip::with([
             'admin:id,name,email',
             'department:id,name',
@@ -50,7 +60,6 @@ class BackupController extends Controller
 
         $data = $arsips->map(function ($a) {
             return [
-                'id'              => $a->id,
                 'no_registrasi'   => $a->no_registrasi,
                 'jenis_pengajuan' => $a->jenis_pengajuan,
                 'keterangan'      => $a->keterangan,
@@ -69,8 +78,6 @@ class BackupController extends Controller
                 'total_qty_out'   => $a->total_qty_out,
                 'detail_barang'   => $a->detail_barang,
                 'bukti_scan'      => $a->bukti_scan,
-                'created_at'      => optional($a->created_at)->toIso8601String(),
-                'updated_at'      => optional($a->updated_at)->toIso8601String(),
 
                 'admin_name'       => $a->admin->name ?? null,
                 'admin_email'      => $a->admin->email ?? null,
@@ -115,38 +122,47 @@ class BackupController extends Controller
             'data' => $data
         ];
 
-        // Buat ZIP
-        $zipName = 'backup-arsip-' . now()->format('Ymd-His') . '.zip';
-        $tempDir = storage_path('app/temp-backup-' . uniqid());
-        if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
+        try {
+            // Setup Temp
+            $zipName = 'backup-arsip-' . now()->format('Ymd-His') . '.zip';
+            $tempDir = storage_path('app/temp-' . uniqid());
+            if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
 
-        $jsonPath = $tempDir . '/data.json';
-        file_put_contents($jsonPath, json_encode($payload, JSON_PRETTY_PRINT));
+            $jsonPath = $tempDir . '/data.json';
+            file_put_contents($jsonPath, json_encode($payload, JSON_PRETTY_PRINT));
 
-        $zipPath = storage_path('app/' . $zipName);
-        $zip = new \ZipArchive();
+            $zipPath = storage_path('app/' . $zipName);
+            $zip = new \ZipArchive();
 
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            // Tambahkan JSON
-            $zip->addFile($jsonPath, 'data.json');
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                // Tambah JSON
+                $zip->addFile($jsonPath, 'data.json');
 
-            // Tambahkan Bukti Scan
-            foreach ($arsips as $a) {
-                if ($a->bukti_scan) {
-                    $filePath = storage_path('app/public/bukti_scan/' . $a->bukti_scan);
-                    if (file_exists($filePath)) {
-                        $zip->addFile($filePath, 'files/' . $a->bukti_scan);
+                // Tambah File Scan
+                foreach ($arsips as $a) {
+                    if ($a->bukti_scan) {
+                        $filePath = storage_path('app/public/bukti_scan/' . $a->bukti_scan);
+                        if (file_exists($filePath)) {
+                            $zip->addFile($filePath, 'files/' . $a->bukti_scan);
+                        }
                     }
                 }
+                $zip->close();
             }
-            $zip->close();
+
+            // Cleanup Temp
+            \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
+
+            if (!file_exists($zipPath)) {
+                 throw new \Exception("Gagal membuat file ZIP. Periksa izin akses folder storage.");
+            }
+
+            return response()->download($zipPath)->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Backup Export Error: " . $e->getMessage());
+            return back()->withErrors(['backup_file' => 'Gagal Export: ' . $e->getMessage()]);
         }
-
-        // Cleanup temp
-        @unlink($jsonPath);
-        @rmdir($tempDir);
-
-        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 
     /**
@@ -161,42 +177,46 @@ class BackupController extends Controller
         ]);
 
         $file    = $request->file('backup_file');
-        $ext     = $file->getClientOriginalExtension();
-        $tempDir = storage_path('app/temp-import-' . uniqid());
+        $ext     = strtolower($file->getClientOriginalExtension());
+        $tempDir = storage_path('app/import-' . uniqid());
         $payload = null;
 
-        if ($ext === 'zip') {
-            $zip = new \ZipArchive();
-            if ($zip->open($file->getRealPath()) === TRUE) {
-                if (!file_exists($tempDir)) mkdir($tempDir, 0777, true);
-                $zip->extractTo($tempDir);
-                $zip->close();
-
-                $jsonPath = $tempDir . '/data.json';
-                if (file_exists($jsonPath)) {
-                    $payload = json_decode(file_get_contents($jsonPath), true);
-                }
-            }
-        } else {
-            // Legacy JSON Import
-            $payload = json_decode(file_get_contents($file->getRealPath()), true);
-        }
-
-        if (!$payload || !isset($payload['data'])) {
-            // Cleanup jika gagal
-            if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
-            return back()->withErrors(['backup_file' => 'Format backup tidak valid. Gunakan file .zip hasil export terbaru.']);
-        }
-
-        $imported = 0;
-        $skipped  = 0;
-        $errors   = [];
-
-        DB::beginTransaction();
         try {
+            if ($ext === 'zip') {
+                if (!class_exists('ZipArchive')) {
+                    throw new \Exception("Ekstensi PHP ZIP tidak aktif di server ini. Tidak dapat memproses file .zip.");
+                }
+
+                $zip = new \ZipArchive();
+                if ($zip->open($file->getRealPath()) === TRUE) {
+                    if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+                    $zip->extractTo($tempDir);
+                    $zip->close();
+
+                    $jsonPath = $tempDir . '/data.json';
+                    if (file_exists($jsonPath)) {
+                        $payload = json_decode(file_get_contents($jsonPath), true);
+                    }
+                } else {
+                    throw new \Exception("Gagal membuka file ZIP backup.");
+                }
+            } else {
+                // Legacy JSON Import
+                $payload = json_decode(file_get_contents($file->getRealPath()), true);
+            }
+
+            if (!$payload || !isset($payload['data'])) {
+                throw new \Exception("Isi backup tidak valid atau format salah.");
+            }
+
+            $imported = 0;
+            $skipped  = 0;
+            $errors   = [];
+
+            DB::beginTransaction();
             foreach ($payload['data'] as $idx => $row) {
                 try {
-                    // 1. Resolve Admin
+                    // Start Import Logic
                     $adminId = User::where('email', $row['admin_email'] ?? '')
                                    ->orWhere('name', $row['admin_name'] ?? '')
                                    ->orWhere('username', strtolower(str_replace(' ', '', $row['admin_name'] ?? '')))
@@ -214,7 +234,6 @@ class BackupController extends Controller
                         ])->id;
                     }
 
-                    // 2. Resolve Master Data
                     $deptId = Department::where('name', $row['department_name'] ?? '')->value('id');
                     if (!$deptId && !empty($row['department_name'])) {
                         $deptId = Department::create(['name' => $row['department_name'], 'is_active' => true])->id;
@@ -232,11 +251,9 @@ class BackupController extends Controller
 
                     if (!$adminId) {
                         $skipped++;
-                        $errors[] = "Row #{$idx}: User data incomplete.";
                         continue;
                     }
 
-                    // 3. Upsert Arsip
                     $existing = Arsip::where('no_registrasi', $row['no_registrasi'])->first();
                     $arsipData = [
                         'no_registrasi'   => $row['no_registrasi'] ?? null,
@@ -273,48 +290,37 @@ class BackupController extends Controller
                         $arsip = Arsip::create($arsipData);
                     }
 
-                    // 4. Restore Items (Adjust, Mutasi, Bundel)
-                    foreach ($row['adjust_items'] ?? [] as $i) {
-                        ArsipAdjustItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
-                    }
-                    foreach ($row['mutasi_items'] ?? [] as $i) {
-                        ArsipMutasiItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
-                    }
-                    foreach ($row['bundel_items'] ?? [] as $i) {
-                        ArsipBundelItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
-                    }
+                    foreach ($row['adjust_items'] ?? [] as $i) ArsipAdjustItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
+                    foreach ($row['mutasi_items'] ?? [] as $i) ArsipMutasiItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
+                    foreach ($row['bundel_items'] ?? [] as $i) ArsipBundelItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
 
-                    // 5. Restore Physical File (Jika ini ZIP)
                     if ($ext === 'zip' && $arsip->bukti_scan) {
                         $srcFile = $tempDir . '/files/' . $arsip->bukti_scan;
                         $dstDir  = storage_path('app/public/bukti_scan');
-                        if (!file_exists($dstDir)) mkdir($dstDir, 0777, true);
-
-                        if (file_exists($srcFile)) {
-                            copy($srcFile, $dstDir . '/' . $arsip->bukti_scan);
-                        }
+                        if (!is_dir($dstDir)) mkdir($dstDir, 0777, true);
+                        if (file_exists($srcFile)) copy($srcFile, $dstDir . '/' . $arsip->bukti_scan);
                     }
 
                     $imported++;
                 } catch (\Exception $e) {
-                    $errors[] = "Row #{$idx}: " . $e->getMessage();
+                    $errors[] = "Baris #{$idx}: " . $e->getMessage();
                     $skipped++;
                 }
             }
             DB::commit();
+
+            if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
+            
+            $resMsg = "Import Berhasil: {$imported} data dipulihkan. {$skipped} gagal.";
+            if ($errors) session()->flash('import_errors', $errors);
+            return back()->with('success', $resMsg);
+
         } catch (\Exception $e) {
             DB::rollBack();
             if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
-            return back()->withErrors(['backup_file' => 'Critical Import Failure: ' . $e->getMessage()]);
+            \Illuminate\Support\Facades\Log::error("Backup Import Error: " . $e->getMessage());
+            return back()->withErrors(['backup_file' => 'Gagal Import: ' . $e->getMessage()]);
         }
-
-        // Cleanup
-        if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
-
-        $msg = "Import Berhasil! {$imported} data + bukti scan dipulihkan. {$skipped} gagal/dilewati.";
-        if ($errors) session()->flash('import_errors', $errors);
-
-        return back()->with('success', $msg);
     }
 
     public function updateNoRegistrasi(Request $request, $id)
