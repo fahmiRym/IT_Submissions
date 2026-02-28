@@ -150,18 +150,43 @@ class BackupController extends Controller
         try {
             foreach ($payload['data'] as $idx => $row) {
                 try {
-                    // Resolve relasi berdasarkan nama
+                    // Resolve relasi berdasarkan nama. Jika tidak ada, buat otomatis agar import sukses.
                     $adminId = User::where('email', $row['admin_email'] ?? '')
                                    ->orWhere('name', $row['admin_name'] ?? '')
+                                   ->orWhere('username', strtolower(str_replace(' ', '', $row['admin_name'] ?? '')))
                                    ->value('id');
 
-                    $deptId    = Department::where('name', $row['department_name'] ?? '')->value('id');
+                    if (!$adminId && !empty($row['admin_name'])) {
+                        $newUser = User::create([
+                            'name'          => $row['admin_name'],
+                            'username'      => strtolower(str_replace(' ', '', $row['admin_name'])),
+                            'email'         => $row['admin_email'] ?? (strtolower(str_replace(' ', '', $row['admin_name'])) . '@system.com'),
+                            'password'      => bcrypt('password123'), // Default password
+                            'role'          => 'admin',
+                            'department_id' => 1, // Fallback to first dept
+                            'is_active'     => true
+                        ]);
+                        $adminId = $newUser->id;
+                    }
+
+                    $deptId = Department::where('name', $row['department_name'] ?? '')->value('id');
+                    if (!$deptId && !empty($row['department_name'])) {
+                        $deptId = Department::create(['name' => $row['department_name'], 'is_active' => true])->id;
+                    }
+
                     $managerId = Manager::where('name', $row['manager_name'] ?? '')->value('id');
-                    $unitId    = Unit::where('name', $row['unit_name'] ?? '')->value('id');
+                    if (!$managerId && !empty($row['manager_name'])) {
+                        $managerId = Manager::create(['name' => $row['manager_name'], 'is_active' => true])->id;
+                    }
+
+                    $unitId = Unit::where('name', $row['unit_name'] ?? '')->value('id');
+                    if (!$unitId && !empty($row['unit_name'])) {
+                        $unitId = Unit::create(['name' => $row['unit_name'], 'is_active' => true])->id;
+                    }
 
                     if (!$adminId) {
                         $skipped++;
-                        $errors[] = "Row #{$idx}: User '{$row['admin_name']}' tidak ditemukan. Dilewati.";
+                        $errors[] = "Row #{$idx}: Data User tidak lengkap. Dilewati.";
                         continue;
                     }
 
