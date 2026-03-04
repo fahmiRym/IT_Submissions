@@ -961,5 +961,40 @@ window.editArsip = function(id) {
     }
 });
 }
+
+// =========================================================================
+// AUTO REFRESH (AJAX POLLING)
+// =========================================================================
+let currentLastUpdate = null;
+let currentCount = null;
+
+function checkArsipUpdates() {
+    // JANGAN auto-refresh jika user sedang membuka modal (form tambah/edit)
+    if ($('.modal.show').length > 0) return;
+
+    $.ajax({
+        url: "{{ route('arsip.check-updates') }}",
+        type: "GET",
+        cache: false,
+        success: function(res) {
+            if (currentLastUpdate === null) {
+                currentLastUpdate = res.last_update;
+                currentCount = res.count;
+                return;
+            }
+
+            // Memuat ulang langsung jika data berubah
+            if (res.last_update !== currentLastUpdate || res.count !== currentCount) {
+                console.log("Perubahan terdeteksi! Refresh...");
+                window.location.reload();
+            }
+        },
+        error: function(err) { console.log("Gagal mengecek update_api: ", err); }
+    });
+}
+
+// Pasang interval polling: panggil checkArsipUpdates() tiap 15 detik (15000ms)
+setInterval(checkArsipUpdates,2000);
+checkArsipUpdates(); // Cek langsung saat load
 </script>
 @endpush

@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IT Submision Report</title>
+    <title>IT Submission Report</title>
+    {{-- Favicon --}}
+    @if(isset($app_logo) && $app_logo)
+        <link rel="icon" type="image/png" href="{{ asset('storage/settings/' . $app_logo) }}">
+    @else
+        <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
+    @endif
     <style>
         body { font-family: sans-serif; font-size: 10pt; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
@@ -24,7 +30,11 @@
 
     <div class="header">
         <div style="margin-bottom: 10px;">
-            <img src="{{ public_path('img/logo.png') }}" style="height: 60px;">
+            @if(isset($app_logo) && $app_logo)
+                <img src="{{ public_path('storage/settings/' . $app_logo) }}" style="height: 60px;">
+            @else
+                <img src="{{ public_path('img/logo.png') }}" style="height: 60px;">
+            @endif
         </div>
         <h2>IT SUBMISSIONS REPORT</h2>
         <p>Filter: {{ $filterDate }} | Departemen: {{ $departmentName }}</p>
@@ -38,7 +48,7 @@
                 <div class="box" style="height: 250px;">
                     <h3 class="box-title">ANALISIS PEMBATALAN & KINERJA</h3>
                     <p style="text-align: justify; margin-bottom: 15px; line-height: 1.4; font-size: 10pt;">{!! $conclusion !!}</p>
-                    <p style="font-size: 9pt; color: #666; font-style: italic;">Note: Fokus analisis adalah tingkat pembatalan (Jenis Pengajuan: Cancel) yang mengindikasikan kesalahan input.</p>
+                    <p style="font-size: 9pt; color: #666; font-style: italic;">Note: Fokus analisis adalah tingkat pembatalan (Jenis Pengajuan: Cancel). Pemohon kosong otomatis diisi nama Staff pengaju.</p>
                 </div>
             </td>
             <!-- Center: Top Dept -->
@@ -53,7 +63,7 @@
             <!-- Right: Top Cancel -->
             <td style="border: none; width: 30%; padding-left: 5px;">
                 <div class="box" style="height: 250px; background-color: #fef2f2; border-color: #fca5a5;">
-                    <h3 class="box-title" style="color: #b91c1c; border-color: #fecaca; font-size: 10pt;">PENGAJU PEMBATALAN TERBANYAK</h3>
+                    <h3 class="box-title" style="color: #b91c1c; border-color: #fecaca; font-size: 10pt;">PEMOHON PEMBATALAN TERBANYAK</h3>
                     <div style="text-align: center; margin-top: 10px;">
                         <img src="{{ $chartPieUrl }}" style="max-height: 180px; width: 100%;" alt="Cancel Chart">
                     </div>
@@ -114,7 +124,7 @@
             <thead>
                 <tr>
                     <th style="width: 10%;">Rank</th>
-                    <th style="text-align: left;">Nama User</th>
+                    <th style="text-align: left;">Pemohon / Staff</th>
                     <th style="text-align: left;">Departemen</th>
                     <th style="width: 20%; background-color: #fee2e2; color: #991b1b;">Jumlah Cancel</th>
                 </tr>
@@ -164,7 +174,11 @@
                         <div style="font-size: 8pt; color: #666;">Dept: {{ $arsip->admin->department->name ?? '-' }}</div>
                     </td>
                     <td class="text-left">
-                        <div style="font-weight: bold; color: #1e40af;">{{ $arsip->pemohon ?? '-' }}</div>
+                        @php $pemohonDisplay = !empty(trim($arsip->pemohon ?? '')) ? $arsip->pemohon : null; @endphp
+                        <div style="font-weight: bold; color: #1e40af;">
+                            {{ $pemohonDisplay ?? ($arsip->admin->name ?? 'System') }}
+                            @if(!$pemohonDisplay)<span style="font-weight: normal; font-size: 8pt; color: #9ca3af;">(Staff)</span>@endif
+                        </div>
                         <div style="font-size: 8pt; color: #666;">Dept: {{ $arsip->department->name ?? '-' }}</div>
                     </td>
                     <td>{{ $arsip->bukti_scan ? 'Ada' : '-' }}</td>

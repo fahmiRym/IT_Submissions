@@ -2,7 +2,13 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title></title>
+    <title>Print Draft - {{ $arsip->no_registrasi }}</title>
+    {{-- Favicon --}}
+    @if(isset($app_logo) && $app_logo)
+        <link rel="icon" type="image/png" href="{{ asset('storage/settings/' . $app_logo) }}">
+    @else
+        <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
+    @endif
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         @page { size: portrait; margin: 10mm; }
@@ -143,8 +149,13 @@
     </style>
     @endif
 
-    <div style="font-size: 10px; font-weight: 800; margin-bottom: 5px;">
-        {{ $arsip->no_registrasi }}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <div style="font-size: 10px; font-weight: 800;">
+            {{ $arsip->no_registrasi }}
+        </div>
+        <div style="height: 40px;">
+            {{-- Logo dihilangkan pada halaman draft --}}
+        </div>
     </div>
 
     <div class="header-title">{{ $title }}</div>

@@ -33,8 +33,10 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('*', function ($view) {
             // Data pengaturan global
+            $logo = Setting::get('app_logo');
             $view->with([
-                'app_logo' => Setting::get('app_logo'),
+                'app_logo' => $logo,
+                'app_logo_url' => $logo ? asset('storage/settings/' . $logo . '?v=' . filemtime(public_path('storage/settings/' . $logo))) : asset('img/logo.png'),
                 'app_name' => Setting::get('app_name', config('app.name')),
             ]);
 

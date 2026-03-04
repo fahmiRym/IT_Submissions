@@ -125,6 +125,19 @@ class LaporanController extends Controller
     }
 
 
+    public function pdfViewer(Request $request)
+    {
+        $app_logo = \App\Models\Setting::get('app_logo');
+        $app_logo_url = $app_logo
+            ? asset('storage/settings/' . $app_logo) . '?v=' . time()
+            : asset('img/logo.png') . '?v=' . time();
+
+        // Build the PDF stream URL with all current query params
+        $pdfUrl = route('superadmin.laporan.pdf') . '?' . http_build_query($request->all());
+
+        return view('laporan.pdf_viewer', compact('app_logo_url', 'pdfUrl'));
+    }
+
     public function printPdf(Request $request)
     {
         $arsips = $this->getFilteredArsips($request);
@@ -158,13 +171,23 @@ class LaporanController extends Controller
         $totalCancel = $cancels->count();
         $cancelRate = $total > 0 ? round(($totalCancel / $total) * 100, 1) : 0;
 
-        // Find Who Makes Mistakes (Cancels)
-        $allCancelers = $cancels->groupBy('admin_id')
-            ->map(fn($group) => [
-                'name' => $group->first()->admin->name ?? 'Unknown',
-                'dept' => $group->first()->department->name ?? '-',
-                'count' => $group->count()
-            ])
+        // Find Who Makes Cancels — group by PEMOHON (fallback ke nama staff jika pemohon kosong)
+        $allCancelers = $cancels->groupBy(function($a) {
+                // Key = pemohon jika ada, fallback ke admin_id agar tidak merger antar staff
+                return !empty(trim($a->pemohon)) ? 'pemohon:' . trim($a->pemohon) : 'staff:' . $a->admin_id;
+            })
+            ->map(function($group) {
+                $first = $group->first();
+                // Nama = pemohon jika ada, fallback ke nama staff
+                $name = !empty(trim($first->pemohon))
+                    ? trim($first->pemohon)
+                    : ($first->admin->name ?? 'Unknown');
+                return [
+                    'name'  => $name,
+                    'dept'  => $first->department->name ?? '-',
+                    'count' => $group->count(),
+                ];
+            })
             ->sortByDesc('count')
             ->values();
         
@@ -190,7 +213,7 @@ class LaporanController extends Controller
             . "Departemen paling aktif adalah <strong>$topDeptName</strong> ($topDeptCount dokumen).<br>"
             . "Tingkat pembatalan (Cancel) dokumen: <strong>$cancelRate%</strong> ($totalCancel dokumen). "
             . "Kelengkapan bukti scan dokumen: <strong>$scanRate%</strong> ($withScan dokumen).<br>"
-            . "Pengaju dengan frekuensi cancel tertinggi: <strong>$topCancelerDisplay</strong> ($topCancelerCount dokumen).";
+            . "Pemohon dengan frekuensi cancel tertinggi: <strong>$topCancelerDisplay</strong> ($topCancelerCount dokumen).";
 
         // CHART 1: TOP 5 DEPARTMENTS (Activity)
         $barConfig = [
@@ -221,13 +244,15 @@ class LaporanController extends Controller
                 ]]
             ],
             'options' => [
-                'plugins' => ['legend' => ['display' => false], 'title' => ['display' => true, 'text' => 'Top 5 Pengaju Cancel Terbanyak'], 'datalabels' => ['display' => true, 'color' => 'black', 'anchor' => 'end', 'align' => 'top']]
+                'plugins' => ['legend' => ['display' => false], 'title' => ['display' => true, 'text' => 'Top 5 Pemohon Cancel Terbanyak'], 'datalabels' => ['display' => true, 'color' => 'black', 'anchor' => 'end', 'align' => 'top']]
             ]
         ];
         $chartPieUrl = 'https://quickchart.io/chart?width=350&height=200&c=' . urlencode(json_encode($barCancelConfig)); // Still reusing var name
 
+        $app_logo = \App\Models\Setting::get('app_logo');
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.pdf', compact(
-            'pivotData', 'departmentName', 'filterDate', 'conclusion', 'chartBarUrl', 'chartPieUrl', 'userCancelList', 'arsips'
+            'pivotData', 'departmentName', 'filterDate', 'conclusion', 'chartBarUrl', 'chartPieUrl', 'userCancelList', 'arsips', 'app_logo'
         ))->setPaper('a4', 'landscape');
         
         return $pdf->stream('laporan-analisis-error.pdf');

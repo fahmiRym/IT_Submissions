@@ -215,7 +215,7 @@
                 <button type="submit" class="btn btn-primary fw-extrabold flex-fill shadow-sm rounded-3">
                     <i class="bi bi-search me-1"></i> CARI DATA
                 </button>
-                <button type="submit" formaction="{{ route('superadmin.laporan.pdf') }}" formtarget="_blank" class="btn btn-danger fw-bold shadow-sm rounded-3 px-4">
+                <button type="submit" formaction="{{ route('superadmin.laporan.pdf-viewer') }}" formtarget="_blank" class="btn btn-danger fw-bold shadow-sm rounded-3 px-4">
                     <i class="bi bi-file-earmark-pdf me-1"></i> CETAK PDF
                 </button>
                 <a href="{{ route('superadmin.laporan.index') }}" class="btn btn-light border shadow-sm rounded-3 px-3" title="Reset Filters">
@@ -359,7 +359,13 @@
                         <!-- PEMOHON -->
                         <td class="px-4">
                              <div class="d-flex flex-column">
-                                <span class="fw-semibold text-soft-dark">{{ $arsip->pemohon ?? '-' }}</span>
+                                @php $pemohonDisplay = !empty(trim($arsip->pemohon ?? '')) ? $arsip->pemohon : null; @endphp
+                                <span class="fw-semibold text-soft-dark">
+                                    {{ $pemohonDisplay ?? ($arsip->admin->name ?? '-') }}
+                                    @if(!$pemohonDisplay)
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill ms-1" style="font-size: 0.65rem; font-weight: 500;">Staff</span>
+                                    @endif
+                                </span>
                                 <div class="text-soft-muted small mt-1">
                                     <i class="bi bi-building me-1 opacity-50"></i>{{ $arsip->department->name ?? '-' }}
                                 </div>

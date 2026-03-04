@@ -237,20 +237,33 @@ class BackupController extends Controller
                         ])->id;
                     }
 
-                    $deptId = Department::where('name', $row['department_name'] ?? '')->value('id');
-                    if (!$deptId && !empty($row['department_name'])) {
-                        $deptId = Department::create(['name' => $row['department_name'], 'is_active' => true])->id;
+                    $deptId = null;
+                    if (!empty($row['department_name'])) {
+                        $dept = Department::firstOrCreate(
+                            ['name' => $row['department_name']],
+                            ['is_active' => true]
+                        );
+                        $deptId = $dept->id;
                     }
 
-                    $managerId = Manager::where('name', $row['manager_name'] ?? '')->value('id');
-                    if (!$managerId && !empty($row['manager_name'])) {
-                        $managerId = Manager::create(['name' => $row['manager_name'], 'is_active' => true])->id;
+                    $managerId = null;
+                    if (!empty($row['manager_name'])) {
+                        $manager = Manager::firstOrCreate(
+                            ['name' => $row['manager_name']],
+                            ['is_active' => true]
+                        );
+                        $managerId = $manager->id;
                     }
 
-                    $unitId = Unit::where('name', $row['unit_name'] ?? '')->value('id');
-                    if (!$unitId && !empty($row['unit_name'])) {
-                        $unitId = Unit::create(['name' => $row['unit_name'], 'is_active' => true])->id;
+                    $unitId = null;
+                    if (!empty($row['unit_name'])) {
+                        $unit = Unit::firstOrCreate(
+                            ['name' => $row['unit_name']],
+                            ['is_active' => true]
+                        );
+                        $unitId = $unit->id;
                     }
+
 
                     if (!$adminId) {
                         $skipped++;

@@ -38,7 +38,18 @@ class SettingController extends Controller
             // Simpan logo baru
             $file = $request->file('app_logo');
             $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
+            
+            // Simpan ke storage (public disk)
             $file->storeAs('settings', $filename, 'public');
+
+            // Tambahan: Juga copy ke public/favicon.ico untuk menjamin tab PDF menampilkan logo brand
+            // Kita gunakan copy() ke path fisik public/favicon.ico
+            try {
+                copy($file->getRealPath(), public_path('favicon.ico'));
+            } catch (\Exception $e) {
+                // Jangan gagalkan proses utama jika penulisan favicon.ico gagal (misal: permission)
+                \Log::error("Gagal mengupdate root favicon.ico: " . $e->getMessage());
+            }
 
             Setting::set('app_logo', $filename);
         }

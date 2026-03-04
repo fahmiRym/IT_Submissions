@@ -84,6 +84,14 @@ Route::middleware('auth')->group(function () {
         ->name('notifications.check');
     Route::put('/notifications/{notification}/read', [NotificationController::class, 'read'])
         ->name('notifications.read');
+
+    // Endpoint ringan untuk mengecek apakah ada perubahan data di tabel Arsip
+    Route::get('/arsip/check-updates', function () {
+        return response()->json([
+            'last_update' => \App\Models\Arsip::max('updated_at'),
+            'count'       => \App\Models\Arsip::count(),
+        ]);
+    })->name('arsip.check-updates');
 });
 
 /*
@@ -138,6 +146,7 @@ Route::prefix('superadmin')
         Route::get('profile', [SuperProfile::class,'index'])->name('profile');
         Route::put('profile', [SuperProfile::class,'update'])->name('profile.update');
 
+        Route::get('laporan/pdf-viewer', [SuperLaporan::class, 'pdfViewer'])->name('laporan.pdf-viewer');
         Route::get('laporan/pdf', [SuperLaporan::class, 'printPdf'])->name('laporan.pdf');
         Route::get('laporan', [SuperLaporan::class, 'index'])->name('laporan.index');
         

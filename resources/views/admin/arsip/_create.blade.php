@@ -256,7 +256,7 @@ BPB-25/12/0327
                                 <div class="card-body">
                                     <div class="form-floating mb-3">
                                         <textarea name="keterangan" class="form-control border-light" placeholder="Keterangan" style="height: 80px"></textarea>
-                                        <label class="text-muted"><i class="bi bi-chat-text me-1"></i> Keterangan / Alasan Pengajuan</label>
+                                        <label class="text-muted"><i class="bi bi-chat-text me-1"></i> Deskripsi / Permasalahan</label>
                                     </div>
                                     
                                     <label class="form-label fw-bold small text-muted text-uppercase mb-2">Upload Bukti Scan (Opsional jika ingin Draft)</label>

@@ -1398,5 +1398,40 @@ function fallbackCopy(el, callback) {
     sel.removeAllRanges();
 }
 
+// =========================================================================
+// AUTO REFRESH (AJAX POLLING)
+// =========================================================================
+let currentLastUpdate = null;
+let currentCount = null;
+
+function checkArsipUpdates() {
+    // JANGAN auto-refresh jika user sedang membuka modal (form tambah/edit)
+    if ($('.modal.show').length > 0) return;
+
+    $.ajax({
+        url: "{{ route('arsip.check-updates') }}",
+        type: "GET",
+        cache: false,
+        success: function(res) {
+            if (currentLastUpdate === null) {
+                currentLastUpdate = res.last_update;
+                currentCount = res.count;
+                return;
+            }
+
+            // Jika terdeteksi waktu update maju atau jumlah baris beda, muat ulang!
+            if (res.last_update !== currentLastUpdate || res.count !== currentCount) {
+                console.log("Perubahan data terdeteksi! Memuat ulang...");
+                window.location.reload();
+            }
+        },
+        error: function() { console.log('Gagal mengecek update'); }
+    });
+}
+
+// Set polling tiap 15 detik (15000ms)
+setInterval(checkArsipUpdates, 15000);
+checkArsipUpdates();
+
 </script>
 @endpush

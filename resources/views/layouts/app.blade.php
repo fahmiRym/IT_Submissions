@@ -7,13 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- Favicon --}}
-    @if($app_logo)
-        <link rel="icon" type="image/png" href="{{ asset('storage/settings/' . $app_logo) }}">
-        <link rel="apple-touch-icon" href="{{ asset('storage/settings/' . $app_logo) }}">
-    @else
-        <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('img/logo.png') }}">
-    @endif
+    <link rel="icon" type="image/x-icon" href="{{ $app_logo_url }}">
+    <link rel="apple-touch-icon" href="{{ $app_logo_url }}">
 
     {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
