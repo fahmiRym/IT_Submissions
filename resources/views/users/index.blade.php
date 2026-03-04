@@ -7,13 +7,29 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
     body, .card, .table, button, input, select { font-family: 'Outfit', sans-serif !important; }
-    .stat-card { border: none; border-radius: 20px; overflow: hidden; position: relative; transition: transform 0.25s ease, box-shadow 0.25s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.13); }
-    .stat-card .mesh { position: absolute; inset: 0; z-index: 1; background: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.18) 0%, transparent 60%), radial-gradient(circle at 90% 90%, rgba(255,255,255,0.1) 0%, transparent 50%); }
-    .stat-card .card-body { z-index: 2; position: relative; }
-    .stat-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-    .stat-value { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; line-height: 1; }
-    .stat-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; }
+    /* ── STAT CARDS (Dashboard Style) ── */
+    .card-stat-vibrant {
+        border: none;
+        border-radius: 16px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .card-stat-vibrant:hover { 
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+    }
+    .stat-overlay-icon {
+        position: absolute;
+        right: -15px;
+        bottom: -15px;
+        font-size: 7rem;
+        opacity: 0.15;
+        transform: rotate(-10deg);
+        color: white;
+    }
     .table-card { border: none; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.05); }
     .table-card .card-header-section { padding: 1.5rem 1.75rem; background: white; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
     .section-title { font-size: 1.05rem; font-weight: 800; color: #1e293b; margin: 0; }
@@ -52,63 +68,35 @@
 
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="card stat-card text-white h-100" style="background: linear-gradient(135deg,#4f46e5,#3730a3);">
-            <div class="mesh"></div>
-            <div class="card-body p-4 d-flex flex-column gap-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-                    <span class="badge bg-white bg-opacity-20 rounded-pill fw-semibold" style="font-size:0.7rem;">Total</span>
-                </div>
-                <div>
-                    <div class="stat-value">{{ number_format($users->count()) }}</div>
-                    <div class="stat-label mt-1">User Terdaftar</div>
-                </div>
-            </div>
+        <div class="card-stat-vibrant h-100 p-4" style="background: linear-gradient(135deg, #4f46e5, #3730a3);">
+            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">User Terdaftar</h6>
+            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($users->count()) }}</h2>
+            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-people-fill me-1"></i> TOTAL DATA</div>
+            <i class="bi bi-people-fill stat-overlay-icon"></i>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card stat-card text-white h-100" style="background: linear-gradient(135deg,#0ea5e9,#0284c7);">
-            <div class="mesh"></div>
-            <div class="card-body p-4 d-flex flex-column gap-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="stat-icon"><i class="bi bi-person-fill-gear"></i></div>
-                    <span class="badge bg-white bg-opacity-20 rounded-pill fw-semibold" style="font-size:0.7rem;">Admin</span>
-                </div>
-                <div>
-                    <div class="stat-value">{{ number_format($totalAdmin) }}</div>
-                    <div class="stat-label mt-1">Role Admin</div>
-                </div>
-            </div>
+        <div class="card-stat-vibrant h-100 p-4" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Role Admin</h6>
+            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalAdmin) }}</h2>
+            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-person-fill-gear me-1"></i> ADMIN USER</div>
+            <i class="bi bi-person-fill-gear stat-overlay-icon"></i>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card stat-card text-white h-100" style="background: linear-gradient(135deg,#ef4444,#dc2626);">
-            <div class="mesh"></div>
-            <div class="card-body p-4 d-flex flex-column gap-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="stat-icon"><i class="bi bi-shield-lock-fill"></i></div>
-                    <span class="badge bg-white bg-opacity-20 rounded-pill fw-semibold" style="font-size:0.7rem;">Super</span>
-                </div>
-                <div>
-                    <div class="stat-value">{{ number_format($totalSuper) }}</div>
-                    <div class="stat-label mt-1">Role Superadmin</div>
-                </div>
-            </div>
+        <div class="card-stat-vibrant h-100 p-4" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Role Superadmin</h6>
+            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalSuper) }}</h2>
+            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-shield-lock-fill me-1"></i> SYSTEM ADMIN</div>
+            <i class="bi bi-shield-lock-fill stat-overlay-icon"></i>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card stat-card text-white h-100" style="background: linear-gradient(135deg,#10b981,#059669);">
-            <div class="mesh"></div>
-            <div class="card-body p-4 d-flex flex-column gap-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="stat-icon"><i class="bi bi-lightning-charge-fill"></i></div>
-                    <span class="badge bg-white bg-opacity-20 rounded-pill fw-semibold" style="font-size:0.7rem;">Latest</span>
-                </div>
-                <div>
-                    <div class="fw-bold text-truncate" style="font-size:1rem;letter-spacing:-0.3px;">{{ $latestUser ?: '-' }}</div>
-                    <div class="stat-label mt-1">User Terbaru</div>
-                </div>
-            </div>
+        <div class="card-stat-vibrant h-100 p-4" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">User Terbaru</h6>
+            <h2 class="mb-0 fw-bold text-white text-truncate" style="font-size:2.2rem; line-height:1.2; padding-top:4px;">{{ $latestUser ?: '-' }}</h2>
+            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-lightning-charge-fill me-1"></i> LATEST ACCOUNT</div>
+            <i class="bi bi-lightning-charge-fill stat-overlay-icon"></i>
         </div>
     </div>
 </div>

@@ -8,21 +8,29 @@
 <style>
     body, .card, .table, button, input, select { font-family: 'Outfit', sans-serif !important; }
 
-    /* ── STAT CARDS ── */
-    .stat-card {
-        border: none; border-radius: 20px; overflow: hidden; position: relative;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    /* ── STAT CARDS (Dashboard Style) ── */
+    .card-stat-vibrant {
+        border: none;
+        border-radius: 16px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.13); }
-    .stat-card .mesh { position: absolute; inset: 0; z-index: 1;
-        background: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.18) 0%, transparent 60%),
-                    radial-gradient(circle at 90% 90%, rgba(255,255,255,0.1) 0%, transparent 50%); }
-    .stat-card .card-body { z-index: 2; position: relative; }
-    .stat-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.2);
-        display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-    .stat-value { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; line-height: 1; }
-    .stat-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; }
+    .card-stat-vibrant:hover { 
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+    }
+    .stat-overlay-icon {
+        position: absolute;
+        right: -15px;
+        bottom: -15px;
+        font-size: 7rem;
+        opacity: 0.15;
+        transform: rotate(-10deg);
+        color: white;
+    }
 
     /* ── TABLE CARD ── */
     .table-card { border: none; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.05); }
@@ -101,48 +109,27 @@
 {{-- STATS --}}
 <div class="row g-4 mb-4">
     <div class="col-md-4">
-        <div class="card stat-card text-white h-100" style="background: linear-gradient(135deg, #6366f1, #4338ca);">
-            <div class="mesh"></div>
-            <div class="card-body p-4 d-flex flex-column gap-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="stat-icon"><i class="bi bi-building"></i></div>
-                    <span class="badge bg-white bg-opacity-20 rounded-pill fw-semibold" style="font-size:0.7rem;">Total</span>
-                </div>
-                <div>
-                    <div class="stat-value">{{ number_format($totalDept) }}</div>
-                    <div class="stat-label mt-1">Departemen Terdaftar</div>
-                </div>
-            </div>
+        <div class="card-stat-vibrant h-100 p-4" style="background: linear-gradient(135deg, #818cf8, #4f46e5);">
+            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Departemen Terdaftar</h6>
+            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalDept) }}</h2>
+            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-building me-1"></i> TOTAL DATA</div>
+            <i class="bi bi-building stat-overlay-icon"></i>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card text-white h-100" style="background: linear-gradient(135deg, #10b981, #059669);">
-            <div class="mesh"></div>
-            <div class="card-body p-4 d-flex flex-column gap-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-                    <span class="badge bg-white bg-opacity-20 rounded-pill fw-semibold" style="font-size:0.7rem;">Staff</span>
-                </div>
-                <div>
-                    <div class="stat-value">{{ number_format($totalUser) }}</div>
-                    <div class="stat-label mt-1">User Terhubung</div>
-                </div>
-            </div>
+        <div class="card-stat-vibrant h-100 p-4" style="background: linear-gradient(135deg, #34d399, #059669);">
+            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">User Terhubung</h6>
+            <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalUser) }}</h2>
+            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-people-fill me-1"></i> ACTIVE STAFF</div>
+            <i class="bi bi-people-fill stat-overlay-icon"></i>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card stat-card text-white h-100" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-            <div class="mesh"></div>
-            <div class="card-body p-4 d-flex flex-column gap-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
-                    <span class="badge bg-white bg-opacity-20 rounded-pill fw-semibold" style="font-size:0.7rem;">Latest</span>
-                </div>
-                <div>
-                    <div class="fw-bold text-truncate" style="font-size:1.1rem; letter-spacing:-0.3px;">{{ $latestDept ?: '-' }}</div>
-                    <div class="stat-label mt-1">Terakhir Ditambahkan</div>
-                </div>
-            </div>
+        <div class="card-stat-vibrant h-100 p-4" style="background: linear-gradient(135deg, #fbbf24, #d97706);">
+            <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Terakhir Ditambahkan</h6>
+            <h2 class="mb-0 fw-bold text-white text-truncate" style="font-size:2.2rem; line-height:1.2; padding-top:4px;">{{ $latestDept ?: '-' }}</h2>
+            <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-clock-history me-1"></i> LATEST UPDATE</div>
+            <i class="bi bi-clock-history stat-overlay-icon"></i>
         </div>
     </div>
 </div>
