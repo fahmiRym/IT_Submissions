@@ -743,7 +743,12 @@ class ArsipController extends Controller
      */
     public function printDraft($id)
     {
-        $arsip = Arsip::with(['department', 'unit', 'admin'])->findOrFail($id);
+        $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems'])->findOrFail($id);
+        
+        if ($arsip->jenis_pengajuan === 'Bundel') {
+            return view('print.arsip_draft_bundel', compact('arsip'));
+        }
+        
         return view('print.arsip_draft', compact('arsip'));
     }
 }
