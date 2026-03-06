@@ -280,7 +280,7 @@ $item = $currentItems->values()->get($i);
 
 <div class="sig-title">YANG MEMBUAT</div>
 
-<div class="sig-name">{{ strtoupper($arsip->admin->name ?? '') }}</div>
+<div class="sig-name">{{ ucwords(mb_strtolower($arsip->admin->name ?? '')) }}</div>
 
 <div class="sig-note">( TTD & Nama Jelas )</div>
 
