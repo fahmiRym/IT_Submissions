@@ -318,13 +318,18 @@
 
     <div class="footer-section" style="page-break-inside: avoid; break-inside: avoid;">
         <div style="margin-bottom: 5px; font-weight: 800;">
-            PASURUAN, {{ \Carbon\Carbon::parse($arsip->created_at)->translatedFormat('d F Y') }}
+            PASURUAN, {{ $isAdjust ? '____________________' : \Carbon\Carbon::parse($arsip->created_at)->translatedFormat('d F Y') }}
         </div>
 
         <table class="signature-table" style="page-break-inside: avoid; break-inside: avoid;">
             <tr>
                 <th style="width: 20%;">Diajukan Oleh,</th>
-                <th colspan="3" style="width: 60%;">Diketahui Oleh,</th>
+                @if($isAdjust)
+                    <th colspan="2" style="width: 40%;">Diketahui Oleh,</th>
+                    <th style="width: 20%;">Disetujui Oleh,</th>
+                @else
+                    <th colspan="3" style="width: 60%;">Diketahui Oleh,</th>
+                @endif
                 <th style="width: 20%;">Dikerjakan Oleh,</th>
             </tr>
             <tr>
@@ -333,21 +338,39 @@
                     <div style="font-weight: 800; font-size: 10px;">Pemohon</div>
                     <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                 </td>
-                <td style="width: 20%;">
-                    <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
-                    <div style="font-weight: 800; font-size: 10px;">SPV</div>
-                    <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
-                </td>
-                <td style="width: 20%;">
-                    <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
-                    <div style="font-weight: 800; font-size: 10px;">Kabag</div>
-                    <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
-                </td>
-                <td style="width: 20%;">
-                    <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
-                    <div style="font-weight: 800; font-size: 10px;">Manager</div>
-                    <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
-                </td>
+                @if($isAdjust)
+                    <td style="width: 20%;">
+                        <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
+                        <div style="font-weight: 800; font-size: 10px;">SPV / Kabag</div>
+                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    </td>
+                    <td style="width: 20%;">
+                        <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
+                        <div style="font-weight: 800; font-size: 10px;">Manager</div>
+                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    </td>
+                    <td style="width: 20%;">
+                        <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
+                        <div style="font-weight: 800; font-size: 10px;">Accounting</div>
+                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    </td>
+                @else
+                    <td style="width: 20%;">
+                        <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
+                        <div style="font-weight: 800; font-size: 10px;">SPV</div>
+                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    </td>
+                    <td style="width: 20%;">
+                        <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
+                        <div style="font-weight: 800; font-size: 10px;">Kabag</div>
+                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    </td>
+                    <td style="width: 20%;">
+                        <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
+                        <div style="font-weight: 800; font-size: 10px;">Manager</div>
+                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    </td>
+                @endif
                 <td>
                     <div style="font-weight: 800; text-decoration: underline; margin-bottom: 2px;"></div>
                     <div style="font-weight: 800; font-size: 10px;">Departemen IT</div>
