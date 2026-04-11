@@ -32,19 +32,20 @@ class ArsipController extends Controller
         /* ================= FILTER LOGIC ================= */
         // Use a helper array to store filters that should apply to stats too
         $filters = [
-            'q'               => $request->q,
-            'department_id'   => $request->department_id,
-            'manager_id'      => $request->manager_id,
-            'unit_id'         => $request->unit_id,
-            'kategori'        => $request->kategori,
+            'q' => $request->q,
+            'department_id' => $request->department_id,
+            'manager_id' => $request->manager_id,
+            'unit_id' => $request->unit_id,
+            'kategori' => $request->kategori,
             'jenis_pengajuan' => $request->jenis_pengajuan ?? $request->jenis,
-            'admin_id'        => $request->admin_id ?? $request->user_id,
-            'start_date'      => $request->start_date,
-            'end_date'        => $request->end_date,
+            'admin_id' => $request->admin_id ?? $request->user_id,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
         ];
 
         foreach ($filters as $key => $value) {
-            if (empty($value)) continue;
+            if (empty($value))
+                continue;
 
             if ($key === 'q') {
                 $query->where(function ($x) use ($value) {
@@ -87,7 +88,8 @@ class ArsipController extends Controller
         // Stats should respect all filters EXCEPT status-specific ones
         $statsQuery = Arsip::query();
         foreach ($filters as $key => $value) {
-            if (empty($value)) continue;
+            if (empty($value))
+                continue;
 
             if ($key === 'q') {
                 $statsQuery->where(function ($x) use ($value) {
@@ -106,30 +108,30 @@ class ArsipController extends Controller
         }
 
         $stats = [
-            'total'         => (clone $statsQuery)->count(),
-            'Review'        => (clone $statsQuery)->where('ket_process', 'Review')->count(),
-            'Process'       => (clone $statsQuery)->where('ket_process', 'Process')->count(),
-            'Done'          => (clone $statsQuery)->where('ket_process', 'Done')->count(),
-            'Pending'       => (clone $statsQuery)->where('ket_process', 'Pending')->count(),
-            'Void'          => (clone $statsQuery)->where('ket_process', 'Void')->count(),
-            'ba_pending'    => (clone $statsQuery)->where('ba', 'Pending')->count(),
-            'ba_process'    => (clone $statsQuery)->where('ba', 'Process')->count(),
-            'ba_done'       => (clone $statsQuery)->where('ba', 'Done')->count(),
+            'total' => (clone $statsQuery)->count(),
+            'Review' => (clone $statsQuery)->where('ket_process', 'Review')->count(),
+            'Process' => (clone $statsQuery)->where('ket_process', 'Process')->count(),
+            'Done' => (clone $statsQuery)->where('ket_process', 'Done')->count(),
+            'Pending' => (clone $statsQuery)->where('ket_process', 'Pending')->count(),
+            'Void' => (clone $statsQuery)->where('ket_process', 'Void')->count(),
+            'ba_pending' => (clone $statsQuery)->where('ba', 'Pending')->count(),
+            'ba_process' => (clone $statsQuery)->where('ba', 'Process')->count(),
+            'ba_done' => (clone $statsQuery)->where('ba', 'Done')->count(),
             'arsip_pending' => (clone $statsQuery)->where('arsip', 'Pending')->count(),
             'arsip_process' => (clone $statsQuery)->where('arsip', 'Process')->count(),
-            'arsip_done'    => (clone $statsQuery)->where('arsip', 'Done')->count(),
+            'arsip_done' => (clone $statsQuery)->where('arsip', 'Done')->count(),
         ];
 
         return view('superadmin.arsip.index', [
-            'arsips'      => $arsips,
+            'arsips' => $arsips,
             'departments' => Department::where('is_active', true)->orderBy('name')->get(),
-            'managers'    => Manager::where('is_active', true)->orderBy('name')->get(),
-            'units'       => Unit::where('is_active', true)->orderBy('name')->get(),
-            'users'       => User::where('role', 'admin')->where('is_active', true)->orderBy('name')->get(),
+            'managers' => Manager::where('is_active', true)->orderBy('name')->get(),
+            'units' => Unit::where('is_active', true)->orderBy('name')->get(),
+            'users' => User::where('role', 'admin')->where('is_active', true)->orderBy('name')->get(),
             'superadmins' => User::where('role', 'superadmin')->where('is_active', true)->orderBy('name')->get(),
-            'sort'        => $sort,
-            'dir'         => $dir,
-            'stats'       => $stats
+            'sort' => $sort,
+            'dir' => $dir,
+            'stats' => $stats
         ]);
     }
 
@@ -141,14 +143,14 @@ class ArsipController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'tgl_pengajuan'   => 'required|date',
-            'user_id'         => 'required|exists:users,id',
-            'department_id'   => 'required|exists:departments,id',
-            'manager_id'      => 'required|exists:managers,id',
-            'unit_id'         => 'required|exists:units,id',
+            'tgl_pengajuan' => 'required|date',
+            'user_id' => 'required|exists:users,id',
+            'department_id' => 'required|exists:departments,id',
+            'manager_id' => 'required|exists:managers,id',
+            'unit_id' => 'required|exists:units,id',
             'jenis_pengajuan' => 'required|string|max:30',
-            'status'          => 'required|in:Check,Process,Done,Reject,Void',
-            'bukti_scan'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'status' => 'required|in:Check,Process,Done,Reject,Void',
+            'bukti_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         try {
@@ -167,54 +169,57 @@ class ArsipController extends Controller
             $totalOut = 0;
 
             // Helper to sum qty from array structure
-            $calculateQty = function($items, $type) {
-                if(!is_array($items)) return 0;
-                return collect($items)->sum(function($item) use ($type) {
-                     if($type === 'in') return $item['qty_in'] ?? ($item['qty'] ?? 0);
-                     if($type === 'out') return $item['qty_out'] ?? ($item['qty'] ?? 0);
-                     return 0;
+            $calculateQty = function ($items, $type) {
+                if (!is_array($items))
+                    return 0;
+                return collect($items)->sum(function ($item) use ($type) {
+                    if ($type === 'in')
+                        return $item['qty_in'] ?? ($item['qty'] ?? 0);
+                    if ($type === 'out')
+                        return $item['qty_out'] ?? ($item['qty'] ?? 0);
+                    return 0;
                 });
             };
 
             $rawItems = $request->input('detail_barang', []);
 
             if ($request->jenis_pengajuan == 'Adjust') {
-                $totalIn  = collect($rawItems['adjust'] ?? [])->sum('qty_in');
+                $totalIn = collect($rawItems['adjust'] ?? [])->sum('qty_in');
                 $totalOut = collect($rawItems['adjust'] ?? [])->sum('qty_out');
-            } elseif(str_contains($request->jenis_pengajuan, 'Mutasi')) {
-                 // Mutasi Asal = Out, Mutasi Tujuan = In
-                 $totalOut = collect($rawItems['mutasi_asal'] ?? [])->sum('qty');
-                 $totalIn  = collect($rawItems['mutasi_tujuan'] ?? [])->sum('qty');
-            } elseif($request->jenis_pengajuan == 'Bundel') {
-                 $totalIn = collect($rawItems['bundel'] ?? [])->sum('qty');
+            } elseif (str_contains($request->jenis_pengajuan, 'Mutasi')) {
+                // Mutasi Asal = Out, Mutasi Tujuan = In
+                $totalOut = collect($rawItems['mutasi_asal'] ?? [])->sum('qty');
+                $totalIn = collect($rawItems['mutasi_tujuan'] ?? [])->sum('qty');
+            } elseif ($request->jenis_pengajuan == 'Bundel') {
+                $totalIn = collect($rawItems['bundel'] ?? [])->sum('qty');
             }
 
             $arsip = Arsip::create([
-                'no_registrasi'   => Arsip::generateNoRegistrasi($request),
-                'tgl_pengajuan'   => $request->tgl_pengajuan ? \Carbon\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : now(),
-                'tgl_arsip'       => $request->tgl_arsip,
-                'admin_id'        => $request->user_id,
-                'superadmin_id'   => auth()->id(),
-                'department_id'   => $request->department_id,
-                'manager_id'      => $request->manager_id,
-                'unit_id'         => $request->unit_id,
-                'kategori'        => $request->kategori ?: 'None', // Handle empty string
-                'pemohon'         => $request->pemohon,
-                'keterangan'      => $request->keterangan,
-                'no_doc'          => $request->no_doc,
-                'no_transaksi'    => $request->no_transaksi,
+                'no_registrasi' => Arsip::generateNoRegistrasi($request),
+                'tgl_pengajuan' => $request->tgl_pengajuan ? \Carbon\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : now(),
+                'tgl_arsip' => $request->tgl_arsip,
+                'admin_id' => $request->user_id,
+                'superadmin_id' => auth()->id(),
+                'department_id' => $request->department_id,
+                'manager_id' => $request->manager_id,
+                'unit_id' => $request->unit_id,
+                'kategori' => $request->kategori ?: 'None', // Handle empty string
+                'pemohon' => $request->pemohon,
+                'keterangan' => $request->keterangan,
+                'no_doc' => $request->no_doc,
+                'no_transaksi' => $request->no_transaksi,
                 'jenis_pengajuan' => $request->jenis_pengajuan,
-                'target_qty'      => $request->target_qty,
-                'catatan_tambahan'=> $request->catatan_tambahan,
-                'sub_jenis'       => $request->sub_jenis,
-                'detail_barang'   => $rawItems, // Backup JSON
-                'total_qty_in'    => $totalIn,
-                'total_qty_out'   => $totalOut,
-                'status'          => $request->status,
-                'bukti_scan'      => $filename,
-                'ba'              => $request->ba ?? ($request->status == 'Done' ? 'Done' : 'Process'),
-                'arsip'           => $request->arsip ?? ($request->status == 'Done' ? 'Done' : 'Pending'),
-                'ket_process'     => $request->ket_process ?? 'Review',
+                'target_qty' => $request->target_qty,
+                'catatan_tambahan' => $request->catatan_tambahan,
+                'sub_jenis' => $request->sub_jenis,
+                'detail_barang' => $rawItems, // Backup JSON
+                'total_qty_in' => $totalIn,
+                'total_qty_out' => $totalOut,
+                'status' => $request->status,
+                'bukti_scan' => $filename,
+                'ba' => $request->ba ?? ($request->status == 'Done' ? 'Done' : 'Process'),
+                'arsip' => $request->arsip ?? ($request->status == 'Done' ? 'Done' : 'Pending'),
+                'ket_process' => $request->ket_process ?? 'Review',
             ]);
 
             // SIMPAN DETIL KE TABLE RELASI
@@ -239,13 +244,18 @@ class ArsipController extends Controller
     public function edit($id)
     {
         $arsip = Arsip::with([
-            'admin', 'department', 'manager', 'unit',
-            'adjustItems', 'mutasiItems', 'bundelItems'
+            'admin',
+            'department',
+            'manager',
+            'unit',
+            'adjustItems',
+            'mutasiItems',
+            'bundelItems'
         ])->findOrFail($id);
 
         return response()->json([
             'status' => 'success',
-            'data'   => $arsip
+            'data' => $arsip
         ]);
     }
 
@@ -284,7 +294,7 @@ class ArsipController extends Controller
                 $unitObj = $arsip->unit;
 
                 $kodeDept = $deptObj->code ?? strtoupper(substr($deptObj->name, 0, 3));
-                $tglCode  = $now->format('ymd');
+                $tglCode = $now->format('ymd');
 
                 if (!empty($unitObj->code)) {
                     $kodeUnit = $unitObj->code;
@@ -301,7 +311,7 @@ class ArsipController extends Controller
                 if ($lastArsip) {
                     $parts = explode('-', $lastArsip->no_registrasi);
                     $lastSegment = end($parts);
-                    $newSeq = is_numeric($lastSegment) ? (int)$lastSegment + 1 : 1;
+                    $newSeq = is_numeric($lastSegment) ? (int) $lastSegment + 1 : 1;
                 } else {
                     $newSeq = 1;
                 }
@@ -315,48 +325,48 @@ class ArsipController extends Controller
             $noDoc = [];
             $tahun = $now->format('Y');
             $bulan = $now->format('m');
-            $hari  = $now->format('d');
+            $hari = $now->format('d');
 
             $prefixDoc = 'DOC';
-            $padding   = 4;
-            $useDay    = false;
+            $padding = 4;
+            $useDay = false;
 
             switch (trim(str_replace(' ', '_', $arsip->jenis_pengajuan))) {
                 case 'Mutasi_Produk':
                     $prefixDoc = 'RPP';
-                    $padding   = 4;
-                    $useDay    = false;
+                    $padding = 4;
+                    $useDay = false;
                     break;
                 case 'Mutasi_Billet':
                     $prefixDoc = 'DCB';
-                    $padding   = 5;
-                    $useDay    = false;
+                    $padding = 5;
+                    $useDay = false;
                     break;
                 case 'Adjust':
                     $prefixDoc = 'DC';
-                    $padding   = 4;
-                    $useDay    = true;
+                    $padding = 4;
+                    $useDay = true;
                     break;
                 case 'Internal_Memo':
                     $prefixDoc = 'IM';
-                    $padding   = 4;
-                    $useDay    = false;
+                    $padding = 4;
+                    $useDay = false;
                     break;
                 case 'Bundel':
                     $prefixDoc = 'BDL';
-                    $padding   = 4;
-                    $useDay    = false;
+                    $padding = 4;
+                    $useDay = false;
                     break;
                 case 'Cancel':
                 case 'Cancelled':
                     $prefixDoc = 'CANCEL';
-                    $padding   = 4;
-                    $useDay    = false;
+                    $padding = 4;
+                    $useDay = false;
                     break;
                 default:
                     $prefixDoc = strtoupper(substr(str_replace(' ', '', $arsip->jenis_pengajuan), 0, 3));
-                    $padding   = 4;
-                    $useDay    = false;
+                    $padding = 4;
+                    $useDay = false;
                     break;
             }
 
@@ -379,7 +389,7 @@ class ArsipController extends Controller
                         // Format: "Cancelled No Doc : 0025/02/IT/2026"
                         // Ambil angka tepat setelah ": "
                         if (preg_match('/Cancelled No Doc\s*:\s*(\d+)/', $docStr, $m)) {
-                            $maxNumber = max($maxNumber, (int)$m[1]);
+                            $maxNumber = max($maxNumber, (int) $m[1]);
                         }
                     } else {
                         // Format: "PREFIX/TAHUN/BULAN/NNNN" atau "PREFIX/TAHUN/BULAN/HARI/NNNN"
@@ -387,7 +397,7 @@ class ArsipController extends Controller
                         $parts = explode('/', $docStr);
                         $lastSegment = end($parts);
                         if (is_numeric($lastSegment)) {
-                            $maxNumber = max($maxNumber, (int)$lastSegment);
+                            $maxNumber = max($maxNumber, (int) $lastSegment);
                         }
                     }
                 }
@@ -415,19 +425,19 @@ class ArsipController extends Controller
              */
             $arsip->update([
                 'no_registrasi' => $noRegistrasiFix,
-                'no_doc'        => implode("\n", $noDoc),
-                'tgl_arsip'     => $now,
-                'status'        => 'Done',
-                'ba'            => 'Done',
-                'arsip'         => 'Done',
-                'ket_process'   => 'Done',
+                'no_doc' => implode("\n", $noDoc),
+                'tgl_arsip' => $now,
+                'status' => 'Done',
+                'ba' => 'Done',
+                'arsip' => 'Done',
+                'ket_process' => 'Done',
             ]);
 
             Notification::create([
-                'user_id'     => $arsip->admin_id,
-                'arsip_id'    => $arsip->id,
-                'title'       => 'Arsip Selesai',
-                'message'     => "Dokumen telah diarsipkan.\nNo Reg: {$noRegistrasiFix}\nNo Doc: {$finalNoDoc}",
+                'user_id' => $arsip->admin_id,
+                'arsip_id' => $arsip->id,
+                'title' => 'Arsip Selesai',
+                'message' => "Dokumen telah diarsipkan.\nNo Reg: {$noRegistrasiFix}\nNo Doc: {$finalNoDoc}",
                 'role_target' => 'admin',
             ]);
 
@@ -437,18 +447,20 @@ class ArsipController extends Controller
                 $isCancel = in_array(trim($arsip->jenis_pengajuan), ['Cancel', 'Cancelled']);
 
                 $noTransaksiSub = '';
-                $copyAllText    = '';
+                $copyAllText = '';
 
                 if ($isCancel) {
                     // Filter Sub Transaksi (buang baris yang diawali MO atau PO)
-                    $indukPrefixes  = ['MO', 'PO'];
+                    $indukPrefixes = ['MO', 'PO', 'SOF', 'LL'];
                     $noTransaksiRaw = $arsip->no_transaksi ?? '';
-                    $allLines       = preg_split('/\r\n|\n|\r/', $noTransaksiRaw);
-                    $subLines       = array_filter($allLines, function ($line) use ($indukPrefixes) {
+                    $allLines = preg_split('/\r\n|\n|\r/', $noTransaksiRaw);
+                    $subLines = array_filter($allLines, function ($line) use ($indukPrefixes) {
                         $trimmed = trim($line);
-                        if ($trimmed === '') return false;
+                        if ($trimmed === '')
+                            return false;
                         foreach ($indukPrefixes as $prefix) {
-                            if (str_starts_with($trimmed, $prefix)) return false;
+                            if (str_starts_with($trimmed, $prefix))
+                                return false;
                         }
                         return true;
                     });
@@ -462,13 +474,13 @@ class ArsipController extends Controller
                 }
 
                 return response()->json([
-                    'status'           => 'success',
-                    'no_doc'           => $finalNoDoc,
-                    'no_registrasi'    => $noRegistrasiFix,
-                    'jenis_pengajuan'  => $arsip->jenis_pengajuan,
+                    'status' => 'success',
+                    'no_doc' => $finalNoDoc,
+                    'no_registrasi' => $noRegistrasiFix,
+                    'jenis_pengajuan' => $arsip->jenis_pengajuan,
                     'no_transaksi_sub' => $noTransaksiSub,
-                    'copy_all_text'    => $copyAllText,
-                    'message'          => "Berhasil diarsipkan!",
+                    'copy_all_text' => $copyAllText,
+                    'message' => "Berhasil diarsipkan!",
                 ]);
             }
 
@@ -491,7 +503,7 @@ class ArsipController extends Controller
     {
         $request->validate([
             'start_date' => 'required|date',
-            'end_date'   => 'required|date|after_or_equal:start_date',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
         try {
@@ -512,7 +524,7 @@ class ArsipController extends Controller
                     if (Storage::disk('public')->exists($filePath)) {
                         Storage::disk('public')->delete($filePath);
                     }
-                    
+
                     // Update field database jadi NULL agar tidak ada link 'mati'
                     $arsip->update(['bukti_scan' => null]);
                     $count++;
@@ -536,11 +548,11 @@ class ArsipController extends Controller
 
 
         $request->validate([
-            'status'      => 'required|in:Check,Process,Pending,Done,Reject,Void',
+            'status' => 'required|in:Check,Process,Pending,Done,Reject,Void',
             'ket_process' => 'nullable|in:Review,Process,Done,Pending,Void,Partial Done',
-            'ba'          => 'nullable',
-            'arsip'       => 'nullable',
-            'bukti_scan'  => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'ba' => 'nullable',
+            'arsip' => 'nullable',
+            'bukti_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -555,51 +567,54 @@ class ArsipController extends Controller
 
             // MAP STATUS UTAMA
             $map = [
-                'Check'   => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Review'],
+                'Check' => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Review'],
                 'Process' => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Process'],
                 'Pending' => ['ket_process' => 'Pending'],
-                'Done'    => ['ba' => 'Done', 'arsip' => 'Done', 'ket_process' => 'Done'],
-                'Reject'  => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
-                'Void'    => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
+                'Done' => ['ba' => 'Done', 'arsip' => 'Done', 'ket_process' => 'Done'],
+                'Reject' => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
+                'Void' => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],
             ];
 
             // 1. Ambil Data Detail dari Request
             $rawItems = $request->detail_barang ?: [];
 
             // 2. Hitung Ulang Total Qty (Mutasi, Adjust, Bundel)
-            $totalIn  = 0;
+            $totalIn = 0;
             $totalOut = 0;
 
-            if (!empty($rawItems['mutasi_asal']))   $totalOut += collect($rawItems['mutasi_asal'])->sum('qty');
-            if (!empty($rawItems['mutasi_tujuan'])) $totalIn  += collect($rawItems['mutasi_tujuan'])->sum('qty');
-            if (!empty($rawItems['bundel']))        $totalOut += collect($rawItems['bundel'])->sum('qty');
+            if (!empty($rawItems['mutasi_asal']))
+                $totalOut += collect($rawItems['mutasi_asal'])->sum('qty');
+            if (!empty($rawItems['mutasi_tujuan']))
+                $totalIn += collect($rawItems['mutasi_tujuan'])->sum('qty');
+            if (!empty($rawItems['bundel']))
+                $totalOut += collect($rawItems['bundel'])->sum('qty');
             if (!empty($rawItems['adjust'])) {
-                $totalIn  += collect($rawItems['adjust'])->sum('qty_in');
+                $totalIn += collect($rawItems['adjust'])->sum('qty_in');
                 $totalOut += collect($rawItems['adjust'])->sum('qty_out');
             }
 
             // 3. Siapkan Data Update & Automation
             $updateData = [
-                'admin_id'        => $request->user_id,
-                'no_registrasi'   => $request->no_registrasi ?? $arsip->no_registrasi,
-                'tgl_pengajuan'   => $request->tgl_pengajuan ? \Carbon\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : $arsip->tgl_pengajuan,
-                'tgl_arsip'       => $request->tgl_arsip,
-                'department_id'   => $request->department_id,
-                'manager_id'      => $request->manager_id,
-                'unit_id'         => $request->unit_id,
-                'no_doc'          => $request->no_doc,
-                'no_transaksi'    => $request->no_transaksi,
-                'kategori'        => $request->kategori ?? 'None',
+                'admin_id' => $request->user_id,
+                'no_registrasi' => $request->no_registrasi ?? $arsip->no_registrasi,
+                'tgl_pengajuan' => $request->tgl_pengajuan ? \Carbon\Carbon::parse($request->tgl_pengajuan)->setTimeFrom(now()) : $arsip->tgl_pengajuan,
+                'tgl_arsip' => $request->tgl_arsip,
+                'department_id' => $request->department_id,
+                'manager_id' => $request->manager_id,
+                'unit_id' => $request->unit_id,
+                'no_doc' => $request->no_doc,
+                'no_transaksi' => $request->no_transaksi,
+                'kategori' => $request->kategori ?? 'None',
                 'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,
-                'pemohon'         => $request->pemohon,
-                'target_qty'      => $request->target_qty ?? $arsip->target_qty,
-                'keterangan'      => $request->keterangan ?? $arsip->keterangan,
-                'sub_jenis'       => $request->sub_jenis ?? $arsip->sub_jenis,
-                'status'          => $request->status,
-                'bukti_scan'      => $filename,
-                'detail_barang'   => $rawItems,
-                'total_qty_in'    => $totalIn,
-                'total_qty_out'   => $totalOut,
+                'pemohon' => $request->pemohon,
+                'target_qty' => $request->target_qty ?? $arsip->target_qty,
+                'keterangan' => $request->keterangan ?? $arsip->keterangan,
+                'sub_jenis' => $request->sub_jenis ?? $arsip->sub_jenis,
+                'status' => $request->status,
+                'bukti_scan' => $filename,
+                'detail_barang' => $rawItems,
+                'total_qty_in' => $totalIn,
+                'total_qty_out' => $totalOut,
             ];
 
             // Masukkan Automasi Status (Default)
@@ -608,13 +623,16 @@ class ArsipController extends Controller
             }
 
             // IJINKAN OVERRIDE MANUAL (Jika form diisi secara spesifik & tidak kosong)
-            if ($request->filled('ba'))          $updateData['ba'] = $request->ba;
-            if ($request->filled('arsip'))       $updateData['arsip'] = $request->arsip;
-            if ($request->filled('ket_process')) $updateData['ket_process'] = $request->ket_process;
+            if ($request->filled('ba'))
+                $updateData['ba'] = $request->ba;
+            if ($request->filled('arsip'))
+                $updateData['arsip'] = $request->arsip;
+            if ($request->filled('ket_process'))
+                $updateData['ket_process'] = $request->ket_process;
 
             // JIKA STATUS DI EDIT MENJADI DONE, TAPI NO DOC KOSONG -> BERI PERINGATAN ATAU TETAPKAN
             // Catatan: Sebaiknya No Doc hanya digenerate lewat tombol Arsip Sistem agar terkontrol.
-            
+
             $arsip->update($updateData);
 
             // 4. Sinkronisasi Tabel Relasi (Hapus Lama, Buat Baru)
@@ -655,17 +673,17 @@ class ArsipController extends Controller
         }
 
         Notification::create([
-            'user_id'     => $arsip->admin_id,
-            'arsip_id'    => $arsip->id,
-            'title'       => $title,
-            'message'     => $message,
+            'user_id' => $arsip->admin_id,
+            'arsip_id' => $arsip->id,
+            'title' => $title,
+            'message' => $message,
             'role_target' => 'admin',
         ]);
 
         if ($request->wantsJson()) {
             return response()->json(['status' => 'success', 'message' => 'Status arsip berhasil diperbarui']);
         }
-        
+
         return back()->with('success', 'Status arsip berhasil diperbarui');
     }
 
@@ -683,35 +701,40 @@ class ArsipController extends Controller
     private function saveDetailItems($arsip, $data)
     {
         // 1. MUTASI
-        $saveMutasi = function($items, $type) use ($arsip) {
-            if (!is_array($items)) return;
+        $saveMutasi = function ($items, $type) use ($arsip) {
+            if (!is_array($items))
+                return;
             foreach ($items as $item) {
-                if (empty($item['no_doc']) && empty($item['nama_produk']) && empty($item['product_code'])) continue;
-                
+                if (empty($item['no_doc']) && empty($item['nama_produk']) && empty($item['product_code']))
+                    continue;
+
                 ArsipMutasiItem::create([
-                    'arsip_id'     => $arsip->id,
-                    'type'         => $type,
+                    'arsip_id' => $arsip->id,
+                    'type' => $type,
                     'product_code' => $item['product_code'] ?? $item['no_doc'] ?? null,
                     'product_name' => $item['nama_produk'] ?? $item['no_doc'] ?? '-',
-                    'qty'          => $item['qty'] ?? 0,
-                    'lot'          => $item['lot'] ?? $item['keterangan'] ?? null,
-                    'panjang'      => $item['panjang'] ?? null,
-                    'location'     => $item['location'] ?? null,
+                    'qty' => $item['qty'] ?? 0,
+                    'lot' => $item['lot'] ?? $item['keterangan'] ?? null,
+                    'panjang' => $item['panjang'] ?? null,
+                    'location' => $item['location'] ?? null,
                 ]);
             }
         };
 
-        if (!empty($data['mutasi_asal']))   $saveMutasi($data['mutasi_asal'], 'asal');
-        if (!empty($data['mutasi_tujuan'])) $saveMutasi($data['mutasi_tujuan'], 'tujuan');
+        if (!empty($data['mutasi_asal']))
+            $saveMutasi($data['mutasi_asal'], 'asal');
+        if (!empty($data['mutasi_tujuan']))
+            $saveMutasi($data['mutasi_tujuan'], 'tujuan');
 
         // 2. BUNDEL
         if (!empty($data['bundel']) && is_array($data['bundel'])) {
             foreach ($data['bundel'] as $item) {
-                if (empty($item['no_doc'])) continue;
+                if (empty($item['no_doc']))
+                    continue;
                 ArsipBundelItem::create([
-                    'arsip_id'   => $arsip->id,
-                    'no_doc'     => $item['no_doc'],
-                    'qty'        => $item['qty'] ?? 1,
+                    'arsip_id' => $arsip->id,
+                    'no_doc' => $item['no_doc'],
+                    'qty' => $item['qty'] ?? 1,
                     'keterangan' => $item['keterangan'] ?? null,
                 ]);
             }
@@ -722,15 +745,16 @@ class ArsipController extends Controller
             foreach ($data['adjust'] as $item) {
                 // Cek minimal ada nama barang/kode
                 $identifier = $item['nama_produk'] ?? $item['no_doc'] ?? $item['product_code'] ?? null;
-                if (!$identifier) continue;
+                if (!$identifier)
+                    continue;
 
                 ArsipAdjustItem::create([
-                    'arsip_id'     => $arsip->id,
+                    'arsip_id' => $arsip->id,
                     'product_code' => $item['product_code'] ?? null,
-                    'product_name' => $item['nama_produk'] ?? $item['no_doc'] ?? '-', 
-                    'qty_in'       => $item['qty_in'] ?? 0,
-                    'qty_out'      => $item['qty_out'] ?? 0,
-                    'lot'          => $item['lot'] ?? $item['keterangan'] ?? null,
+                    'product_name' => $item['nama_produk'] ?? $item['no_doc'] ?? '-',
+                    'qty_in' => $item['qty_in'] ?? 0,
+                    'qty_out' => $item['qty_out'] ?? 0,
+                    'lot' => $item['lot'] ?? $item['keterangan'] ?? null,
                 ]);
             }
         }
@@ -744,11 +768,11 @@ class ArsipController extends Controller
     public function printDraft($id)
     {
         $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems'])->findOrFail($id);
-        
+
         if ($arsip->jenis_pengajuan === 'Bundel') {
             return view('print.arsip_draft_bundel', compact('arsip'));
         }
-        
+
         return view('print.arsip_draft', compact('arsip'));
     }
 }
