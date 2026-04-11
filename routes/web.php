@@ -67,6 +67,26 @@ Route::get('/preview-file/{filename}', function ($filename) {
     ]);
 })->name('preview.file');
 
+// PDF VIEWER — Menggunakan PDF.js lokal
+Route::get('/pdf-viewer/{filename}', function ($filename) {
+    if (!preg_match('/^[a-zA-Z0-9_\-\.]+$/', $filename)) {
+        abort(403);
+    }
+
+    $path = storage_path('app/public/bukti_scan/' . $filename);
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    $fileUrl = route('preview.file', ['filename' => $filename]);
+
+    return view('vendor.pdfjs.viewer', [
+        'filename' => $filename,
+        'fileUrl'  => $fileUrl
+    ]);
+})->name('pdf.viewer');
+
 /*
 |--------------------------------------------------------------------------
 | COMMON AUTH AREA

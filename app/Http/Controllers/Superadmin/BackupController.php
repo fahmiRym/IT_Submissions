@@ -63,52 +63,52 @@ class BackupController extends Controller
 
         $data = $arsips->map(function ($a) {
             return [
-                'no_registrasi'   => $a->no_registrasi,
+                'no_registrasi' => $a->no_registrasi,
                 'jenis_pengajuan' => $a->jenis_pengajuan,
-                'keterangan'      => $a->keterangan,
-                'ket_eror'        => $a->ket_eror,
-                'kategori'        => $a->kategori,
-                'pemohon'         => $a->pemohon,
-                'tgl_pengajuan'   => optional($a->tgl_pengajuan)->toIso8601String(),
-                'tgl_arsip'       => optional($a->tgl_arsip)->toDateString(),
-                'no_doc'          => $a->no_doc,
-                'no_transaksi'    => $a->no_transaksi,
-                'ba'              => $a->ba,
-                'arsip'           => $a->arsip,
-                'ket_process'     => $a->ket_process,
-                'status'          => $a->status,
-                'total_qty_in'    => $a->total_qty_in,
-                'total_qty_out'   => $a->total_qty_out,
-                'detail_barang'   => $a->detail_barang,
-                'bukti_scan'      => $a->bukti_scan,
+                'keterangan' => $a->keterangan,
+                'ket_eror' => $a->ket_eror,
+                'kategori' => $a->kategori,
+                'pemohon' => $a->pemohon,
+                'tgl_pengajuan' => optional($a->tgl_pengajuan)->toIso8601String(),
+                'tgl_arsip' => optional($a->tgl_arsip)->toDateString(),
+                'no_doc' => $a->no_doc,
+                'no_transaksi' => $a->no_transaksi,
+                'ba' => $a->ba,
+                'arsip' => $a->arsip,
+                'ket_process' => $a->ket_process,
+                'status' => $a->status,
+                'total_qty_in' => $a->total_qty_in,
+                'total_qty_out' => $a->total_qty_out,
+                'detail_barang' => $a->detail_barang,
+                'bukti_scan' => $a->bukti_scan,
 
-                'admin_name'       => $a->admin->name ?? null,
-                'admin_email'      => $a->admin->email ?? null,
-                'department_name'  => $a->department->name ?? null,
-                'manager_name'     => $a->manager->name ?? null,
-                'unit_name'        => $a->unit->name ?? null,
+                'admin_name' => $a->admin->name ?? null,
+                'admin_email' => $a->admin->email ?? null,
+                'department_name' => $a->department->name ?? null,
+                'manager_name' => $a->manager->name ?? null,
+                'unit_name' => $a->unit->name ?? null,
 
                 'adjust_items' => $a->adjustItems->map(fn($i) => [
                     'product_code' => $i->product_code,
                     'product_name' => $i->product_name,
-                    'qty_in'       => $i->qty_in,
-                    'qty_out'      => $i->qty_out,
-                    'lot'          => $i->lot,
+                    'qty_in' => $i->qty_in,
+                    'qty_out' => $i->qty_out,
+                    'lot' => $i->lot,
                 ])->toArray(),
 
                 'mutasi_items' => $a->mutasiItems->map(fn($i) => [
-                    'type'         => $i->type,
+                    'type' => $i->type,
                     'product_code' => $i->product_code,
                     'product_name' => $i->product_name,
-                    'qty'          => $i->qty,
-                    'lot'          => $i->lot,
-                    'panjang'      => $i->panjang,
-                    'location'     => $i->location,
+                    'qty' => $i->qty,
+                    'lot' => $i->lot,
+                    'panjang' => $i->panjang,
+                    'location' => $i->location,
                 ])->toArray(),
 
                 'bundel_items' => $a->bundelItems->map(fn($i) => [
-                    'no_doc'     => $i->no_doc,
-                    'qty'        => $i->qty,
+                    'no_doc' => $i->no_doc,
+                    'qty' => $i->qty,
                     'keterangan' => $i->keterangan,
                 ])->toArray(),
             ];
@@ -116,10 +116,10 @@ class BackupController extends Controller
 
         $payload = [
             'meta' => [
-                'app'         => config('app.name'),
-                'version'     => '1.0',
+                'app' => config('app.name'),
+                'version' => '1.0',
                 'exported_at' => now()->toIso8601String(),
-                'total'       => count($data),
+                'total' => count($data),
                 'exported_by' => auth()->user()->name,
             ],
             'data' => $data
@@ -129,7 +129,8 @@ class BackupController extends Controller
             // Setup Temp
             $zipName = 'backup-arsip-' . now()->format('Ymd-His') . '.zip';
             $tempDir = storage_path('app/temp-' . uniqid());
-            if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+            if (!is_dir($tempDir))
+                mkdir($tempDir, 0777, true);
 
             $jsonPath = $tempDir . '/data.json';
             file_put_contents($jsonPath, json_encode($payload, JSON_PRETTY_PRINT));
@@ -157,7 +158,7 @@ class BackupController extends Controller
             \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
 
             if (!file_exists($zipPath)) {
-                 throw new \Exception("Gagal membuat file ZIP. Periksa izin akses folder storage.");
+                throw new \Exception("Gagal membuat file ZIP. Periksa izin akses folder storage.");
             }
 
             return response()->download($zipPath)->deleteFileAfterSend(true);
@@ -179,8 +180,8 @@ class BackupController extends Controller
             'backup_file' => 'required|file|max:102400', // max 100MB
         ]);
 
-        $file    = $request->file('backup_file');
-        $ext     = strtolower($file->getClientOriginalExtension());
+        $file = $request->file('backup_file');
+        $ext = strtolower($file->getClientOriginalExtension());
         $tempDir = storage_path('app/import-' . uniqid());
         $payload = null;
 
@@ -192,7 +193,8 @@ class BackupController extends Controller
 
                 $zip = new \ZipArchive();
                 if ($zip->open($file->getRealPath()) === TRUE) {
-                    if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+                    if (!is_dir($tempDir))
+                        mkdir($tempDir, 0777, true);
                     $zip->extractTo($tempDir);
                     $zip->close();
 
@@ -213,27 +215,27 @@ class BackupController extends Controller
             }
 
             $imported = 0;
-            $skipped  = 0;
-            $errors   = [];
+            $skipped = 0;
+            $errors = [];
 
             DB::beginTransaction();
             foreach ($payload['data'] as $idx => $row) {
                 try {
                     // Start Import Logic
                     $adminId = User::where('email', $row['admin_email'] ?? '')
-                                   ->orWhere('name', $row['admin_name'] ?? '')
-                                   ->orWhere('username', strtolower(str_replace(' ', '', $row['admin_name'] ?? '')))
-                                   ->value('id');
+                        ->orWhere('name', $row['admin_name'] ?? '')
+                        ->orWhere('username', strtolower(str_replace(' ', '', $row['admin_name'] ?? '')))
+                        ->value('id');
 
                     if (!$adminId && !empty($row['admin_name'])) {
                         $adminId = User::create([
-                            'name'          => $row['admin_name'],
-                            'username'      => strtolower(str_replace(' ', '', $row['admin_name'])),
-                            'email'         => $row['admin_email'] ?? (strtolower(str_replace(' ', '', $row['admin_name'])) . '@system.com'),
-                            'password'      => bcrypt('password123'),
-                            'role'          => 'admin',
+                            'name' => $row['admin_name'],
+                            'username' => strtolower(str_replace(' ', '', $row['admin_name'])),
+                            'email' => $row['admin_email'] ?? (strtolower(str_replace(' ', '', $row['admin_name'])) . '@system.com'),
+                            'password' => bcrypt('password123'),
+                            'role' => 'admin',
                             'department_id' => 1,
-                            'is_active'     => true
+                            'is_active' => true
                         ])->id;
                     }
 
@@ -272,28 +274,28 @@ class BackupController extends Controller
 
                     $existing = Arsip::where('no_registrasi', $row['no_registrasi'])->first();
                     $arsipData = [
-                        'no_registrasi'   => $row['no_registrasi'] ?? null,
+                        'no_registrasi' => $row['no_registrasi'] ?? null,
                         'jenis_pengajuan' => $row['jenis_pengajuan'] ?? 'Cancel',
-                        'keterangan'      => $row['keterangan'] ?? null,
-                        'ket_eror'        => $row['ket_eror'] ?? null,
-                        'kategori'        => $row['kategori'] ?? 'None',
-                        'pemohon'         => $row['pemohon'] ?? null,
-                        'tgl_pengajuan'   => $row['tgl_pengajuan'] ? Carbon::parse($row['tgl_pengajuan']) : now(),
-                        'tgl_arsip'       => $row['tgl_arsip'] ?? null,
-                        'admin_id'        => $adminId,
-                        'department_id'   => $deptId,
-                        'manager_id'      => $managerId,
-                        'unit_id'         => $unitId,
-                        'no_doc'          => $row['no_doc'] ?? null,
-                        'no_transaksi'    => $row['no_transaksi'] ?? null,
-                        'ba'              => $row['ba'] ?? 'Process',
-                        'arsip'           => $row['arsip'] ?? 'Process',
-                        'ket_process'     => $row['ket_process'] ?? 'Pending',
-                        'status'          => $row['status'] ?? 'Process',
-                        'total_qty_in'    => $row['total_qty_in'] ?? 0,
-                        'total_qty_out'   => $row['total_qty_out'] ?? 0,
-                        'detail_barang'   => $row['detail_barang'] ?? null,
-                        'bukti_scan'      => $row['bukti_scan'] ?? null,
+                        'keterangan' => $row['keterangan'] ?? null,
+                        'ket_eror' => $row['ket_eror'] ?? null,
+                        'kategori' => $row['kategori'] ?? 'None',
+                        'pemohon' => $row['pemohon'] ?? null,
+                        'tgl_pengajuan' => $row['tgl_pengajuan'] ? Carbon::parse($row['tgl_pengajuan']) : now(),
+                        'tgl_arsip' => $row['tgl_arsip'] ?? null,
+                        'admin_id' => $adminId,
+                        'department_id' => $deptId,
+                        'manager_id' => $managerId,
+                        'unit_id' => $unitId,
+                        'no_doc' => $row['no_doc'] ?? null,
+                        'no_transaksi' => $row['no_transaksi'] ?? null,
+                        'ba' => $row['ba'] ?? 'Process',
+                        'arsip' => $row['arsip'] ?? 'Process',
+                        'ket_process' => $row['ket_process'] ?? 'Pending',
+                        'status' => $row['status'] ?? 'Process',
+                        'total_qty_in' => $row['total_qty_in'] ?? 0,
+                        'total_qty_out' => $row['total_qty_out'] ?? 0,
+                        'detail_barang' => $row['detail_barang'] ?? null,
+                        'bukti_scan' => $row['bukti_scan'] ?? null,
                     ];
 
                     if ($existing) {
@@ -306,9 +308,12 @@ class BackupController extends Controller
                         $arsip = Arsip::create($arsipData);
                     }
 
-                    foreach ($row['adjust_items'] ?? [] as $i) ArsipAdjustItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
-                    foreach ($row['mutasi_items'] ?? [] as $i) ArsipMutasiItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
-                    foreach ($row['bundel_items'] ?? [] as $i) ArsipBundelItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
+                    foreach ($row['adjust_items'] ?? [] as $i)
+                        ArsipAdjustItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
+                    foreach ($row['mutasi_items'] ?? [] as $i)
+                        ArsipMutasiItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
+                    foreach ($row['bundel_items'] ?? [] as $i)
+                        ArsipBundelItem::create(array_merge($i, ['arsip_id' => $arsip->id]));
 
                     if ($ext === 'zip' && $arsip->bukti_scan) {
                         // Coba di files/ atau di root zip
@@ -321,7 +326,7 @@ class BackupController extends Controller
                             if (file_exists($srcFile)) {
                                 $content = file_get_contents($srcFile);
                                 Storage::disk('public')->put('bukti_scan/' . $arsip->bukti_scan, $content);
-                                
+
                                 // Set permission (Linux/Docker)
                                 $dstPath = storage_path('app/public/bukti_scan/' . $arsip->bukti_scan);
                                 @chmod($dstPath, 0664);
@@ -340,15 +345,18 @@ class BackupController extends Controller
             }
             DB::commit();
 
-            if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
-            
+            if (is_dir($tempDir))
+                \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
+
             $resMsg = "Import Berhasil: {$imported} data dipulihkan. {$skipped} gagal.";
-            if ($errors) session()->flash('import_errors', $errors);
+            if ($errors)
+                session()->flash('import_errors', $errors);
             return back()->with('success', $resMsg);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            if (is_dir($tempDir)) \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
+            if (is_dir($tempDir))
+                \Illuminate\Support\Facades\File::deleteDirectory($tempDir);
             \Illuminate\Support\Facades\Log::error("Backup Import Error: " . $e->getMessage());
             return back()->withErrors(['backup_file' => 'Gagal Import: ' . $e->getMessage()]);
         }
@@ -358,7 +366,9 @@ class BackupController extends Controller
     {
         $request->validate([
             'no_registrasi' => [
-                'required', 'string', 'max:100',
+                'required',
+                'string',
+                'max:100',
                 \Illuminate\Validation\Rule::unique('arsips', 'no_registrasi')->ignore($id),
             ],
         ]);

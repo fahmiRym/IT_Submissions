@@ -106,6 +106,20 @@ if (typeof window.showBukti !== 'function') {
                 img.src = url;
                 img.classList.remove('d-none');
             }
+        } else if (ext === 'pdf') {
+            if (frame) {
+                // Gunakan PDF.js viewer lokal jika file adalah PDF
+                // Ekstrak nama file dari URL (asumsi format .../preview-file/NAMAFILE.pdf)
+                const segments = urlPart.split('/');
+                const filename = segments.pop();
+                const viewerUrl = `/pdf-viewer/${filename}`;
+                
+                frame.src = viewerUrl;
+                frame.classList.remove('d-none');
+                
+                // Juga update tombol "Buka di Tab Baru" agar menggunakan viewer
+                if (openTab) openTab.href = viewerUrl;
+            }
         } else {
             if (frame) {
                 frame.src = url;
