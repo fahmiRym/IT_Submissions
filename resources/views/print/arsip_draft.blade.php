@@ -149,14 +149,35 @@
     </style>
     @endif
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+    <!-- QRCode.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
         <div style="font-size: 10px; font-weight: 800;">
-            {{ $arsip->no_registrasi }}
+            <!-- {{ $arsip->no_registrasi }} -->
+              {{ date('Y-m-d') }} | {{ date('H:i:s') }}
         </div>
-        <div style="height: 40px;">
-            {{-- Logo dihilangkan pada halaman draft --}}
+
+        {{-- QR Code pojok kanan atas --}}
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div id="qrcode" style="width: 60px; height: 60px;"></div>
+            <div style="font-size: 7px; font-weight: 800; text-align: center; margin-top: 2px;"></div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            new QRCode(document.getElementById("qrcode"), {
+                text: "{{ $arsip->no_registrasi }}",
+                width: 60,
+                height: 60,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        });
+    </script>
+
 
     <div class="header-title">{{ $title }}</div>
     <div class="header-doc">
