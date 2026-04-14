@@ -36,12 +36,12 @@ class Arsip extends Model
 
     protected $casts = [
         'tgl_pengajuan' => 'datetime',
-        'tgl_arsip'     => 'date',
+        'tgl_arsip' => 'date',
         'detail_barang' => 'array'
     ];
 
 
-         /**
+    /**
      * ======================================================
      * GENERATE NO REGISTRASI (FINAL)
      * ======================================================
@@ -51,7 +51,7 @@ class Arsip extends Model
     {
         $now = now();
         $date = $now->format('ymd');
-        
+
         // 1. Ambil Data Departemen untuk Prefix (Contoh: PUR, GBB, dll)
         $deptModel = \App\Models\Department::find($request->department_id);
         $kodeDept = 'IT'; // Default jika tidak ditemukan
@@ -70,11 +70,11 @@ class Arsip extends Model
 
         // Gunakan Prefix Departemen untuk No Registrasi (Badge Biru)
         $prefix = "{$kodeDept}-{$date}-{$kodeUnit}-";
-        
+
         // Cari urutan terakhir hari ini untuk kombinasi tanggal & unit & dept tersebut
         $lastArsip = self::where('no_registrasi', 'like', $prefix . '%')
-                          ->orderBy('no_registrasi', 'desc')
-                          ->first();
+            ->orderBy('no_registrasi', 'desc')
+            ->first();
 
         $lastSeq = 0;
         if ($lastArsip) {
@@ -169,18 +169,21 @@ class Arsip extends Model
      */
     public function getTotalQtyInAttribute($value)
     {
-        if ($value > 0) return $value;
+        if ($value > 0)
+            return $value;
 
         // Jika 0, coba hitung dari relasi JIKA relasi sudah di-eager-load
         // Untuk Adjust, sum qty_in
         if ($this->relationLoaded('adjustItems')) {
             $sum = $this->adjustItems->sum('qty_in');
-            if ($sum > 0) return $sum;
+            if ($sum > 0)
+                return $sum;
         }
         // Untuk Mutasi, Tujuan = In
         if ($this->relationLoaded('mutasiItems')) {
             $sum = $this->mutasiItems->where('type', 'tujuan')->sum('qty');
-            if ($sum > 0) return $sum;
+            if ($sum > 0)
+                return $sum;
         }
 
         return 0;
@@ -191,22 +194,26 @@ class Arsip extends Model
      */
     public function getTotalQtyOutAttribute($value)
     {
-        if ($value > 0) return $value;
+        if ($value > 0)
+            return $value;
 
         // Adjust Out
         if ($this->relationLoaded('adjustItems')) {
             $sum = $this->adjustItems->sum('qty_out');
-            if ($sum > 0) return $sum;
+            if ($sum > 0)
+                return $sum;
         }
         // Mutasi Asal = Out
         if ($this->relationLoaded('mutasiItems')) {
             $sum = $this->mutasiItems->where('type', 'asal')->sum('qty');
-            if ($sum > 0) return $sum;
+            if ($sum > 0)
+                return $sum;
         }
         // Bundel = Out
         if ($this->relationLoaded('bundelItems')) {
             $sum = $this->bundelItems->sum('qty');
-            if ($sum > 0) return $sum;
+            if ($sum > 0)
+                return $sum;
         }
 
         return 0;
@@ -217,7 +224,8 @@ class Arsip extends Model
      */
     public function getNoDocRowsAttribute(): array
     {
-        if (!$this->no_doc) return [];
+        if (!$this->no_doc)
+            return [];
         return collect(preg_split("/\n\s*\n/", trim($this->no_doc)))
             ->map(fn($b) => array_values(array_filter(array_map('trim', preg_split("/\r\n|\n|\r/", $b)))))
             ->toArray();
@@ -228,7 +236,8 @@ class Arsip extends Model
      */
     public function getNoTransaksiRowsAttribute(): array
     {
-        if (!$this->no_transaksi) return [];
+        if (!$this->no_transaksi)
+            return [];
         return collect(preg_split("/\n\s*\n/", trim($this->no_transaksi)))
             ->map(fn($b) => array_values(array_filter(array_map('trim', preg_split("/\r\n|\n|\r/", $b)))))
             ->toArray();

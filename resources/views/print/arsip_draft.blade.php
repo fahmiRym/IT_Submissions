@@ -14,7 +14,7 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 8mm 10mm 8mm 10mm;
+            margin: 16mm 10mm 10mm 10mm;
         }
 
         *,
@@ -40,7 +40,7 @@
             display: flex;
             flex-direction: column;
             min-height: 96vh;
-            padding: 6px 8px;
+            padding: 15px 8px 6px 8px;
         }
 
         /* ── META BAR (Printed date / User) ── */
@@ -236,7 +236,7 @@
 
             .print-container {
                 min-height: 96vh;
-                padding: 0;
+                padding: 20px 0 0 0;
             }
 
             .footer-section {
@@ -328,7 +328,7 @@
             </div>
         </div>
 
-        <hr class="separator">
+        <!-- <hr class="separator"> -->
 
         {{-- ── INFO TABLE ── --}}
         <table class="info-table">
@@ -416,8 +416,27 @@
                     <div style="white-space: pre-wrap;">{{ trim($arsip->keterangan) }}</div>
                 @endif
                 @if(!empty(trim($arsip->no_transaksi)))
-                    <div style="column-width: 200px; column-gap: 20px; white-space: pre-wrap; page-break-inside: avoid;">
-                        {{ trim($arsip->no_transaksi) }}
+                    @php
+                        $normalized = preg_replace('/\|+/', "\n\n", trim($arsip->no_transaksi));
+                        $normalized = str_replace("\r\n", "\n", $normalized);
+                        $trxGroups = preg_split('/\n{2,}/', $normalized);
+                        $trxGroups = array_filter(array_map('trim', $trxGroups));
+                    @endphp
+                    <div>
+                        <div style="font-weight: 800;">No. Transaksi :</div>
+                        <div style="column-count: 3; column-gap: 15px; font-weight: 700;">
+                            @foreach($trxGroups as $group)
+                                <div style="break-inside: avoid; page-break-inside: avoid;">
+                                    @php
+                                        $lines = array_filter(array_map('trim', explode("\n", $group)));
+                                    @endphp
+                                    @foreach($lines as $line)
+                                        <div>{{ $line }}</div>
+                                    @endforeach
+                                    <div>&nbsp;</div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
                 @if(!$isAdjust)
