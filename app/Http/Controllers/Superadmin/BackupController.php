@@ -114,6 +114,8 @@ class BackupController extends Controller
             ];
         })->toArray();
 
+        $locationsData = \App\Models\Location::all(['name', 'is_active'])->toArray();
+
         $payload = [
             'meta' => [
                 'app' => config('app.name'),
@@ -122,7 +124,8 @@ class BackupController extends Controller
                 'total' => count($data),
                 'exported_by' => auth()->user()->name,
             ],
-            'data' => $data
+            'data' => $data,
+            'locations' => $locationsData
         ];
 
         try {
@@ -219,6 +222,20 @@ class BackupController extends Controller
             $errors = [];
 
             DB::beginTransaction();
+
+            // 1. IMPORT DATA MASTER LOKASI (Bila ada dalam backup)
+            if (isset($payload['locations']) && is_array($payload['locations'])) {
+                foreach ($payload['locations'] as $loc) {
+                    if (!empty($loc['name'])) {
+                        \App\Models\Location::firstOrCreate(
+                            ['name' => $loc['name']],
+                            ['is_active' => $loc['is_active'] ?? true]
+                        );
+                    }
+                }
+            }
+
+            // 2. IMPORT DATA ARSIP
             foreach ($payload['data'] as $idx => $row) {
                 try {
                     // Start Import Logic

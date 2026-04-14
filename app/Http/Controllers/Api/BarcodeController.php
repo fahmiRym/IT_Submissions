@@ -65,4 +65,39 @@ class BarcodeController extends Controller
             'data' => $arsip
         ], 200);
     }
+
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:arsips,id',
+            'status' => 'required|string'
+        ]);
+
+        $arsip = Arsip::find($request->id);
+
+        if (!$arsip) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Arsip tidak ditemukan'
+            ], 404);
+        }
+
+        // Map status "arsip" dari mobile ke "Sudah Diarsip" pada database
+        $newStatus = $request->status;
+        if (strtolower($newStatus) === 'arsip') {
+            $newStatus = 'Sudah Diarsip';
+        }
+
+        $arsip->update([
+            'status' => $newStatus,
+            'tgl_arsip' => now(),
+            'arsip' => 'Done' // Asumsi: mengubah trackernya juga menjadi Done
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status arsip berhasil diperbarui menjadi ' . $newStatus,
+            'data' => $arsip
+        ], 200);
+    }
 }

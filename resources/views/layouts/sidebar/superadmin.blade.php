@@ -118,7 +118,7 @@
 
             {{-- MASTER DATA --}}
             @php
-                $isMaster = request()->is('superadmin/departments*', 'superadmin/units*', 'superadmin/managers*', 'superadmin/users*');
+                $isMaster = request()->is('superadmin/departments*', 'superadmin/units*', 'superadmin/managers*', 'superadmin/users*', 'superadmin/locations*');
             @endphp
 
             <li class="nav-item">
@@ -136,6 +136,7 @@
 
                 <div class="collapse {{ $isMaster ? 'show' : '' }}" id="masterMenu">
                     <ul class="nav flex-column ms-3 mt-1 ps-3 border-start border-2">
+                        <li><a href="{{ route('superadmin.locations.index') }}" class="nav-link py-2 text-sm">📍 Lokasi Fisik</a></li>
                         <li><a href="{{ route('superadmin.departments.index') }}" class="nav-link py-2 text-sm">🏢 Departemen</a></li>
                         <li><a href="{{ route('superadmin.units.index') }}" class="nav-link py-2 text-sm">📦 Unit</a></li>
                         <li><a href="{{ route('superadmin.managers.index') }}" class="nav-link py-2 text-sm">🧑‍💼 Manager</a></li>

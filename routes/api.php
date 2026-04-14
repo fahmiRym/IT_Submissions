@@ -12,6 +12,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/arsip/scan', [BarcodeController::class, 'processScan']);
+    Route::post('/arsip/update-status', [BarcodeController::class, 'updateStatus']);
 
     // Rute test token bawaan Laravel
     Route::get('/user', function (Request $request) {

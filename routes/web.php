@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\NotificationController as AdminNotification;
 use App\Http\Controllers\Superadmin\DashboardController as SuperDashboard;
 use App\Http\Controllers\Superadmin\ArsipController as SuperArsip;
 use App\Http\Controllers\Superadmin\DepartmentController as SuperDepartment;
+use App\Http\Controllers\Superadmin\LocationController as SuperLocation;
 use App\Http\Controllers\Superadmin\UnitController as SuperUnit;
 use App\Http\Controllers\Superadmin\ManagerController as SuperManager;
 use App\Http\Controllers\Superadmin\UserController as SuperUser;
@@ -189,6 +190,9 @@ Route::prefix('superadmin')
         // MASTER DATA
         Route::patch('departments/{department}/toggle', [SuperDepartment::class, 'toggleIsActive'])->name('departments.toggle');
         Route::resource('departments', SuperDepartment::class);
+
+        Route::patch('locations/{location}/toggle', [SuperLocation::class, 'toggleIsActive'])->name('locations.toggle');
+        Route::resource('locations', SuperLocation::class);
 
         Route::patch('units/{unit}/toggle', [SuperUnit::class, 'toggleIsActive'])->name('units.toggle');
         Route::resource('units', SuperUnit::class);
