@@ -5,7 +5,13 @@
     <title>@yield('title', config('app.name'))</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
+    
+    {{-- Open Graph Meta Tags --}}
+    <meta property="og:title" content="@yield('title', config('app.name'))" />
+    <meta property="og:description" content="Aplikasi IT Submissions - Pengajuan Cancel, Adjustment, Internal Memo, Bundle, dan Mutasi" />
+    <meta property="og:image" content="{{ asset('img/og-image.jpeg') }}" />
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta name="twitter:card" content="summary_large_image" />
     {{-- Favicon --}}
     <link rel="icon" type="image/x-icon" href="{{ $app_logo_url }}">
     <link rel="apple-touch-icon" href="{{ $app_logo_url }}">

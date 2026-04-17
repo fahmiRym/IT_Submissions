@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Login | {{ $app_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:title" content="Login | {{ $app_name }}" />
+    <meta property="og:description"
+        content="Diagram Alur Aplikasi IT Submissions - Aplikasi untuk Pengajuan Cancel, Adjustment, Internal Memo, Bundle, dan Mutasi" />
+    <meta property="og:image" content="{{ asset('img/og-image.jpeg') }}" />
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     {{-- Favicon --}}
     <link rel="icon" type="image/x-icon" href="{{ $app_logo_url }}">
     <link rel="apple-touch-icon" href="{{ $app_logo_url }}">
-    
+
     {{-- Google Fonts --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -28,6 +35,7 @@
             justify-content: center;
             font-family: 'Inter', sans-serif;
         }
+
         .login-card {
             width: 100%;
             max-width: 400px;
@@ -37,12 +45,14 @@
             border-radius: 1.5rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
+
         .login-header {
             background: rgba(79, 70, 229, 0.05);
             padding: 2rem 2rem 1rem;
             border-radius: 1.5rem 1.5rem 0 0;
             text-align: center;
         }
+
         .login-icon {
             width: 60px;
             height: 60px;
@@ -58,58 +68,66 @@
         }
     </style>
 </head>
+
 <body>
 
-<div class="login-card animate-on-scroll">
-    <div class="login-header">
-        <div class="login-icon bg-white p-2">
-            @if($app_logo)
-                <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
-            @else
-                <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
-            @endif
+    <div class="login-card animate-on-scroll">
+        <div class="login-header">
+            <div class="login-icon bg-white p-2">
+                @if($app_logo)
+                    <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                @else
+                    <img src="{{ asset('img/logo.png') }}" alt="Logo"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                @endif
+            </div>
+            <h4 class="fw-bold text-dark mb-1">Selamat Datang</h4>
+            <p class="text-secondary small mb-0">Silakan login untuk mengakses {{ $app_name }}</p>
         </div>
-        <h4 class="fw-bold text-dark mb-1">Selamat Datang</h4>
-        <p class="text-secondary small mb-0">Silakan login untuk mengakses {{ $app_name }}</p>
-    </div>
-    
-    <div class="p-4 pt-3">
-        @error('username')
-            <div class="alert alert-danger d-flex align-items-center mb-4 border-0 shadow-sm" role="alert">
-                <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
-                <div>{{ $message }}</div>
-            </div>
-        @enderror
 
-        <form method="POST" action="{{ route('login.process') }}">
-            @csrf
-
-            <div class="mb-4">
-                <label class="form-label text-sm text-secondary fw-bold text-uppercase">Username</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-secondary"><i class="bi bi-person"></i></span>
-                    <input type="text" name="username" class="form-control" placeholder="Masukkan username" required style="border-left:none" autocomplete="off">
+        <div class="p-4 pt-3">
+            @error('username')
+                <div class="alert alert-danger d-flex align-items-center mb-4 border-0 shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i>
+                    <div>{{ $message }}</div>
                 </div>
-            </div>
+            @enderror
 
-            <div class="mb-4">
-                <label class="form-label text-sm text-secondary fw-bold text-uppercase">Password</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-secondary"><i class="bi bi-key"></i></span>
-                    <input type="password" name="password" class="form-control" placeholder="Masukkan password" required style="border-left:none">
+            <form method="POST" action="{{ route('login.process') }}">
+                @csrf
+
+                <div class="mb-4">
+                    <label class="form-label text-sm text-secondary fw-bold text-uppercase">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                class="bi bi-person"></i></span>
+                        <input type="text" name="username" class="form-control" placeholder="Masukkan username" required
+                            style="border-left:none" autocomplete="off">
+                    </div>
                 </div>
-            </div>
 
-            <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold shadow-lg">
-                Masuk Sekarang <i class="bi bi-arrow-right ms-2"></i>
-            </button>
-            
-            <div class="text-center mt-4">
-                <small class="text-muted">© 2026_IT_Submission</small>
-            </div>
-        </form>
+                <div class="mb-4">
+                    <label class="form-label text-sm text-secondary fw-bold text-uppercase">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-secondary"><i
+                                class="bi bi-key"></i></span>
+                        <input type="password" name="password" class="form-control" placeholder="Masukkan password"
+                            required style="border-left:none">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold shadow-lg">
+                    Masuk Sekarang <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+
+                <div class="text-center mt-4">
+                    <small class="text-muted">© 2026_IT_Submission</small>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
 </body>
+
 </html>

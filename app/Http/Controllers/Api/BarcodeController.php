@@ -18,21 +18,21 @@ class BarcodeController extends Controller
 
         // Cari arsip berdasarkan no_registrasi beserta relasinya
         $arsip = Arsip::with([
-            'department', 
-            'unit', 
-            'admin', 
+            'department',
+            'unit',
+            'admin',
             'superadmin',
             'adjustItems',
             'mutasiItems',
             'bundelItems'
         ])
-        ->where('no_registrasi', $barcode)
-        ->first();
+            ->where('no_registrasi', $barcode)
+            ->first();
 
         if (!$arsip) {
             return response()->json([
                 'success' => false,
-                'message' => 'Arsip dengan barcode '.$barcode.' tidak ditemukan'
+                'message' => 'Arsip dengan barcode ' . $barcode . ' tidak ditemukan'
             ], 404);
         }
 
@@ -73,31 +73,32 @@ class BarcodeController extends Controller
             'status' => 'required|string'
         ]);
 
-        $arsip = Arsip::find($request->id);
+        try {
+            // Jika status dari mobile adalah "arsip", jalankan logika Arsip Sistem (Generate No Doc)
+            if (strtolower($request->status) === 'arsip') {
+                $arsip = Arsip::processArchiving($request->id);
+                $message = 'Status arsip berhasil diperbarui menjadi Done (No Doc: ' . $arsip->no_doc . ')';
+            } else {
+                // Untuk status lain (jika ada), update manual
+                $arsip = Arsip::findOrFail($request->id);
+                $arsip->update([
+                    'status' => $request->status,
+                    'tgl_arsip' => now(),
+                ]);
+                $message = 'Status arsip berhasil diperbarui menjadi ' . $request->status;
+            }
 
-        if (!$arsip) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $arsip
+            ], 200);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Arsip tidak ditemukan'
-            ], 404);
+                'message' => 'Gagal memperbarui status: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Map status "arsip" dari mobile ke "Sudah Diarsip" pada database
-        $newStatus = $request->status;
-        if (strtolower($newStatus) === 'arsip') {
-            $newStatus = 'Sudah Diarsip';
-        }
-
-        $arsip->update([
-            'status' => $newStatus,
-            'tgl_arsip' => now(),
-            'arsip' => 'Done' // Asumsi: mengubah trackernya juga menjadi Done
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Status arsip berhasil diperbarui menjadi ' . $newStatus,
-            'data' => $arsip
-        ], 200);
     }
 }

@@ -266,184 +266,13 @@ class ArsipController extends Controller
      */
     public function arsipSistem(Request $request, $id)
     {
-        // 1. Load Arsip
-        $arsip = Arsip::with(['department', 'unit'])->findOrFail($id);
-
-        // 🔒 CEK STATUS FINAL - Hanya blokir jika SUDAH PUNYA No Dokumen
-        if ($arsip->status === 'Done' && !empty($arsip->no_doc)) {
-            return back()->withErrors(['status' => 'Dokumen ini sudah diarsipkan dengan No Doc: ' . $arsip->no_doc]);
-        }
-
-        // --- MULAI TRANSAKSI DATABASE ---
-        // Kita gunakan DB Transaction agar jika ada error saat insert item, status arsip tidak berubah jadi Done
         try {
-            DB::beginTransaction();
-
-            $now = Carbon::now();
-
-            /**
-             * 1️⃣ NO REGISTRASI
-             * Hanya generate baru jika BELUM ADA. Jangan overwrite yang sudah ada.
-             */
-            if (!empty($arsip->no_registrasi)) {
-                // Sudah punya no_registrasi → pakai yang lama, jangan diubah
-                $noRegistrasiFix = $arsip->no_registrasi;
-            } else {
-                // Belum punya → generate baru
-                $deptObj = $arsip->department;
-                $unitObj = $arsip->unit;
-
-                $kodeDept = $deptObj->code ?? strtoupper(substr($deptObj->name, 0, 3));
-                $tglCode = $now->format('ymd');
-
-                if (!empty($unitObj->code)) {
-                    $kodeUnit = $unitObj->code;
-                } else {
-                    $kodeUnit = str_replace(['Unit ', 'Unit', ' '], ['U', 'U', ''], $unitObj->name);
-                }
-
-                $prefixReg = "{$kodeDept}-{$tglCode}-{$kodeUnit}-";
-                $lastArsip = Arsip::where('no_registrasi', 'like', $prefixReg . '%')
-                    ->where('id', '!=', $id)
-                    ->orderBy('no_registrasi', 'desc')
-                    ->first();
-
-                if ($lastArsip) {
-                    $parts = explode('-', $lastArsip->no_registrasi);
-                    $lastSegment = end($parts);
-                    $newSeq = is_numeric($lastSegment) ? (int) $lastSegment + 1 : 1;
-                } else {
-                    $newSeq = 1;
-                }
-
-                $noRegistrasiFix = $prefixReg . str_pad($newSeq, 3, '0', STR_PAD_LEFT);
-            }
-
-            /**
-             * 2️⃣ GENERATE NO DOC (SWITCH CASE)
-             */
-            $noDoc = [];
-            $tahun = $now->format('Y');
-            $bulan = $now->format('m');
-            $hari = $now->format('d');
-
-            $prefixDoc = 'DOC';
-            $padding = 4;
-            $useDay = false;
-
-            switch (trim(str_replace(' ', '_', $arsip->jenis_pengajuan))) {
-                case 'Mutasi_Produk':
-                    $prefixDoc = 'RPP';
-                    $padding = 4;
-                    $useDay = false;
-                    break;
-                case 'Mutasi_Billet':
-                    $prefixDoc = 'DCB';
-                    $padding = 5;
-                    $useDay = false;
-                    break;
-                case 'Adjust':
-                    $prefixDoc = 'DC';
-                    $padding = 4;
-                    $useDay = true;
-                    break;
-                case 'Internal_Memo':
-                    $prefixDoc = 'IM';
-                    $padding = 4;
-                    $useDay = false;
-                    break;
-                case 'Bundel':
-                    $prefixDoc = 'BDL';
-                    $padding = 4;
-                    $useDay = false;
-                    break;
-                case 'Cancel':
-                case 'Cancelled':
-                    $prefixDoc = 'CANCEL';
-                    $padding = 4;
-                    $useDay = false;
-                    break;
-                default:
-                    $prefixDoc = strtoupper(substr(str_replace(' ', '', $arsip->jenis_pengajuan), 0, 3));
-                    $padding = 4;
-                    $useDay = false;
-                    break;
-            }
-
-            // --- LOGIKA SEQUENCE OTOMATIS (Mencari nomor urut TERBESAR dari No Doc) ---
-            $rawSeq = $request->sequence_number;
-
-            if (!$rawSeq) {
-                $normalizedJenis = trim(str_replace(' ', '_', $arsip->jenis_pengajuan));
-
-                // Ambil SEMUA record jenis yang sama yang sudah punya no_doc di tahun ini
-                $allDocs = Arsip::where('jenis_pengajuan', $arsip->jenis_pengajuan)
-                    ->whereNotNull('no_doc')
-                    ->where('no_doc', 'like', "%{$tahun}%")
-                    ->pluck('no_doc');
-
-                $maxNumber = 0;
-
-                foreach ($allDocs as $docStr) {
-                    if ($normalizedJenis === 'Cancel' || $normalizedJenis === 'Cancelled') {
-                        // Format: "Cancelled No Doc : 0025/02/IT/2026"
-                        // Ambil angka tepat setelah ": "
-                        if (preg_match('/Cancelled No Doc\s*:\s*(\d+)/', $docStr, $m)) {
-                            $maxNumber = max($maxNumber, (int) $m[1]);
-                        }
-                    } else {
-                        // Format: "PREFIX/TAHUN/BULAN/NNNN" atau "PREFIX/TAHUN/BULAN/HARI/NNNN"
-                        // Nomor urut selalu merupakan segmen TERAKHIR
-                        $parts = explode('/', $docStr);
-                        $lastSegment = end($parts);
-                        if (is_numeric($lastSegment)) {
-                            $maxNumber = max($maxNumber, (int) $lastSegment);
-                        }
-                    }
-                }
-
-                $rawSeq = $maxNumber + 1;
-            }
-
-            $seqDoc = str_pad($rawSeq, $padding, '0', STR_PAD_LEFT);
-            $normalizedJenisForDoc = trim(str_replace(' ', '_', $arsip->jenis_pengajuan));
-
-            if ($normalizedJenisForDoc === 'Cancel' || $normalizedJenisForDoc === 'Cancelled') {
-                $finalNoDoc = "Cancelled No Doc : {$seqDoc}/{$bulan}/IT/{$tahun}";
-            } else {
-                if ($useDay) {
-                    $finalNoDoc = "{$prefixDoc}/{$tahun}/{$bulan}/{$hari}/{$seqDoc}";
-                } else {
-                    $finalNoDoc = "{$prefixDoc}/{$tahun}/{$bulan}/{$seqDoc}";
-                }
-            }
-
-            $noDoc = [$finalNoDoc];
-
-            /**
-             * 3️⃣ UPDATE FINAL & NOTIFIKASI
-             */
-            $arsip->update([
-                'no_registrasi' => $noRegistrasiFix,
-                'no_doc' => implode("\n", $noDoc),
-                'tgl_arsip' => $now,
-                'status' => 'Done',
-                'ba' => 'Done',
-                'arsip' => 'Done',
-                'ket_process' => 'Done',
-            ]);
-
-            Notification::create([
-                'user_id' => $arsip->admin_id,
-                'arsip_id' => $arsip->id,
-                'title' => 'Arsip Selesai',
-                'message' => "Dokumen telah diarsipkan.\nNo Reg: {$noRegistrasiFix}\nNo Doc: {$finalNoDoc}",
-                'role_target' => 'admin',
-            ]);
-
-            DB::commit(); // Simpan semua perubahan jika sukses
+            // Jalankan logika arsip sistem terpusat di Model
+            $arsip = Arsip::processArchiving($id, $request->sequence_number);
 
             if ($request->wantsJson() || $request->ajax()) {
+                $finalNoDoc = $arsip->no_doc;
+                $noRegistrasiFix = $arsip->no_registrasi;
                 $isCancel = in_array(trim($arsip->jenis_pengajuan), ['Cancel', 'Cancelled']);
 
                 $noTransaksiSub = '';
@@ -452,21 +281,17 @@ class ArsipController extends Controller
                 if ($isCancel) {
                     // Filter Sub Transaksi (buang baris yang diawali MO atau PO)
                     $indukPrefixes = ['MO', 'PO', 'SOF', 'LL'];
-                    $noTransaksiRaw = $arsip->no_transaksi ?? '';
-                    $allLines = preg_split('/\r\n|\n|\r/', $noTransaksiRaw);
+                    $allLines = preg_split('/\r\n|\n|\r/', $arsip->no_transaksi ?? '');
                     $subLines = array_filter($allLines, function ($line) use ($indukPrefixes) {
                         $trimmed = trim($line);
-                        if ($trimmed === '')
-                            return false;
+                        if ($trimmed === '') return false;
                         foreach ($indukPrefixes as $prefix) {
-                            if (str_starts_with($trimmed, $prefix))
-                                return false;
+                            if (str_starts_with($trimmed, $prefix)) return false;
                         }
                         return true;
                     });
                     $noTransaksiSub = implode("\n", array_values($subLines));
 
-                    // Gabungan siap copy: No Doc + newline + sub transaksi
                     $copyAllText = $finalNoDoc;
                     if ($noTransaksiSub !== '') {
                         $copyAllText .= "\n" . $noTransaksiSub;
@@ -486,13 +311,17 @@ class ArsipController extends Controller
 
             return redirect()
                 ->route('superadmin.arsip.index')
-                ->with('success', "Berhasil Arsip! No Doc: {$finalNoDoc}");
+                ->with('success', "Berhasil Arsip! No Doc: {$arsip->no_doc}");
 
         } catch (\Exception $e) {
-            DB::rollBack(); // Batalkan semua jika ada error
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+            }
             return back()->withErrors(['error' => 'Gagal melakukan arsip sistem: ' . $e->getMessage()]);
         }
     }
+
+
 
     /**
      * ===============================
