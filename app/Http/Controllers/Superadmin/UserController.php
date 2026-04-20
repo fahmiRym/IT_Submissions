@@ -29,27 +29,28 @@ class UserController extends Controller
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'name'          => 'required',
-        'username'      => 'required|unique:users,username',
-        'password'      => 'required|min:6',
-        'role'          => 'required|in:admin,superadmin',
-        'department_id' => 'required',
-    ]);
+    {
+        $request->validate([
+            'name' => 'required',
+            'username' => 'required|unique:users,username',
+            'password' => 'required|min:6',
+            'role' => 'required|in:admin,superadmin',
+            'department_id' => 'required',
+        ]);
 
-    User::create([
-        'name'          => $request->name,
-        'username'      => $request->username,
-        'password'      => Hash::make($request->password),
-        'role'          => $request->role,
-        'department_id' => $request->department_id,
-    ]);
+        User::create([
+            'name' => $request->name,
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'department_id' => $request->department_id,
+            'is_active' => true,
+        ]);
 
-    return redirect()
-        ->route('superadmin.users.index')
-        ->with('success','User berhasil ditambahkan');
-}
+        return redirect()
+            ->route('superadmin.users.index')
+            ->with('success', 'User berhasil ditambahkan');
+    }
 
     public function edit(User $user)
     {
@@ -58,36 +59,36 @@ class UserController extends Controller
     }
 
     public function update(Request $request, User $user)
-{
-    $request->validate([
-        'name'          => 'required',
-        'username'      => 'required|unique:users,username,' . $user->id,
-        'role'          => 'required|in:admin,superadmin',
-        'department_id' => 'required',
-    ]);
-
-    $data = $request->only([
-        'name',
-        'username',
-        'role',
-        'department_id',
-    ]);
-
-    // 🔐 password opsional
-    if ($request->filled('password')) {
+    {
         $request->validate([
-            'password' => 'min:6'
+            'name' => 'required',
+            'username' => 'required|unique:users,username,' . $user->id,
+            'role' => 'required|in:admin,superadmin',
+            'department_id' => 'required',
         ]);
 
-        $data['password'] = Hash::make($request->password);
+        $data = $request->only([
+            'name',
+            'username',
+            'role',
+            'department_id',
+        ]);
+
+        // 🔐 password opsional
+        if ($request->filled('password')) {
+            $request->validate([
+                'password' => 'min:6'
+            ]);
+
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return redirect()
+            ->route('superadmin.users.index')
+            ->with('success', 'User berhasil diperbarui');
     }
-
-    $user->update($data);
-
-    return redirect()
-        ->route('superadmin.users.index')
-        ->with('success', 'User berhasil diperbarui');
-}
 
 
     public function destroy(User $user)
@@ -123,13 +124,13 @@ class UserController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'name'     => 'required',
-            'email'    => 'required|email',
+            'name' => 'required',
+            'email' => 'required|email',
             'password' => 'nullable|min:6|confirmed',
         ]);
 
         $data = [
-            'name'  => $request->name,
+            'name' => $request->name,
             'email' => $request->email,
         ];
 
@@ -139,6 +140,6 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return back()->with('success','Profile berhasil diperbarui');
+        return back()->with('success', 'Profile berhasil diperbarui');
     }
 }

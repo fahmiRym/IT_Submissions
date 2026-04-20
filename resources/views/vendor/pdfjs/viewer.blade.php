@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,7 +15,9 @@
             --text-color: #e0e0e0;
             --accent-color: #3b82f6;
         }
-        body, html {
+
+        body,
+        html {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -22,6 +25,7 @@
             background-color: var(--bg-color);
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
+
         #viewer-container {
             height: calc(100% - 56px);
             overflow-y: auto;
@@ -31,12 +35,14 @@
             padding: 10px;
             scroll-behavior: smooth;
         }
+
         .pdf-page {
             margin-bottom: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             background-color: white;
             transition: transform 0.2s;
         }
+
         .toolbar {
             height: 56px;
             background-color: var(--toolbar-color);
@@ -44,10 +50,11 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             z-index: 100;
             color: var(--text-color);
         }
+
         .toolbar-title {
             font-size: 14px;
             font-weight: 500;
@@ -56,13 +63,15 @@
             text-overflow: ellipsis;
             max-width: 50%;
         }
+
         .controls {
             display: flex;
             gap: 10px;
         }
+
         .btn {
             background: transparent;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-color);
             padding: 6px 12px;
             border-radius: 6px;
@@ -73,10 +82,12 @@
             gap: 6px;
             transition: all 0.2s;
         }
+
         .btn:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border-color: var(--accent-color);
         }
+
         .loader {
             position: fixed;
             top: 50%;
@@ -88,6 +99,7 @@
             gap: 15px;
             z-index: 1000;
         }
+
         .spinner {
             width: 40px;
             height: 40px;
@@ -96,9 +108,13 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
+
         .error-message {
             background: #ef4444;
             color: white;
@@ -107,20 +123,65 @@
             text-align: center;
             max-width: 80%;
         }
+
         canvas {
             max-width: 100%;
             height: auto !important;
         }
+
         /* Mobile optimization */
         @media (max-width: 600px) {
             .toolbar {
                 padding: 0 10px;
             }
-            .btn span { display: none; }
-            .btn { padding: 8px; }
+
+            .btn span {
+                display: none;
+            }
+
+            .btn {
+                padding: 8px;
+            }
+        }
+
+        /* Print optimization */
+        @media print {
+            @page {
+                margin: 0;
+                size: auto;
+            }
+
+            .toolbar,
+            .loader,
+            #loader {
+                display: none !important;
+            }
+
+            #viewer-container {
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .pdf-page {
+                margin: 0 !important;
+                box-shadow: none !important;
+                page-break-after: always;
+                width: 100% !important;
+            }
+
+            body,
+            html {
+                height: auto !important;
+                overflow: visible !important;
+                background-color: white !important;
+            }
         }
     </style>
 </head>
+
 <body>
     <div id="loader" class="loader">
         <div class="spinner"></div>
@@ -131,11 +192,16 @@
         <div class="toolbar-title">{{ $filename }}</div>
         <div class="controls">
             <button class="btn" onclick="window.print()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+                </svg>
                 <span>Cetak</span>
             </button>
             <a href="{{ $fileUrl }}" download class="btn" style="text-decoration: none;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
                 <span>Unduh</span>
             </a>
         </div>
@@ -155,7 +221,7 @@
         async function renderPage(pageNum) {
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: 1.5 });
-            
+
             const canvas = document.createElement('canvas');
             canvas.className = 'pdf-page';
             const context = canvas.getContext('2d');
@@ -175,7 +241,7 @@
             try {
                 const loadingTask = pdfjsLib.getDocument(url);
                 pdfDoc = await loadingTask.promise;
-                
+
                 loader.style.display = 'none';
 
                 // Render all pages
@@ -197,4 +263,5 @@
         loadPdf();
     </script>
 </body>
+
 </html>

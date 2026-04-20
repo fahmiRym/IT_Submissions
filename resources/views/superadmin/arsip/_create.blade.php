@@ -307,7 +307,7 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold text-secondary">Upload Bukti (Scan/Foto) - (Opsional jika ingin Draft)</label>
+                                        <label class="form-label small fw-bold text-secondary">Upload Bukti Scan (PDF) - (Opsional jika ingin Draft)</label>
                                         <input type="file" name="bukti_scan" accept=".pdf" class="form-control bg-light border-0">
                                         <div class="form-text text-xs">Maks 2MB. Format: PDF.</div>
                                     </div>

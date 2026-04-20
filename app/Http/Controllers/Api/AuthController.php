@@ -33,12 +33,12 @@ class AuthController extends Controller
         }
 
         // ==========================================
-        // RESTRIKSI: Hanya Superadmin yang boleh lewat aplikasi
-        // ==========================================
-        if ($user->role !== 'superadmin') {
+        // RESTRIKSI: Superadmin dan Admin boleh akses via Android
+        // ==========================================   
+        if (!in_array($user->role, ['superadmin', 'admin'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Login Gagal. Aplikasi Scanner Barcode ini hanya dapat digunakan oleh Superadmin.',
+                'message' => 'Login Gagal. Aplikasi ini hanya dapat digunakan oleh Admin dan Superadmin.',
             ], 403);
         }
 

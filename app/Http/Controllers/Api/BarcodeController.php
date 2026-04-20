@@ -47,12 +47,13 @@ class BarcodeController extends Controller
         // }
 
         // Tambahkan URL lengkap untuk lampiran agar Android bisa akses langsung
-        // Tambahkan URL lengkap untuk lampiran agar Android bisa akses langsung
         if ($arsip->bukti_scan) {
             $extension = pathinfo($arsip->bukti_scan, PATHINFO_EXTENSION);
             if (strtolower($extension) === 'pdf') {
+                // Gunakan route() agar Laravel otomatis handle base URL dan HTTPS
                 $arsip->bukti_scan_url = route('pdf.viewer', ['filename' => $arsip->bukti_scan]);
             } else {
+                // Gunakan asset() untuk file gambar
                 $arsip->bukti_scan_url = asset('storage/bukti_scan/' . $arsip->bukti_scan);
             }
         } else {

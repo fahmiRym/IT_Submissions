@@ -164,7 +164,7 @@ class ArsipController extends Controller
             'unit_id'         => 'required',
             'manager_id'      => 'required',
             'tgl_pengajuan'   => 'nullable|date',
-            'bukti_scan'      => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'bukti_scan'      => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -257,6 +257,10 @@ class ArsipController extends Controller
              if($request->ajax()) return response()->json(['message' => 'Data sudah selesai (Done) dan tidak bisa diubah'], 403);
              return back()->with('error', 'Data sudah selesai diproses.');
         }
+
+        $request->validate([
+            'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
+        ]);
 
         DB::beginTransaction();
         try {

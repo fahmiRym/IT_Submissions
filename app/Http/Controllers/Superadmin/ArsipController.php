@@ -150,7 +150,7 @@ class ArsipController extends Controller
             'unit_id' => 'required|exists:units,id',
             'jenis_pengajuan' => 'required|string|max:30',
             'status' => 'required|in:Check,Process,Done,Reject,Void',
-            'bukti_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         try {
@@ -381,7 +381,7 @@ class ArsipController extends Controller
             'ket_process' => 'nullable|in:Review,Process,Done,Pending,Void,Partial Done',
             'ba' => 'nullable',
             'arsip' => 'nullable',
-            'bukti_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         DB::beginTransaction();
