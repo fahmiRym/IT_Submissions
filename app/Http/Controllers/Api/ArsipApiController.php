@@ -125,7 +125,6 @@ class ArsipApiController extends Controller
             // Generate No Registrasi otomatis menggunakan fungsi yang ada di Model
             $noRegistrasi = Arsip::generateNoRegistrasi((object) [
                 'department_id' => $request->department_id,
-                'unit_id' => $request->unit_id
             ]);
 
             // Handle Upload File (Bukti Scan dari Kamera HP/File Picker)
