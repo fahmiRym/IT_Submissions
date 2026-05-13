@@ -34,7 +34,7 @@ class UserController extends Controller
             'name' => 'required',
             'username' => 'required|unique:users,username',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,superadmin',
+            'role' => 'required|in:admin,superadmin,accounting',
             'department_id' => 'required',
         ]);
 
@@ -63,7 +63,7 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required',
             'username' => 'required|unique:users,username,' . $user->id,
-            'role' => 'required|in:admin,superadmin',
+            'role' => 'required|in:admin,superadmin,accounting',
             'department_id' => 'required',
         ]);
 

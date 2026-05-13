@@ -179,6 +179,44 @@
                 background-color: white !important;
             }
         }
+
+        /* ── WATERMARK (PDF OVERLAY) ── */
+        .page-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            background-color: white;
+            line-height: 0; /* Hindari gap extra di bawah canvas */
+        }
+
+        .pdf-page {
+            margin-bottom: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .watermark-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 60px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: 10;
+            white-space: nowrap;
+            user-select: none;
+            text-transform: uppercase;
+            border: 8px double currentColor;
+            padding: 10px 30px;
+            border-radius: 10px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .wm-done { color: #059669; border-color: #059669; }
+        .wm-void { color: #dc2626; border-color: #dc2626; }
+        .wm-reject { color: #7c3aed; border-color: #7c3aed; }
     </style>
 </head>
 
@@ -222,6 +260,11 @@
             const page = await pdfDoc.getPage(pageNum);
             const viewport = page.getViewport({ scale: 1.5 });
 
+            // Create Wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'page-wrapper';
+            wrapper.style.width = viewport.width + 'px'; // Set lebar agar watermark center pas
+
             const canvas = document.createElement('canvas');
             canvas.className = 'pdf-page';
             const context = canvas.getContext('2d');
@@ -233,7 +276,35 @@
                 viewport: viewport
             };
 
-            container.appendChild(canvas);
+            wrapper.appendChild(canvas);
+
+            // Add Watermark if applicable
+            @if($arsip)
+                @php
+                    $status = strtolower($arsip->status ?? '');
+                    $wmText = '';
+                    $wmClass = '';
+                    if ($status === 'done') {
+                        $wmText = \App\Models\Setting::get('wm_done', 'DONE');
+                        $wmClass = 'wm-done';
+                    } elseif ($status === 'void') {
+                        $wmText = \App\Models\Setting::get('wm_void', 'VOID');
+                        $wmClass = 'wm-void';
+                    } elseif ($status === 'reject') {
+                        $wmText = \App\Models\Setting::get('wm_reject', 'REJECT');
+                        $wmClass = 'wm-reject';
+                    }
+                @endphp
+
+                @if(!empty($wmText))
+                    const wm = document.createElement('div');
+                    wm.className = 'watermark-overlay {{ $wmClass }}';
+                    wm.innerText = '{{ $wmText }}';
+                    wrapper.appendChild(wm);
+                @endif
+            @endif
+
+            container.appendChild(wrapper);
             await page.render(renderContext).promise;
         }
 

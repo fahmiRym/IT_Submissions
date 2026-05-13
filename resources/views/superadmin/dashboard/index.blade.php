@@ -608,69 +608,117 @@
         </div>
     </div>
 
-    {{-- 8. LATEST DATA TABLE --}}
-    <div class="card-chart mb-4">
-        <div class="card-header-chart d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-clock-history me-2 text-primary"></i> Riwayat Pengajuan Terbaru</span>
-            <a href="{{ route('superadmin.arsip.index') }}"
-                class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3 shadow-sm">Lihat Semua</a>
+    <div class="row g-4 mb-4">
+        {{-- LATEST DATA TABLE --}}
+        <div class="col-xl-8">
+            <div class="card-chart h-100 mb-0">
+                <div class="card-header-chart d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-2 text-primary"></i> Riwayat Pengajuan Terbaru</span>
+                    <a href="{{ route('superadmin.arsip.index') }}"
+                        class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3 shadow-sm">Lihat Semua</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-modern mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">No Registrasi</th>
+                                <th>User Pengaju</th>
+                                <th>Jenis</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($latestArsip as $submission)
+                                <tr>
+                                    <td class="ps-4">
+                                        <span
+                                            class="font-monospace fw-bold text-primary small">{{ $submission->no_registrasi ?? '-' }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-gradient-indigo text-white d-flex align-items-center justify-content-center me-2 shadow-sm"
+                                                style="width:32px;height:32px;font-size:0.8rem; font-weight:bold;">
+                                                {{ substr($submission->admin->name ?? 'U', 0, 1) }}
+                                            </div>
+                                            <div>
+                                                <div class="small fw-bold text-dark">{{ $submission->admin->name ?? 'User' }}</div>
+                                                <div class="text-muted" style="font-size: 0.7rem;">{{ $submission->department->name ?? 'Dept' }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span
+                                            class="badge bg-light text-dark border fw-bold px-3 py-2" style="font-size: 0.65rem;">{{ str_replace('_', ' ', $submission->jenis_pengajuan) }}</span>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $colors = ['Review' => 'info', 'Process' => 'warning', 'Done' => 'success', 'Partial Done' => 'primary', 'Pending' => 'secondary'];
+                                            $sc = $colors[$submission->ket_process] ?? 'secondary';
+                                        @endphp
+                                        <span
+                                            class="badge bg-{{ $sc }} bg-opacity-10 text-{{ $sc }} border border-{{ $sc }} border-opacity-20 rounded-pill px-3 py-1" style="font-size: 0.65rem;">
+                                            {{ $submission->ket_process }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4 small text-muted font-monospace">
+                                        {{ $submission->tgl_pengajuan ? $submission->tgl_pengajuan->format('d/m/y') : '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-5 small">Belum ada data terbaru.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-modern mb-0">
-                <thead>
-                    <tr>
-                        <th class="ps-4">No Registrasi</th>
-                        <th>User Pengaju</th>
-                        <th>Jenis</th>
-                        <th>Departemen</th>
-                        <th>Status</th>
-                        <th class="text-end pe-4">Tanggal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($latestArsip as $submission)
-                        <tr>
-                            <td class="ps-4">
-                                <span
-                                    class="font-monospace fw-bold text-primary small">{{ $submission->no_registrasi ?? '-' }}</span>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle bg-gradient-indigo text-white d-flex align-items-center justify-content-center me-2 shadow-sm"
-                                        style="width:32px;height:32px;font-size:0.8rem; font-weight:bold;">
-                                        {{ substr($submission->admin->name ?? 'U', 0, 1) }}
+
+        {{-- RECENT ACTIVITY / AUDIT LOG --}}
+        <div class="col-xl-4">
+            <div class="card-chart h-100 mb-0">
+                <div class="card-header-chart">
+                    <span><i class="bi bi-shield-check me-2 text-success"></i> Aktivitas Audit Terbaru</span>
+                </div>
+                <div class="p-3">
+                    <div class="d-flex flex-column gap-3">
+                        @forelse($recentEdits as $edit)
+                            <div class="p-3 rounded-4 border-0 shadow-xs transition-hover" style="background: #f8fafc; border: 1px solid #f1f5f9 !important;">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center border" style="width: 40px; height: 40px; min-width: 40px;">
+                                        <i class="bi bi-person-fill-gear text-primary fs-5"></i>
                                     </div>
-                                    <div>
-                                        <div class="small fw-bold text-dark">{{ $submission->admin->name ?? 'User' }}</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">{{ $submission->role ?? 'Staff' }}
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="fw-bold text-dark" style="font-size: 0.85rem;">{{ $edit->editor->name ?? 'System' }}</span>
+                                            <small class="text-muted font-monospace" style="font-size: 0.65rem;">{{ $edit->updated_at->diffForHumans() }}</small>
+                                        </div>
+                                        <p class="mb-1 text-secondary" style="font-size: 0.75rem; line-height: 1.4;">
+                                            Mengubah berkas <span class="fw-bold text-primary">{{ $edit->no_registrasi }}</span>
+                                        </p>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill" style="font-size: 0.6rem;">UPDATE</span>
+                                            <span class="text-muted" style="font-size: 0.65rem;"><i class="bi bi-clock me-1"></i>{{ $edit->updated_at->format('H:i') }} WIB</span>
                                         </div>
                                     </div>
                                 </div>
-                            </td>
-                            <td><span
-                                    class="badge bg-light text-dark border fw-bold px-3 py-2">{{ str_replace('_', ' ', $submission->jenis_pengajuan) }}</span>
-                            </td>
-                            <td class="small fw-semibold text-secondary">{{ $submission->department->name ?? '-' }}</td>
-                            <td>
-                                @php
-                                    $colors = ['Review' => 'info', 'Process' => 'warning', 'Done' => 'success', 'Partial Done' => 'primary', 'Pending' => 'secondary'];
-                                    $sc = $colors[$submission->ket_process] ?? 'secondary';
-                                @endphp
-                                <span
-                                    class="badge bg-{{ $sc }} bg-opacity-10 text-{{ $sc }} border border-{{ $sc }} border-opacity-20 rounded-pill px-3 py-1">
-                                    {{ $submission->ket_process }}
-                                </span>
-                            </td>
-                            <td class="text-end pe-4 small text-muted font-monospace">
-                                {{ $submission->tgl_pengajuan ? $submission->tgl_pengajuan->format('d/m/Y') : '-' }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-5 small">Belum ada data terbaru.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                            </div>
+                        @empty
+                            <div class="text-center py-5">
+                                <i class="bi bi-shield-slash fs-1 text-muted opacity-25"></i>
+                                <p class="text-muted small mt-2">Belum ada riwayat perubahan.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+                @if($recentEdits->count() > 0)
+                    <div class="p-3 pt-0 text-center">
+                        <button class="btn btn-sm btn-light w-100 rounded-pill text-muted small fw-bold" disabled>
+                            Lihat Log Lengkap
+                        </button>
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 

@@ -7,12 +7,20 @@ use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-    public function handle($request, Closure $next, $role)
+    public function handle($request, Closure $next, ...$roles)
     {
-        if (!Auth::check() || Auth::user()->role !== $role) {
+        if (!Auth::check()) {
             abort(403);
         }
 
-        return $next($request);
+        // Support multiple roles: role:admin,accounting
+        foreach ($roles as $roleGroup) {
+            $allowedRoles = explode(',', $roleGroup);
+            if (in_array(Auth::user()->role, $allowedRoles)) {
+                return $next($request);
+            }
+        }
+
+        abort(403);
     }
 }

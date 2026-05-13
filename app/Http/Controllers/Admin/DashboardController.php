@@ -14,8 +14,12 @@ class DashboardController extends Controller
     {
         $adminId = auth()->id();
 
-        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems'])
-            ->where('admin_id', $adminId);
+        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems']);
+
+        // Jika bukan Accounting atau Superadmin, batasi hanya data milik sendiri
+        if (!in_array(auth()->user()->role, ['accounting', 'superadmin'])) {
+            $query->where('admin_id', auth()->id());
+        }
 
         // FILTER TANGGAL
         if ($request->filled('start_date')) {

@@ -28,10 +28,12 @@ class Arsip extends Model
         'ket_process',
         'status',
         'bukti_scan',
+        'scan_ba_accounting',
         'total_qty_in',
         'total_qty_out',
         'detail_barang',
         'pemohon',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -153,6 +155,7 @@ class Arsip extends Model
                 'ba' => 'Done',
                 'arsip' => 'Done',
                 'ket_process' => 'Done',
+                'updated_by' => auth()->id(),
             ]);
 
             // 4. Buat Notifikasi
@@ -219,6 +222,11 @@ class Arsip extends Model
     public function superadmin()
     {
         return $this->belongsTo(User::class, 'superadmin_id');
+    }
+
+    public function editor()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     public function department()

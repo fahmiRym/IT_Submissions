@@ -247,10 +247,57 @@
                 display: none !important;
             }
         }
+        /* ── WATERMARK (Rubber Stamp Design) ── */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 85px;
+            font-weight: 900;
+            letter-spacing: 8px;
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 9999;
+            white-space: nowrap;
+            user-select: none;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            border: 12px double currentColor;
+            padding: 15px 40px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        .watermark-lengkap  { color: #059669; border-color: #059669; }
+        .watermark-void     { color: #dc2626; border-color: #dc2626; }
+        .watermark-reject   { color: #7c3aed; border-color: #7c3aed; }
     </style>
 </head>
 
 <body onload="window.print()">
+    {{-- ── WATERMARK BASED ON STATUS ── --}}
+    @php
+        $status = strtolower($arsip->status ?? 'pending');
+        
+        if ($status === 'done') {
+            $wmClass = 'watermark-lengkap';
+            $wmText  = \App\Models\Setting::get('wm_done', 'DONE');
+        } elseif ($status === 'void') {
+            $wmClass = 'watermark-void';
+            $wmText  = \App\Models\Setting::get('wm_void', 'VOID');
+        } elseif ($status === 'reject') {
+            $wmClass = 'watermark-reject';
+            $wmText  = \App\Models\Setting::get('wm_reject', 'REJECT');
+        } else {
+            $wmClass = '';
+            $wmText  = '';
+        }
+    @endphp
+    
+    @if(!empty($wmText))
+        <div class="watermark {{ $wmClass }}">{{ $wmText }}</div>
+    @endif
+
     <div class="print-container">
 
         {{-- ── PRINT BUTTON (hidden on print) ── --}}
@@ -492,7 +539,8 @@
         {{-- ── FOOTER: Date + Signature ── --}}
         <div class="footer-section" style="page-break-inside: avoid; break-inside: avoid;">
             <div style="margin-bottom: 5px; font-weight: 800;">
-                PASURUAN,
+                @php $kotaBa = \App\Models\Setting::get('kota_ba', 'PASURUAN'); @endphp
+                {{ $kotaBa }},
                 {{ $isAdjust ? '____________________' : \Carbon\Carbon::parse($arsip->created_at)->translatedFormat('d F Y') }}
             </div>
 

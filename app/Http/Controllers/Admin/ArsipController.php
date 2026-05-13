@@ -24,8 +24,12 @@ class ArsipController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems'])
-            ->where('admin_id', auth()->id());
+        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems']);
+
+        // Jika bukan Accounting atau Superadmin, batasi hanya data milik sendiri
+        if (!in_array(auth()->user()->role, ['accounting', 'superadmin'])) {
+            $query->where('admin_id', auth()->id());
+        }
 
         /* ================= FILTER LOGIC ================= */
         $filters = [
@@ -79,7 +83,10 @@ class ArsipController extends Controller
         $arsips = $query->paginate($perPage)->withQueryString();
 
         /* ================= STATS (Dynamic) ================= */
-        $statsQuery = Arsip::where('admin_id', auth()->id());
+        $statsQuery = Arsip::query();
+        if (!in_array(auth()->user()->role, ['accounting', 'superadmin'])) {
+            $statsQuery->where('admin_id', auth()->id());
+        }
         foreach ($filters as $key => $value) {
             if (empty($value))
                 continue;
@@ -317,6 +324,7 @@ class ArsipController extends Controller
                 'total_qty_out' => $totalOut,
                 // Update JSON backup juga
                 'detail_barang' => $dataToProcess,
+                'updated_by' => auth()->id(),
             ]);
 
             // 5. REFRESH DETAIL ITEM (Hapus Lama, Buat Baru)
@@ -430,5 +438,55 @@ class ArsipController extends Controller
         }
 
         return view('print.arsip_draft', compact('arsip'));
+    }
+
+    // ========================================================================
+    // RE-UPLOAD SCAN BA (Khusus Accounting setelah Approve Adjustment)
+    // ========================================================================
+    public function reuploadBaScan(Request $request, $id)
+    {
+        // Hanya untuk jenis Adjust
+        $arsip = Arsip::findOrFail($id);
+
+        if ($arsip->jenis_pengajuan !== 'Adjust') {
+            return back()->with('error', 'Fitur re-upload BA hanya tersedia untuk pengajuan Adjustment.');
+        }
+
+        // Harus sudah di-approve (ba = Done atau Process atau ket_process = Process/Done)
+        if (!in_array($arsip->ket_process, ['Process', 'Done']) && !in_array($arsip->ba, ['Process', 'Done'])) {
+            return back()->with('error', 'Berkas BA hanya bisa diupload ulang setelah pengajuan disetujui.');
+        }
+
+        $request->validate([
+            'scan_ba' => 'required|file|mimes:pdf|max:10240',
+        ], [
+            'scan_ba.required' => 'File scan BA wajib dipilih.',
+            'scan_ba.mimes'    => 'File harus berformat PDF.',
+            'scan_ba.max'      => 'Ukuran file maksimal 10MB.',
+        ]);
+
+        try {
+            // Hapus file lama jika ada
+            if ($arsip->scan_ba_accounting) {
+                Storage::disk('public')->delete('bukti_scan/' . $arsip->scan_ba_accounting);
+            }
+
+            // Upload file baru
+            $file = $request->file('scan_ba');
+            $cleanName = preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName());
+            $filename = 'BA_' . $arsip->no_registrasi . '_' . time() . '_' . $cleanName;
+            $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+            $file->storeAs('bukti_scan', $filename, 'public');
+
+            // Simpan ke kolom scan_ba_accounting
+            $arsip->update([
+                'scan_ba_accounting' => $filename,
+                'updated_by' => auth()->id(),
+            ]);
+
+            return back()->with('success', 'Scan BA berhasil diupload. Terima kasih, ' . auth()->user()->name . '!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal upload: ' . $e->getMessage());
+        }
     }
 }

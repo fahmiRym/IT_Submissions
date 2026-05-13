@@ -155,6 +155,7 @@
                                 $roleC = match($u->role) {
                                     'superadmin' => ['bg'=>'#fef2f2','text'=>'#991b1b','border'=>'#fca5a5','icon'=>'bi-shield-fill-check'],
                                     'admin'      => ['bg'=>'#f0f9ff','text'=>'#075985','border'=>'#7dd3fc','icon'=>'bi-person-fill-gear'],
+                                    'accounting' => ['bg'=>'#fffbeb','text'=>'#92400e','border'=>'#fde68a','icon'=>'bi-calculator-fill'],
                                     default      => ['bg'=>'#f8fafc','text'=>'#475569','border'=>'#e2e8f0','icon'=>'bi-person'],
                                 };
                             @endphp
@@ -238,6 +239,7 @@
                             <label class="form-label">Level Akses (Role)</label>
                             <select name="role" class="form-select" required>
                                 <option value="admin">Admin</option>
+                                <option value="accounting">Accounting</option>
                                 <option value="superadmin">Super Admin</option>
                             </select>
                         </div>
@@ -292,6 +294,7 @@
                             <label class="form-label">Level Akses (Role)</label>
                             <select name="role" id="editRole" class="form-select" required>
                                 <option value="admin">Admin</option>
+                                <option value="accounting">Accounting</option>
                                 <option value="superadmin">Super Admin</option>
                             </select>
                         </div>

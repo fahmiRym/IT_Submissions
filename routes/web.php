@@ -24,6 +24,9 @@ use App\Http\Controllers\Superadmin\LaporanController as SuperLaporan;
 use App\Http\Controllers\Superadmin\NotificationController as SuperNotification;
 use App\Http\Controllers\Superadmin\BackupController as SuperBackup;
 use App\Http\Controllers\Superadmin\SettingController as SuperSetting;
+use App\Http\Controllers\Superadmin\ProductController as SuperProduct;
+use App\Http\Controllers\Superadmin\ActivityLogController as SuperActivity;
+use App\Http\Controllers\Superadmin\ServerStatController as SuperServer;
 
 // Shared Notification Controller (Jika dipakai di middleware auth umum)
 use App\Http\Controllers\NotificationController; 
@@ -82,9 +85,15 @@ Route::get('/pdf-viewer/{filename}', function ($filename) {
 
     $fileUrl = route('preview.file', ['filename' => $filename]);
 
+    // Cari data arsip berdasarkan nama file (cek di bukti_scan atau scan_ba_accounting)
+    $arsip = \App\Models\Arsip::where('bukti_scan', $filename)
+                ->orWhere('scan_ba_accounting', $filename)
+                ->first();
+
     return view('vendor.pdfjs.viewer', [
         'filename' => $filename,
-        'fileUrl'  => $fileUrl
+        'fileUrl'  => $fileUrl,
+        'arsip'    => $arsip
     ]);
 })->name('pdf.viewer');
 
@@ -121,23 +130,20 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')
-    ->middleware(['auth','role:admin'])
-    ->name('admin.') // Prefix Nama: semua route di sini otomatis diawali 'admin.'
+    ->middleware(['auth','role:admin,accounting'])
+    ->name('admin.')
     ->group(function () {
 
         Route::get('dashboard', [AdminDashboard::class,'index'])
             ->name('dashboard');
 
-        // =================================================================
-        // PERBAIKAN UTAMA DI SINI
-        // =================================================================
-        // Tambahkan 'edit' ke dalam only().
-        // Ini otomatis membuat route bernama 'admin.arsip.edit'
-        // dan mengarah ke method edit() di controller.
         Route::resource('arsip', AdminArsip::class)
             ->only(['index', 'store', 'update', 'edit']); 
 
         Route::get('arsip/{id}/print-draft', [AdminArsip::class, 'printDraft'])->name('arsip.print-draft');
+
+        // ✅ RE-UPLOAD BA SCAN (Khusus Accounting setelah Approve)
+        Route::post('arsip/{id}/reupload-ba', [AdminArsip::class, 'reuploadBaScan'])->name('arsip.reupload-ba');
 
         // ✅ PROFILE ADMIN
         Route::get('profile', [AdminProfile::class,'index'])->name('profile');
@@ -187,6 +193,12 @@ Route::prefix('superadmin')
         Route::post('backup/import', [SuperBackup::class, 'import'])->name('backup.import');
         Route::get('backup', fn() => view('superadmin.backup.index'))->name('backup.index');
 
+        // LOG AKTIVITAS
+        Route::get('activity-logs', [SuperActivity::class, 'index'])->name('activity-logs.index');
+
+        // STATISTIK SERVER
+        Route::get('server-stats', [SuperServer::class, 'index'])->name('server-stats.index');
+
         // MASTER DATA
         Route::patch('departments/{department}/toggle', [SuperDepartment::class, 'toggleIsActive'])->name('departments.toggle');
         Route::resource('departments', SuperDepartment::class);
@@ -202,6 +214,10 @@ Route::prefix('superadmin')
 
         Route::patch('users/{user}/toggle', [SuperUser::class, 'toggleIsActive'])->name('users.toggle');
         Route::resource('users', SuperUser::class);
+
+        // ✅ MASTER PRODUK
+        Route::patch('products/{id}/toggle', [SuperProduct::class, 'toggleStatus'])->name('products.toggle');
+        Route::resource('products', SuperProduct::class);
 
         // ✅ SETTINGS
         Route::get('settings', [SuperSetting::class, 'index'])->name('settings.index');

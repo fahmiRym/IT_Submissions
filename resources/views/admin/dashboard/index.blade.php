@@ -161,15 +161,15 @@
     <div class="card-body p-4">
         <form method="GET" action="{{ route('admin.dashboard') }}" class="row g-3">
             {{-- ROW 1 --}}
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="small fw-bold text-muted mb-2">DARI TANGGAL</label>
                 <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control bg-light border-0 py-2 rounded-3 shadow-none">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="small fw-bold text-muted mb-2">SAMPAI TANGGAL</label>
                 <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control bg-light border-0 py-2 rounded-3 shadow-none">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="small fw-bold text-muted mb-2">DEPARTEMEN</label>
                 <select name="department_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
                     <option value="">-- Semua Departemen --</option>
@@ -178,7 +178,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="small fw-bold text-muted mb-2">UNIT</label>
                 <select name="unit_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
                     <option value="">-- Semua Unit --</option>
@@ -189,7 +189,7 @@
             </div>
 
             {{-- ROW 2 --}}
-            <div class="col-md-4">
+            <div class="col-12 col-sm-6 col-lg-4">
                 <label class="small fw-bold text-muted mb-2">MANAGER</label>
                 <select name="manager_id" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
                     <option value="">-- Semua Manager --</option>
@@ -198,7 +198,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-lg-3">
                 <label class="small fw-bold text-muted mb-2">KATEGORI</label>
                 <select name="kategori" class="form-select bg-light border-0 py-2 rounded-3 shadow-none">
                     <option value="">-- Semua Kategori --</option>
@@ -207,7 +207,7 @@
                     <option value="None" {{ request('kategori')=='None'?'selected':'' }}>None/Adjust</option>
                 </select>
             </div>
-            <div class="col-md-5 d-flex gap-2 align-items-end">
+            <div class="col-12 col-lg-5 d-flex gap-2 align-items-end mt-3 mt-lg-0">
                 <button type="submit" class="btn btn-primary flex-fill fw-extrabold shadow-sm py-2 rounded-3" style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); border:none;">
                     <i class="bi bi-funnel-fill me-1"></i> TERAPKAN FILTER
                 </button>
@@ -220,43 +220,43 @@
 </div>
 
 {{-- ── 1. TOP STAT CARDS ──────────────────────────────────────── --}}
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
+<div class="row g-3 g-lg-4 mb-4">
+    <div class="col-6 col-lg-3">
         <a href="{{ route('admin.arsip.index', request()->all()) }}" class="text-decoration-none h-100 d-block">
-            <div class="card-stat-vibrant bg-gradient-indigo h-100 p-4">
-                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Total Pengajuan</h6>
-                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($total) }}</h2>
-                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-layers-fill me-1"></i> ALL SUBMISSION</div>
+            <div class="card-stat-vibrant bg-gradient-indigo h-100 p-3 p-lg-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2" style="font-size: 0.65rem;">Total Pengajuan</h6>
+                <h2 class="mb-0 fw-bold display-6 text-white">{{ number_format($total) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace d-none d-sm-block"><i class="bi bi-layers-fill me-1"></i> ALL SUBMISSION</div>
                 <i class="bi bi-layers-fill stat-overlay-icon"></i>
             </div>
         </a>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-lg-3">
         <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Review'])) }}" class="text-decoration-none h-100 d-block">
-            <div class="card-stat-vibrant bg-gradient-blue h-100 p-4">
-                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Need Review</h6>
-                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($Review) }}</h2>
-                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-clock-history me-1"></i> WAITING</div>
+            <div class="card-stat-vibrant bg-gradient-blue h-100 p-3 p-lg-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2" style="font-size: 0.65rem;">Need Review</h6>
+                <h2 class="mb-0 fw-bold display-6 text-white">{{ number_format($Review) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace d-none d-sm-block"><i class="bi bi-clock-history me-1"></i> WAITING</div>
                 <i class="bi bi-clock-history stat-overlay-icon"></i>
             </div>
         </a>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-lg-3">
         <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Process'])) }}" class="text-decoration-none h-100 d-block">
-            <div class="card-stat-vibrant bg-gradient-orange h-100 p-4">
-                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">In Process</h6>
-                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($process) }}</h2>
-                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-gear-fill me-1"></i> ON GOING</div>
+            <div class="card-stat-vibrant bg-gradient-orange h-100 p-3 p-lg-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2" style="font-size: 0.65rem;">In Process</h6>
+                <h2 class="mb-0 fw-bold display-6 text-white">{{ number_format($process) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace d-none d-sm-block"><i class="bi bi-gear-fill me-1"></i> ON GOING</div>
                 <i class="bi bi-gear-fill stat-overlay-icon"></i>
             </div>
         </a>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-lg-3">
         <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Done'])) }}" class="text-decoration-none h-100 d-block">
-            <div class="card-stat-vibrant bg-gradient-green h-100 p-4">
-                <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Completed</h6>
-                <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($done) }}</h2>
-                <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-circle-fill me-1"></i> FINALIZED</div>
+            <div class="card-stat-vibrant bg-gradient-green h-100 p-3 p-lg-4">
+                <h6 class="text-white-50 text-uppercase small fw-bold mb-2" style="font-size: 0.65rem;">Completed</h6>
+                <h2 class="mb-0 fw-bold display-6 text-white">{{ number_format($done) }}</h2>
+                <div class="mt-2 text-white-50 small font-monospace d-none d-sm-block"><i class="bi bi-check-circle-fill me-1"></i> FINALIZED</div>
                 <i class="bi bi-check-circle-fill stat-overlay-icon"></i>
             </div>
         </a>
@@ -265,7 +265,7 @@
 
 {{-- ── 2. PIPELINE STATUS ──────────────────────────────────────── --}}
 <h6 class="fw-bold text-dark mb-3 ps-1">Status Proses Pengerjaan</h6>
-<div class="row g-3 mb-4">
+<div class="row g-2 g-md-3 mb-4">
     @php
         $proc = [
             ['label' => 'PENDING',      'val' => $pending ?? 0, 'db' => 'Pending', 'color' => 'status-pending'],
@@ -277,15 +277,15 @@
         ];
     @endphp
     @foreach($proc as $p)
-    <div class="col-md-2">
+    <div class="col-6 col-sm-4 col-lg-2">
         <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['ket_process' => $p['db']])) }}" class="text-decoration-none h-100 d-block">
-            <div class="card-pipeline {{ $p['color'] }} h-100 p-3">
+            <div class="card-pipeline {{ $p['color'] }} h-100 p-2 p-md-3">
                 <div class="d-flex flex-column align-items-center text-center">
-                    <div class="icon-pipeline {{ $p['color'] }} bg-opacity-10 mb-2" style="width: 40px; height: 40px;">
-                        <i class="bi bi-circle-fill fs-6"></i>
+                    <div class="icon-pipeline {{ $p['color'] }} bg-opacity-10 mb-2" style="width: 36px; height: 36px;">
+                        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
                     </div>
-                    <h4 class="mb-1 fw-bold {{ $p['color'] }}">{{ number_format($p['val']) }}</h4>
-                    <div class="fw-bold text-muted text-uppercase tracking-wider" style="font-size: 0.6rem;">{{ $p['label'] }}</div>
+                    <h5 class="mb-1 fw-bold {{ $p['color'] }}">{{ number_format($p['val']) }}</h5>
+                    <div class="fw-bold text-muted text-uppercase tracking-wider" style="font-size: 0.55rem;">{{ $p['label'] }}</div>
                 </div>
             </div>
         </a>
@@ -295,39 +295,41 @@
 
 {{-- ── 3. CHARTS: MONTHLY TREND + STATUS DOUGHNUT ──────────────── --}}
 <div class="row g-4 mb-4">
-    <div class="col-md-8">
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-8">
         <div class="card-chart h-100">
             <div class="card-header-chart">
-                <span class="chart-legend-box bg-primary"></span> Tren Data Masuk Bulanan (Pengajuan Saya)
+                <span class="chart-legend-box bg-primary"></span> Tren Data Masuk Bulanan
             </div>
-            <div class="p-4">
+            <div class="p-3 p-lg-4">
                 <div style="height: 300px;">
                     <canvas id="monthlyChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-lg-4">
         <div class="card-chart h-100">
             <div class="card-header-chart">
                 <span class="chart-legend-box bg-info"></span> Komposisi Status
             </div>
-            <div class="p-4 d-flex align-items-center justify-content-center">
-                <div style="height: 270px; width: 100%; position: relative;">
+            <div class="p-3 p-lg-4 d-flex align-items-center justify-content-center">
+                <div style="height: 270px; width: 100%; max-width: 300px; position: relative;">
                     <canvas id="statusChart"></canvas>
                     <div class="position-absolute top-50 start-50 translate-middle text-center" style="pointer-events:none;">
-                        <span class="small fw-bold d-block text-uppercase" style="color:#64748b;opacity:0.8;">Total</span>
-                        <span class="fw-bold display-6" style="color:#3b82f6;">{{ $total }}</span>
+                        <span class="small fw-bold d-block text-uppercase" style="color:#64748b;opacity:0.8;font-size:0.7rem;">Total</span>
+                        <span class="fw-bold display-6" style="color:#3b82f6;font-size:1.5rem;">{{ $total }}</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+</div>
 
 {{-- ── 4. STATISTIK PER JENIS ──────────────────────────────────── --}}
 <h6 class="fw-bold text-dark mb-3 ps-1">Statistik per Jenis Pengajuan</h6>
-<div class="row g-3 mb-4">
+<div class="row g-2 g-md-3 mb-4">
     @php
         $cats = [
             ['label' => 'CANCEL',       'val' => $cancelCount,       'code' => 'Cancel',        'color' => '#94a3b8'],
@@ -339,14 +341,14 @@
         ];
     @endphp
     @foreach($cats as $c)
-    <div class="col-md-2">
+    <div class="col-6 col-sm-4 col-lg-2">
         <a href="{{ route('admin.arsip.index', array_merge(request()->all(), ['jenis_pengajuan' => $c['code']])) }}" class="text-decoration-none h-100 d-block">
-            <div class="card-category h-100">
-                <div class="icon-category-circle" style="background: {{ $c['color'] }}">
-                    <i class="bi bi-folder2-open"></i>
+            <div class="card-category h-100 p-2 p-md-3">
+                <div class="icon-category-circle" style="background: {{ $c['color'] }}; width: 36px; height: 36px;">
+                    <i class="bi bi-folder2-open" style="font-size: 1rem;"></i>
                 </div>
-                <div class="small fw-bold text-muted mb-1 text-uppercase">{{ $c['label'] }}</div>
-                <div class="cat-count" style="color: {{ $c['color'] }}">{{ number_format($c['val']) }}</div>
+                <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.55rem;">{{ $c['label'] }}</div>
+                <div class="cat-count" style="color: {{ $c['color'] }}; font-size: 1.2rem;">{{ number_format($c['val']) }}</div>
             </div>
         </a>
     </div>
@@ -354,8 +356,8 @@
 </div>
 
 {{-- ── 5. TREND CHARTS PER JENIS ───────────────────────────────── --}}
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
+<div class="row g-3 g-lg-4 mb-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card-chart h-100">
             <div class="card-header-chart">
                 <span class="chart-legend-box" style="background:#38bdf8;"></span> Tren Adjustment
@@ -363,7 +365,7 @@
             <div class="p-3"><div style="height:200px;"><canvas id="chartAdjust"></canvas></div></div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card-chart h-100">
             <div class="card-header-chart">
                 <span class="chart-legend-box" style="background:#fbbf24;"></span> Tren Internal Memo
@@ -371,7 +373,7 @@
             <div class="p-3"><div style="height:200px;"><canvas id="chartMemo"></canvas></div></div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card-chart h-100">
             <div class="card-header-chart">
                 <span class="chart-legend-box" style="background:#f87171;"></span> Tren Bundel
@@ -379,10 +381,7 @@
             <div class="p-3"><div style="height:200px;"><canvas id="chartBundel"></canvas></div></div>
         </div>
     </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card-chart h-100">
             <div class="card-header-chart">
                 <span class="chart-legend-box" style="background:#34d399;"></span> Tren Mutasi Produk
@@ -390,7 +389,7 @@
             <div class="p-3"><div style="height:200px;"><canvas id="chartMutasiProduk"></canvas></div></div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card-chart h-100">
             <div class="card-header-chart">
                 <span class="chart-legend-box" style="background:#818cf8;"></span> Tren Mutasi Billet
@@ -398,7 +397,7 @@
             <div class="p-3"><div style="height:200px;"><canvas id="chartMutasiBillet"></canvas></div></div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card-chart h-100">
             <div class="card-header-chart">
                 <span class="chart-legend-box" style="background:#94a3b8;"></span> Tren Cancel / Batal
@@ -422,10 +421,10 @@
                 <tr>
                     <th class="ps-4">Tgl Pengajuan</th>
                     <th>No Reg / Transaksi</th>
-                    <th>Jenis</th>
+                    <th class="d-none d-lg-table-cell">Jenis</th>
                     <th>Status</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-end pe-4">Detail</th>
+                    <th class="text-center d-none d-sm-table-cell">Qty</th>
+                    <th class="text-end pe-4 d-none d-md-table-cell">Detail</th>
                 </tr>
             </thead>
             <tbody>
@@ -450,7 +449,7 @@
                             @endif
                         </div>
                     </td>
-                    <td>
+                    <td class="d-none d-lg-table-cell">
                         @php
                             $jc = match($a->jenis_pengajuan) {
                                 'Adjust'        => ['bg' => '#f0f9ff', 'text' => '#0ea5e9'],
@@ -481,15 +480,18 @@
                             <div class="rounded-circle" style="width:6px;height:6px;background:{{ $kpC['dot'] }};"></div>
                             {{ strtoupper($a->ket_process) }}
                         </div>
+                        <div class="d-lg-none mt-2">
+                             <span class="badge" style="font-size:0.6rem; background:{{ $jc['bg'] }}; color:{{ $jc['text'] }};">{{ strtoupper(str_replace('_', ' ', $a->jenis_pengajuan)) }}</span>
+                        </div>
                     </td>
-                    <td class="text-center">
+                    <td class="text-center d-none d-sm-table-cell">
                         <div class="d-flex gap-2 justify-content-center">
                             <span class="badge rounded-pill bg-success fw-bold px-2" style="font-size:.72rem;">+{{ (int)$a->total_qty_in }}</span>
                             <span class="badge rounded-pill bg-danger fw-bold px-2" style="font-size:.72rem;">-{{ (int)$a->total_qty_out }}</span>
                         </div>
                         <small class="text-muted fw-bold mt-1 d-block" style="font-size:.6rem;">TOTAL QTY</small>
                     </td>
-                    <td class="text-end pe-4">
+                    <td class="text-end pe-4 d-none d-md-table-cell">
                         <div class="d-flex flex-column gap-1 align-items-end" style="min-width:200px;">
                             @php $itemsFound = false; @endphp
                             @if($a->adjustItems->count() > 0)

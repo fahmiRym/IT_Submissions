@@ -250,7 +250,8 @@ class ArsipController extends Controller
             'unit',
             'adjustItems',
             'mutasiItems',
-            'bundelItems'
+            'bundelItems',
+            'editor'
         ])->findOrFail($id);
 
         return response()->json([
@@ -444,6 +445,7 @@ class ArsipController extends Controller
                 'detail_barang' => $rawItems,
                 'total_qty_in' => $totalIn,
                 'total_qty_out' => $totalOut,
+                'updated_by' => auth()->id(),
             ];
 
             // Masukkan Automasi Status (Default)

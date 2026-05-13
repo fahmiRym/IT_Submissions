@@ -50,6 +50,7 @@ class LoginController extends Controller
             return redirect()->route('superadmin.dashboard');
         }
 
+        // admin & accounting sama-sama ke dashboard admin
         return redirect()->route('admin.dashboard');
     }
 

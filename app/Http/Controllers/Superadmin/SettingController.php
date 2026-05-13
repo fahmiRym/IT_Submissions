@@ -14,6 +14,10 @@ class SettingController extends Controller
         return view('superadmin.settings.index', [
             'app_logo' => Setting::get('app_logo'),
             'app_name' => Setting::get('app_name', config('app.name')),
+            'kota_ba' => Setting::get('kota_ba', 'PASURUAN'),
+            'wm_done' => Setting::get('wm_done', 'DONE'),
+            'wm_void' => Setting::get('wm_void', 'VOID'),
+            'wm_reject' => Setting::get('wm_reject', 'REJECT'),
         ]);
     }
 
@@ -22,10 +26,26 @@ class SettingController extends Controller
         $request->validate([
             'app_name' => 'required|string|max:100',
             'app_logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
+            'kota_ba' => 'nullable|string|max:100',
+            'wm_done' => 'nullable|string|max:50',
+            'wm_void' => 'nullable|string|max:50',
+            'wm_reject' => 'nullable|string|max:50',
         ]);
 
-        // 1. Update Nama Aplikasi
-        Setting::set('app_name', $request->app_name);
+        // Log data yang masuk untuk debugging
+        \Log::info("Update Settings Request:", $request->all());
+
+        // 1. Update Nama Aplikasi (Gunakan DB langsung agar lebih pasti)
+        \DB::table('settings')->updateOrInsert(['key' => 'app_name'], ['value' => $request->app_name, 'updated_at' => now()]);
+
+        // 2. Update Kota BA
+        \DB::table('settings')->updateOrInsert(['key' => 'kota_ba'], ['value' => strtoupper($request->kota_ba ?? 'PASURUAN'), 'updated_at' => now()]);
+
+        // 3. Update Watermarks
+        $wms = ['wm_done', 'wm_void', 'wm_reject'];
+        foreach ($wms as $wm) {
+            \DB::table('settings')->updateOrInsert(['key' => $wm], ['value' => strtoupper($request->$wm ?? ''), 'updated_at' => now()]);
+        }
 
         // 2. Update Logo Jika Ada
         if ($request->hasFile('app_logo')) {
@@ -38,7 +58,7 @@ class SettingController extends Controller
             // Simpan logo baru
             $file = $request->file('app_logo');
             $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
-            
+
             // Simpan ke storage (public disk)
             $file->storeAs('settings', $filename, 'public');
 
@@ -51,7 +71,7 @@ class SettingController extends Controller
                 \Log::error("Gagal mengupdate root favicon.ico: " . $e->getMessage());
             }
 
-            Setting::set('app_logo', $filename);
+            \DB::table('settings')->updateOrInsert(['key' => 'app_logo'], ['value' => $filename, 'updated_at' => now()]);
         }
 
         return back()->with('success', 'Pengaturan aplikasi berhasil diperbarui');

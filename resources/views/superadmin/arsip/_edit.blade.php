@@ -147,6 +147,19 @@
                 </div>
             </div>
         </div>
+        
+        {{-- AUDIT TRAIL INFO --}}
+        <div id="auditTrailEdit" class="p-3 rounded-4 bg-white border shadow-sm d-none">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-clock-history text-info"></i>
+                <h6 class="small fw-bold text-dark mb-0">Audit Terakhir</h6>
+            </div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <div id="auditEditorAvatar" class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.7rem; font-weight: bold;"></div>
+                <span id="auditEditorName" class="fw-bold text-dark" style="font-size: 0.75rem;"></span>
+            </div>
+            <small id="auditUpdatedAt" class="text-muted d-block ps-4" style="font-size: 0.65rem;"></small>
+        </div>
     </div>
 
     {{-- RIGHT COLUMN: DETAIL & ITEMS --}}

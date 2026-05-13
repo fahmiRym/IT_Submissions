@@ -446,11 +446,11 @@
         </div>
     </div>
     
-    <div class="d-flex align-items-center gap-3">
+    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-3" style="min-width: 0;">
         {{-- Limit Dropdown --}}
-        <div class="d-flex align-items-center bg-white rounded-pill px-3 py-1 shadow-sm border">
-            <small class="text-secondary fw-bold me-2" style="font-size: 0.75rem;">SHOW:</small>
-            <select id="perPageSelect" class="form-select form-select-sm border-0 bg-transparent fw-bold text-primary py-0 ps-0 pe-4" style="width: auto; cursor: pointer; box-shadow: none;">
+        <div class="d-flex align-items-center bg-white rounded-pill px-2 px-sm-3 py-1 shadow-sm border" style="max-width: 100%;">
+            <small class="text-secondary fw-bold me-2 flex-shrink-0" style="font-size: 0.75rem;">SHOW:</small>
+            <select id="perPageSelect" class="form-select form-select-sm border-0 bg-transparent fw-bold text-primary py-0 ps-0 pe-2" style="width: auto; cursor: pointer; box-shadow: none; max-width: 100%;">
                 @foreach([10, 25, 50, 100, 250, 500, 1000] as $size)
                     <option value="{{ $size }}" {{ request('per_page') == $size ? 'selected' : '' }}>{{ $size }} Rows</option>
                 @endforeach
@@ -458,17 +458,17 @@
         </div>
 
         {{-- Management Storage --}}
-        <button class="btn btn-outline-danger rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalCleanupStorage">
+        <button class="btn btn-outline-danger rounded-pill shadow-sm px-3 px-sm-4 fw-bold" style="white-space: nowrap;" data-bs-toggle="modal" data-bs-target="#modalCleanupStorage">
             <i class="bi bi-hdd-network me-1"></i>Pembersihan
         </button>
 
         {{-- Backup & Restore --}}
-        <a href="{{ route('superadmin.backup.index') }}" class="btn btn-outline-primary rounded-pill shadow-sm px-4 fw-bold">
+        <a href="{{ route('superadmin.backup.index') }}" class="btn btn-outline-primary rounded-pill shadow-sm px-3 px-sm-4 fw-bold" style="white-space: nowrap;">
             <i class="bi bi-cloud-arrow-down-fill me-1"></i>Backup
         </a>
 
         {{-- Create Button --}}
-        <button class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalTambahArsip">
+        <button class="btn btn-primary rounded-pill shadow-sm px-3 px-sm-4 fw-bold" style="white-space: nowrap;" data-bs-toggle="modal" data-bs-target="#modalTambahArsip">
             <i class="bi bi-plus-lg me-1"></i>Buat Baru
         </button>
     </div>
@@ -535,13 +535,26 @@
                                 <i class="bi bi-clock-history me-1"></i>{{ optional($a->tgl_pengajuan)->format('H:i') }} WIB
                             </small>
                         </td>
-                        <td class="text-nowrap ps-3">
+                        <td class="text-nowrap ps-3 position-relative">
                             @if($a->tgl_arsip)
                                 <div class="text-dark fw-bold" style="font-size: 0.85rem;">{{ $a->tgl_arsip->format('d/m/Y') }}</div>
-                                <small class="text-success fw-bold" style="font-size: 0.7rem;">
-                                    <i class="bi bi-check-circle-fill me-1"></i>{{ $a->updated_at->format('H:i') }}
+                                <small class="text-success fw-bold d-block" style="font-size: 0.65rem;">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Finalized
                                 </small>
-                            @else
+                            @endif
+
+                            @if($a->updated_by)
+                                <div class="mt-2 pt-2 border-top border-light">
+                                    <small class="text-muted d-block" style="font-size: 0.6rem; font-weight: 700;">LAST MODIFIED:</small>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="bi bi-person-fill-gear text-secondary" style="font-size: 0.7rem;"></i>
+                                        <span class="fw-bold text-dark" style="font-size: 0.68rem;">{{ $a->editor->name ?? 'System' }}</span>
+                                    </div>
+                                    <small class="text-secondary d-block mt-1" style="font-size: 0.62rem;">
+                                        <i class="bi bi-clock-history me-1"></i>{{ $a->updated_at->format('d/m/y H:i') }}
+                                    </small>
+                                </div>
+                            @elseif(!$a->tgl_arsip)
                                 <span class="text-muted opacity-30 fw-bold fs-5">-</span>
                             @endif
                         </td>
@@ -1071,13 +1084,27 @@ $(document).ready(function() {
                 $('#editBa').val(data.ba);
                 $('#editArsipStatus').val(data.arsip);
 
-                // 5. Bukti Scan
+                // 5. Bukti Scan & Audit Trail
                 if(data.bukti_scan) {
                      $('#linkBuktiSaatIni').html(
-                        `<a href="/preview-file/${data.bukti_scan}" target="_blank" class="text-decoration-none fw-bold small text-primary">
+                        `<a href="/pdf-viewer/${data.bukti_scan}" target="_blank" class="text-decoration-none fw-bold small text-primary">
                             <i class="bi bi-file-earmark-pdf"></i> Lihat File Saat Ini
                         </a>`
                     );
+                } else {
+                    $('#linkBuktiSaatIni').text('');
+                }
+                
+                if(data.updated_by && data.editor) {
+                    $('#auditTrailEdit').removeClass('d-none');
+                    $('#auditEditorName').text(data.editor.name);
+                    $('#auditEditorAvatar').text(data.editor.name.substring(0,1).toUpperCase());
+                    
+                    let ud = new Date(data.updated_at);
+                    let formattedDate = ud.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    $('#auditUpdatedAt').text(formattedDate + ' WIB');
+                } else {
+                    $('#auditTrailEdit').addClass('d-none');
                 }
 
                 // 6. trigger change untuk nampilin section yg benar

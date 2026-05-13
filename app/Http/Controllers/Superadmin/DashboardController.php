@@ -164,6 +164,13 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        // ================= RECENT EDITS (Audit Log) =================
+        $recentEdits = Arsip::whereNotNull('updated_by')
+            ->with(['editor', 'admin', 'department'])
+            ->latest('updated_at')
+            ->limit(5)
+            ->get();
+
         // ================= VIEW =================
         return view('superadmin.dashboard.index', [
             'totalArsip'       => $totalArsip,
@@ -219,6 +226,7 @@ class DashboardController extends Controller
             'managers'         => \App\Models\Manager::orderBy('name')->get(),
             'units'            => \App\Models\Unit::orderBy('name')->get(),
             'users'            => \App\Models\User::where('role', 'admin')->orderBy('name')->get(),
+            'recentEdits'      => $recentEdits,
         ]);
     }
 }
