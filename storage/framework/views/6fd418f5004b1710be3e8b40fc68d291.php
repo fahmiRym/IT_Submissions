@@ -681,7 +681,8 @@
             </div>
         </div>
     </div>
-
+    
+    <?php echo $__env->make('superadmin.arsip._view', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startPush('scripts'); ?>
@@ -693,11 +694,16 @@
                 $('#modalReuploadBA').modal('show');
             }
 
-            window.showBukti = function (url) {
-                if (url && url !== '#') {
-                    window.open(url, '_blank');
-                }
-            };
+            // window.showBukti sudah didefinisikan di superadmin.arsip._view
+            // Jadi kita tidak perlu mendefinisikannya lagi di sini agar tidak konflik.
+            // Namun jika belum ada (fallback), kita definisikan:
+            if (typeof window.showBukti !== 'function') {
+                window.showBukti = function (url) {
+                    if (url && url !== '#') {
+                        window.open(url, '_blank');
+                    }
+                };
+            }
 
             // =========================================================================
             // 0. PAGINATION SIZE
@@ -996,9 +1002,9 @@
                     // Link Bukti Scan
                     if (data.bukti_scan) {
                         $('#linkBuktiSaatIni').html(
-                            `<a href="/preview-file/${data.bukti_scan}" target="_blank" class="text-decoration-none fw-bold small">
-                        <i class="bi bi-file-earmark-pdf text-danger"></i> Lihat File
-                    </a>`
+                            `<a href="/pdf-viewer/${data.bukti_scan}" target="_blank" class="text-decoration-none fw-bold small">
+                                <i class="bi bi-file-earmark-pdf text-danger"></i> Lihat File
+                            </a>`
                         );
                     } else {
                         $('#linkBuktiSaatIni').text('Belum ada file.');
