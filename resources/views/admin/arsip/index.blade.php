@@ -209,7 +209,7 @@
                     <label class="form-label small fw-bold text-secondary mb-1">📄 Jenis</label>
                     <select name="jenis_pengajuan" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
                         <option value="">Semua Jenis</option>
-                        @foreach(['Cancel', 'Adjust', 'Mutasi_Billet', 'Mutasi_Produk', 'Internal_Memo', 'Bundel'] as $jp)
+                        @foreach(['Cancel', 'Adjust', 'Mutasi_Billet', 'Mutasi_Produk', 'Internal_Memo', 'Bundel', 'Produk_Baru'] as $jp)
                             <option value="{{ $jp }}" {{ (request('jenis_pengajuan') == $jp || request('jenis') == $jp) ? 'selected' : '' }}>{{ str_replace('_', ' ', $jp) }}</option>
                         @endforeach
                     </select>
@@ -464,18 +464,6 @@
                                     <div class="text-muted fw-bold mt-1" style="font-size: 0.7rem;">
                                         {{ optional($a->tgl_pengajuan)->format('H:i') }} WIB
                                     </div>
-
-                                    @if($a->updated_by)
-                                        <div class="mt-2 pt-1 border-top border-light border-opacity-50">
-                                            <small class="text-muted d-block" style="font-size: 0.55rem; font-weight: 700;">EDITED BY:</small>
-                                            <div class="d-flex align-items-center gap-1">
-                                                <span class="fw-bold text-secondary" style="font-size: 0.65rem;">{{ $a->editor->name ?? 'System' }}</span>
-                                            </div>
-                                            <small class="text-secondary opacity-75" style="font-size: 0.6rem;">
-                                                {{ $a->updated_at->format('d/m/y H:i') }}
-                                            </small>
-                                        </div>
-                                    @endif
                                 </td>
 
                                 <td class="d-none d-lg-table-cell">
@@ -505,6 +493,20 @@
                                     <div class="d-flex flex-column gap-1" style="max-width: 250px;">
                                         @php $itemsFound = false; @endphp
                                         {{-- Simplified item view for table --}}
+                                        @if($a->produkBaruItems && $a->produkBaruItems->count() > 0)
+                                            @php $itemsFound = true; @endphp
+                                            @foreach($a->produkBaruItems->take(1) as $item)
+                                                <div class="text-truncate fw-bold text-primary" style="font-size: 0.7rem;">
+                                                    <i class="bi bi-box-seam"></i> {{ $item->product_name }}
+                                                    <span class="text-muted">({{ $item->status_approval }})</span>
+                                                </div>
+                                                @if($item->barcode)
+                                                    <div class="d-inline-flex align-items-center gap-1 px-2 py-0 rounded bg-dark text-white font-monospace" style="font-size: 0.58rem;">
+                                                        <i class="bi bi-upc"></i>{{ $item->barcode }}
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        @endif
                                         @if($a->adjustItems && $a->adjustItems->count() > 0)
                                             @php $itemsFound = true; @endphp
                                             @foreach($a->adjustItems->take(1) as $item)
@@ -526,7 +528,7 @@
                                             <div class="text-muted italic small text-truncate" style="max-width: 200px;">
                                                 "{{ $a->keterangan }}"</div>
                                         @endif
-                                        @if(($a->adjustItems->count() + $a->mutasiItems->count()) > 1)
+                                        @if(($a->adjustItems->count() + $a->mutasiItems->count() + ($a->produkBaruItems ? $a->produkBaruItems->count() : 0)) > 1)
                                             <small class="text-primary fw-bold" style="font-size: 0.6rem;">+ lainnya</small>
                                         @endif
                                     </div>
@@ -556,50 +558,56 @@
 
                                 <td class="text-end pe-4">
                                     <div class="d-flex gap-2 justify-content-end align-items-center">
-                                        {{-- GROUP UTAMA (Print & View) --}}
+                                        {{-- GROUP UTAMA (Print / Detail) --}}
                                         <div class="btn-group shadow-sm rounded-3 overflow-hidden">
-                                            <a href="{{ route('admin.arsip.print-draft', $a->id) }}" target="_blank"
-                                                class="btn btn-sm btn-light border-end" title="Print Draft" 
-                                                style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
-                                                <i class="bi bi-printer text-secondary"></i>
-                                            </a>
-                                            <button class="btn btn-sm btn-light"
-                                                onclick="showBukti('{{ $a->bukti_scan ? url('/preview-file/' . $a->bukti_scan) : '#' }}')"
-                                                {{ !$a->bukti_scan ? 'disabled' : '' }} title="View Bukti Scan"
-                                                style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
-                                                <i class="bi bi-eye {{ $a->bukti_scan ? 'text-info' : 'text-muted' }}"></i>
-                                            </button>
+                                            @if($a->jenis_pengajuan === 'Produk_Baru')
+                                                {{-- Produk Baru: tanpa draft dokumen, hanya detail (barcode, tgl, log) --}}
+                                                <button type="button" class="btn btn-sm btn-light btn-detail-produk"
+                                                    data-id="{{ $a->id }}" title="Detail Produk Baru"
+                                                    style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
+                                                    <i class="bi bi-upc-scan text-primary"></i>
+                                                </button>
+                                            @else
+                                                <a href="{{ route('admin.arsip.print-draft', $a->id) }}" target="_blank"
+                                                    class="btn btn-sm btn-light" title="Print Draft"
+                                                    style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
+                                                    <i class="bi bi-printer text-secondary"></i>
+                                                </a>
+                                            @endif
                                         </div>
 
-                                        {{-- TOMBOL EDIT (Jika masih bisa diedit) --}}
-                                        @if(!in_array($a->status, ['Done', 'Reject', 'Void']) && !in_array($a->ket_process, ['Done', 'Void']))
+                                        {{-- TOMBOL EDIT — disembunyikan utk non-superadmin saat sudah final (Done/Reject/Void) --}}
+                                        @php
+                                            $isFinal = in_array($a->status, ['Done', 'Reject', 'Void'])
+                                                || in_array($a->ket_process, ['Done', 'Void'])
+                                                || $a->approvalStarted();
+                                        @endphp
+                                        @if(!$isFinal)
                                             <button class="btn btn-sm btn-white border shadow-sm rounded-3 hover-warning"
                                                 onclick="editArsip({{ $a->id }})" title="Edit Data"
                                                 style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
                                                 <i class="bi bi-pencil-square text-warning"></i>
                                             </button>
+                                        @else
+                                            <span class="btn btn-sm border shadow-sm rounded-3 d-flex align-items-center justify-content-center"
+                                                title="Sudah final oleh Superadmin — tidak dapat diubah"
+                                                style="width: 38px; height: 38px; background: #f8fafc; cursor: not-allowed;">
+                                                <i class="bi bi-lock-fill text-secondary"></i>
+                                            </span>
                                         @endif
 
-                                        {{-- KHUSUS ACCOUNTING: UPLOAD BA --}}
-                                        @if(auth()->user()->role === 'accounting' && $a->jenis_pengajuan === 'Adjust' && in_array($a->ket_process, ['Process', 'Done']))
-                                            <button class="btn btn-sm shadow-sm rounded-3 px-3 fw-bold text-white btn-upload-ba d-flex align-items-center gap-2"
-                                                style="height: 38px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none;"
-                                                onclick="openModalReuploadBA({{ $a->id }}, '{{ $a->no_registrasi }}')"
-                                                title="Upload Scan BA (Accounting)">
-                                                <i class="bi bi-cloud-arrow-up-fill"></i>
-                                                <span class="small">BA</span>
-                                            </button>
+                                        {{-- TANDA TANGAN DIGITAL (Pemohon / Accounting) --}}
+                                        @if($a->admin_id === auth()->id() || (auth()->user()->role === 'accounting' && $a->jenis_pengajuan === 'Adjust'))
+                                            <form action="{{ route('admin.arsip.sign', $a->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tanda tangani dokumen ini secara digital?')">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-white border shadow-sm rounded-3"
+                                                    title="Tanda Tangan Digital"
+                                                    style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white;">
+                                                    <i class="bi bi-pen-fill text-primary"></i>
+                                                </button>
+                                            </form>
                                         @endif
 
-                                        {{-- VIEW SCAN BA ACCOUNTING (Jika sudah ada) --}}
-                                        @if($a->scan_ba_accounting)
-                                            <button class="btn btn-sm btn-success shadow-sm rounded-3"
-                                                onclick="showBukti('{{ url('/preview-file/' . $a->scan_ba_accounting) }}')"
-                                                title="View Scan BA Final"
-                                                style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
-                                                <i class="bi bi-file-check"></i>
-                                            </button>
-                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -632,57 +640,14 @@
     @include('admin.arsip._create')
     @include('admin.arsip._edit')
     @include('superadmin.arsip._view')
+    @include('partials._produk_detail_modal', ['detailBase' => url('admin/arsip')])
 
-    {{-- MODAL UPLOAD ULANG BA (KHUSUS ACCOUNTING) --}}
-    <div class="modal fade" id="modalReuploadBA" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-warning text-dark border-0 py-3">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-file-earmark-arrow-up-fill me-2"></i>Upload Ulang Scan BA
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="formReuploadBA" action="" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-body p-4 text-center">
-                        <div class="mb-3">
-                            <h6 class="fw-bold text-secondary mb-1">NO REGISTRASI:</h6>
-                            <h5 id="reuploadNoReg" class="fw-extrabold text-primary font-monospace"></h5>
-                        </div>
-                        <hr class="opacity-10">
-                        <div class="text-start">
-                            <label class="form-label small fw-bold text-uppercase">File Scan BA Final (PDF)</label>
-                            <input type="file" name="scan_ba" class="form-control rounded-3 border-0 bg-light py-2" 
-                                   accept=".pdf" required>
-                            <small class="text-muted d-block mt-2">
-                                <i class="bi bi-info-circle me-1"></i> Upload file PDF BA yang sudah ditandatangani accounting & manager. (Maks. 10MB)
-                            </small>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0 p-3 bg-light rounded-bottom-4">
-                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">BATAL</button>
-                        <button type="submit" class="btn btn-warning text-dark rounded-pill px-4 fw-bold shadow-sm">
-                            <i class="bi bi-cloud-upload-fill me-2"></i>UPLOAD SEKARANG
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
     @include('superadmin.arsip._view')
 @endsection
 
 @push('scripts')
     <script>
         $(document).ready(function () {
-            window.openModalReuploadBA = function(id, noReg) {
-                $('#reuploadNoReg').text(noReg);
-                $('#formReuploadBA').attr('action', `/admin/arsip/${id}/reupload-ba`);
-                $('#modalReuploadBA').modal('show');
-            }
-
             // window.showBukti sudah didefinisikan di superadmin.arsip._view
             // Jadi kita tidak perlu mendefinisikannya lagi di sini agar tidak konflik.
             // Namun jika belum ada (fallback), kita definisikan:
@@ -744,6 +709,10 @@
                     $wrapKategori.addClass('d-none');
                     $('#sectionBundel').removeClass('d-none');
                 }
+                else if (val === 'Produk_Baru') {
+                    $wrapKategori.addClass('d-none');
+                    $('#sectionProdukBaru').removeClass('d-none');
+                }
                 else {
                     $wrapKategori.addClass('d-none');
                 }
@@ -754,7 +723,7 @@
 
             // Helper Add Row
             function refreshAllItemCounts() {
-                ['wrapperAdjust', 'wrapperAsal', 'wrapperTujuan', 'wrapperBundel'].forEach(id => {
+                ['wrapperAdjust', 'wrapperAsal', 'wrapperTujuan', 'wrapperBundel', 'wrapperProdukBaru'].forEach(id => {
                     let count = $(`#${id} tr`).length;
                     let badgeId = id.replace('wrapper', 'badgeCount');
                     if (count > 0) {
@@ -769,13 +738,24 @@
             // -- ADJUST --
             $('#btnAddAdjust').on('click', function () {
                 let idx = getIndex();
+                let adjustLocations = @json(\App\Models\ArsipAdjustItem::getLocations());
+                let adjustLocOptions = '<option value="">-- Lokasi --</option>';
+                adjustLocations.forEach(loc => { adjustLocOptions += `<option value="${loc}">${loc}</option>`; });
+
                 $('#wrapperAdjust').append(`
                 <tr>
-                    <td><input type="text" name="adjust[${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" required></td>
-                    <td><input type="text" name="adjust[${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Barang" required></td>
-                    <td><input type="number" step="any" name="adjust[${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-success fw-bold" value="0" style="min-width: 80px;"></td>
-                    <td><input type="number" step="any" name="adjust[${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-danger fw-bold" value="0" style="min-width: 80px;"></td>
-                    <td><input type="text" name="adjust[${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot"></td>
+                    <td><input type="text" name="adjust[${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" required style="min-width: 70px;"></td>
+                    <td><input type="text" name="adjust[${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Barang" required style="min-width: 150px;"></td>
+                    <td><input type="number" step="any" name="adjust[${idx}][odoo]" class="form-control form-control-sm border-0 bg-light text-secondary fw-bold px-1 text-center" placeholder="Odoo" style="min-width: 50px;"></td>
+                    <td><input type="number" step="any" name="adjust[${idx}][fisik]" class="form-control form-control-sm border-0 bg-light text-secondary fw-bold px-1 text-center" placeholder="Fisik" style="min-width: 50px;"></td>
+                    <td><input type="number" step="any" name="adjust[${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-success fw-bold px-1 text-center" value="0" style="min-width: 50px;"></td>
+                    <td><input type="number" step="any" name="adjust[${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-danger fw-bold px-1 text-center" value="0" style="min-width: 50px;"></td>
+                    <td><input type="text" name="adjust[${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" style="min-width: 70px;"></td>
+                    <td>
+                        <select name="adjust[${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="min-width: 150px;">
+                            ${adjustLocOptions}
+                        </select>
+                    </td>
                     <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
                 </tr>
             `);
@@ -822,6 +802,56 @@
                     <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
                 </tr>
             `);
+                refreshAllItemCounts();
+            });
+
+            // -- PRODUK BARU --
+            window.buildProdukBaruRow = function (namePrefix, idx, data = {}) {
+                const tipeOpts   = @json(\App\Models\ArsipProdukBaruItem::getTipeOptions());
+                const katOpts    = @json(\App\Models\ArsipProdukBaruItem::getKategoriOptions());
+                const satOpts    = @json(\App\Models\ArsipProdukBaruItem::getSatuanOptions());
+                const statusOpts = @json(\App\Models\ArsipProdukBaruItem::getStatusApprovalOptions());
+
+                const buildOpt = (arr, val) => arr.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
+
+                return `
+                <tr>
+                    <td class="ps-3">
+                        <input type="hidden" name="${namePrefix}[${idx}][id]" value="${data.id || ''}">
+                        <input type="hidden" name="${namePrefix}[${idx}][barcode]" value="${data.barcode || ''}">
+                        <input type="text" name="${namePrefix}[${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" value="${data.product_code || ''}" style="min-width: 80px;">
+                    </td>
+                    <td><input type="text" name="${namePrefix}[${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" value="${data.product_name || ''}" required style="min-width: 160px;"></td>
+                    <td>
+                        <select name="${namePrefix}[${idx}][tipe_produk]" class="form-select form-select-sm border-0 bg-light" style="min-width: 100px;">
+                            <option value="">-- Tipe --</option>
+                            ${buildOpt(tipeOpts, data.tipe_produk)}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="${namePrefix}[${idx}][kategori]" class="form-select form-select-sm border-0 bg-light" style="min-width: 180px;">
+                            <option value="">-- Kategori --</option>
+                            ${buildOpt(katOpts, data.kategori)}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="${namePrefix}[${idx}][satuan]" class="form-select form-select-sm border-0 bg-light" style="min-width: 90px;">
+                            <option value="">-- Satuan --</option>
+                            ${buildOpt(satOpts, data.satuan)}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="${namePrefix}[${idx}][status_approval]" class="form-select form-select-sm border-0 bg-light" style="min-width: 110px;">
+                            ${buildOpt(statusOpts, data.status_approval || 'Waiting List')}
+                        </select>
+                    </td>
+                    <td class="text-end pe-2"><button type="button" class="btn btn-link text-danger p-0 btnRemove"><i class="bi bi-x-circle-fill"></i></button></td>
+                </tr>`;
+            };
+
+            $('#btnAddProdukBaru').on('click', function () {
+                let idx = getIndex();
+                $('#wrapperProdukBaru').append(window.buildProdukBaruRow('produk_baru', idx));
                 refreshAllItemCounts();
             });
 
@@ -888,15 +918,29 @@
         // =========================================================================
 
         // Helper Add Row Edit
-        window.addAdjustRowEdit = function (code = '', name = '', qty_in = 0, qty_out = 0, lot = '') {
+        window.addAdjustRowEdit = function (code = '', name = '', qty_in = 0, qty_out = 0, lot = '', odoo = '', fisik = '', keterangan_in = '', keterangan_out = '', location = '') {
             let idx = Date.now() + Math.floor(Math.random() * 1000);
+            let adjustLocations = @json(\App\Models\ArsipAdjustItem::getLocations());
+            let adjustLocOptions = '<option value="">-- Lokasi --</option>';
+            adjustLocations.forEach(loc => {
+                let selected = (loc === location) ? 'selected' : '';
+                adjustLocOptions += `<option value="${loc}" ${selected}>${loc}</option>`;
+            });
+
             let html = `
             <tr>
                 <td class="ps-3"><input type="text" name="detail_barang[adjust][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" value="${code}" required style="width: 80px;"></td>
-                <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Barang" value="${name}" required></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm text-center border-0 bg-light" value="${qty_in}" style="min-width: 80px;"></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm text-center border-0 bg-light" value="${qty_out}" style="min-width: 80px;"></td>
-                <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" value="${lot}"></td>
+                <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Barang" value="${name}" required style="min-width: 150px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][odoo]" class="form-control form-control-sm text-center border-0 bg-light px-1" placeholder="Odoo" value="${odoo !== null ? odoo : ''}" style="min-width: 50px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][fisik]" class="form-control form-control-sm text-center border-0 bg-light px-1" placeholder="Fisik" value="${fisik !== null ? fisik : ''}" style="min-width: 50px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm text-center border-0 bg-light px-1" value="${qty_in}" style="min-width: 50px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm text-center border-0 bg-light px-1" value="${qty_out}" style="min-width: 50px;"></td>
+                <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" value="${lot}" style="min-width: 70px;"></td>
+                <td>
+                    <select name="detail_barang[adjust][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="min-width: 150px;">
+                        ${adjustLocOptions}
+                    </select>
+                </td>
                 <td class="text-end pe-2"><button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-x-circle-fill"></i></button></td>
             </tr>`;
             $('#wrapperAdjustEdit').append(html);
@@ -932,6 +976,19 @@
             else $('#wrapperTujuanEdit').append(html);
         };
 
+        window.addProdukBaruRowEdit = function (item = {}) {
+            let idx = Date.now() + Math.floor(Math.random() * 1000);
+            let html = window.buildProdukBaruRow('detail_barang[produk_baru]', idx, {
+                product_code: item.product_code || '',
+                product_name: item.product_name || '',
+                tipe_produk: item.tipe_produk || '',
+                kategori: item.kategori || '',
+                satuan: item.satuan || '',
+                status_approval: item.status_approval || 'Waiting List',
+            });
+            $('#wrapperProdukBaruEdit').append(html);
+        };
+
         window.addBundelRowEdit = function (no_doc = '', qty = 1, ket = '') {
             let idx = Date.now() + Math.floor(Math.random() * 1000);
             let html = `
@@ -949,7 +1006,7 @@
             // 1. Reset Form Edit
             $('#formEditArsip')[0].reset();
             $('.dynamic-section-edit').addClass('d-none');
-            $('#wrapperAdjustEdit, #wrapperAsalEdit, #wrapperTujuanEdit, #wrapperBundelEdit').empty();
+            $('#wrapperAdjustEdit, #wrapperAsalEdit, #wrapperTujuanEdit, #wrapperBundelEdit, #wrapperProdukBaruEdit').empty();
 
             // 2. Set ID ke Hidden Input
             $('#editArsipId').val(id);
@@ -970,6 +1027,7 @@
                     $('#sectionBundelEdit').addClass('d-none');
                     $('#sectionAdjustEdit').addClass('d-none');
                     $('#sectionMutasiEdit').addClass('d-none');
+                    $('#sectionProdukBaruEdit').addClass('d-none');
 
                     $('#editNoTransaksi').prop('required', false);
 
@@ -1025,8 +1083,16 @@
                                 let qty_in = item.qty_in || 0;
                                 let qty_out = item.qty_out || 0;
                                 let lot = item.lot || item.keterangan || '';
-                                addAdjustRowEdit(code, nama, qty_in, qty_out, lot);
+                                let odoo = item.odoo;
+                                let fisik = item.fisik;
+                                addAdjustRowEdit(code, nama, qty_in, qty_out, lot, odoo, fisik, item.keterangan_in || '', item.keterangan_out || '', item.location || '');
                             });
+                        }
+                    }
+                    else if (jenis === 'Produk_Baru') {
+                        $('#sectionProdukBaruEdit').removeClass('d-none');
+                        if (data.produk_baru_items) {
+                            data.produk_baru_items.forEach(item => addProdukBaruRowEdit(item));
                         }
                     }
                     else if (jenis && jenis.includes('Mutasi')) {
@@ -1045,6 +1111,9 @@
                         }
                     }
 
+                    // ALUR PERSETUJUAN: timeline + preselect approver + lock bila sudah berjalan
+                    window.renderApprovalEdit(data);
+
                     $('#modalEditArsip').modal('show');
                 },
                 error: function (xhr) {
@@ -1053,6 +1122,52 @@
                 }
             });
         }
+
+        // Render timeline approval + isi approver terpilih di modal edit
+        window.renderApprovalEdit = function (data) {
+            const tl = $('#editApprovalTimeline');
+            const steps = data.approvals || [];
+            if (steps.length) {
+                let html = '';
+                steps.forEach(s => {
+                    const map = { approved: ['#dcfce7', '#166534', 'Disetujui'], rejected: ['#fee2e2', '#991b1b', 'Ditolak'] };
+                    const c = map[s.status] || ['#f1f5f9', '#475569', 'Menunggu'];
+                    const who = (s.approver && s.approver.name) ? s.approver.name : (s.role_label === 'Departemen IT' ? 'Tim IT' : 'belum ditentukan');
+                    const at = s.acted_at ? new Date(s.acted_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                    html += `<div class="d-flex align-items-center gap-2 px-2 py-1 rounded-2 mb-1" style="background:${c[0]};">
+                        <span class="fw-bold" style="font-size:0.72rem; color:${c[1]};">${s.step_order}. ${s.role_label}</span>
+                        <span class="text-muted" style="font-size:0.66rem;">— ${who} ${at ? '· ' + at : ''}</span>
+                        <span class="badge ms-auto" style="background:${c[1]}; font-size:0.55rem;">${c[2].toUpperCase()}</span>
+                    </div>`;
+                });
+                tl.html(html);
+            } else {
+                tl.html('<span class="text-muted small fst-italic">Belum ada alur persetujuan.</span>');
+            }
+
+            // Preselect approver dari approval_map
+            const m = data.approval_map || {};
+            ['SPV', 'Kabag', 'Manager', 'Accounting'].forEach(role => {
+                $('#formEditArsip select[name="approvers[' + role + ']"]').val(m[role] ? String(m[role]) : '');
+            });
+
+            // Trigger toggle field sesuai jenis (partial mengatur tampil/sembunyi)
+            $('#editJenisPengajuan').trigger('change');
+
+            // Kunci ubah approver bila approval sudah berjalan
+            const started = !!data.approval_started;
+            const note = $('#editApprovalNote');
+            if (started) {
+                // disable semua (override pengaturan per-field dari partial)
+                $('#formEditArsip select[name^="approvers["]').prop('disabled', true);
+                $('#editApproverWrap .approver-card').css('opacity', '0.6');
+                note.removeClass('d-none').html('<i class="bi bi-lock-fill me-1"></i>Persetujuan sudah berjalan — approver tidak dapat diubah.');
+            } else {
+                // biarkan partial yang mengatur enable/disable per jenis
+                $('#editApproverWrap .approver-card').css('opacity', '1');
+                note.addClass('d-none');
+            }
+        };
 
         // =========================================================================
         // AUTO REFRESH (AJAX POLLING)

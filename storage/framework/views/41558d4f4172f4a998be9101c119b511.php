@@ -119,8 +119,29 @@
                                 <span>Bundel</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="<?php echo e(route('superadmin.arsip.index', ['jenis' => 'Produk_Baru'])); ?>"
+                                class="nav-link py-2 <?php echo e(request('jenis') == 'Produk_Baru' ? 'text-primary fw-bold' : ''); ?>">
+                                <i class="bi bi-box-seam-fill text-primary"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Daftar Produk Baru</span>
+                                <span class="badge bg-primary ms-auto" style="font-size:0.5rem;"></span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
+            </li>
+
+            
+            <li class="nav-item mt-2">
+                <a href="<?php echo e(route('superadmin.approvals.index')); ?>"
+                    class="nav-link d-flex align-items-center <?php echo e(request()->routeIs('superadmin.approvals.*') ? 'active' : ''); ?>">
+                    <i class="bi bi-check2-square text-success"></i>
+                    <span>Persetujuan (Final IT)</span>
+                    <?php if(($pendingApprovalCount ?? 0) > 0): ?>
+                        <span class="badge bg-danger rounded-pill ms-auto"><?php echo e($pendingApprovalCount); ?></span>
+                    <?php endif; ?>
+                </a>
             </li>
 
             

@@ -29,6 +29,9 @@
     {{-- Custom Modern Theme --}}
     <link href="{{ asset('css/modern-theme.css') }}?v={{ filemtime(public_path('css/modern-theme.css')) }}" rel="stylesheet">
 
+    {{-- Responsive Mobile Overrides (loaded AFTER modern-theme so it wins) --}}
+    <link href="{{ asset('css/responsive-mobile.css') }}?v={{ filemtime(public_path('css/responsive-mobile.css')) }}" rel="stylesheet">
+
     {{-- Chart --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

@@ -90,6 +90,9 @@ class DashboardController extends Controller
         $internalMemoCount = (clone $query)->where('jenis_pengajuan', 'Internal_Memo')->count();
         $bundelCount = (clone $query)->where('jenis_pengajuan', 'Bundel')->count();
         $cancelCount = (clone $query)->where('jenis_pengajuan', 'Cancel')->count();
+        $produkBaruCount = (clone $query)->where('jenis_pengajuan', 'Produk_Baru')->count();
+        $produkBaruDone = (clone $query)->where('jenis_pengajuan', 'Produk_Baru')->where('ket_process', 'Done')->count();
+        $produkBaruWaiting = (clone $query)->where('jenis_pengajuan', 'Produk_Baru')->whereIn('ket_process', ['Review', 'Process', 'Pending'])->count();
 
         // ================= BA & ARSIP STATUS =================
         $baDone = (clone $query)->where('ba', 'Done')->count();
@@ -150,6 +153,7 @@ class DashboardController extends Controller
         $deptMutasi = $this->getTopDeptsByType('Mutasi');
         $deptMutasiProduk = $this->getTopDeptsByType('Mutasi_Produk');
         $deptMutasiBillet = $this->getTopDeptsByType('Mutasi_Billet');
+        $deptProdukBaru   = $this->getTopDeptsByType('Produk_Baru');
 
         // ================= BULANAN =================
         $monthlyChart = (clone $query)
@@ -160,6 +164,7 @@ class DashboardController extends Controller
 
         // ================= HISTORY =================
         $latestArsip = (clone $query)
+            ->with(['admin', 'department', 'adjustItems', 'mutasiItems'])
             ->latest('tgl_pengajuan')
             ->limit(10)
             ->get();
@@ -187,6 +192,9 @@ class DashboardController extends Controller
             'internalMemoCount'=> $internalMemoCount,
             'bundelCount'      => $bundelCount,
             'cancelCount'      => $cancelCount,
+            'produkBaruCount'  => $produkBaruCount,
+            'produkBaruDone'   => $produkBaruDone,
+            'produkBaruWaiting'=> $produkBaruWaiting,
             
             // BA & Arsip Status
             'baDone'           => $baDone,
@@ -209,6 +217,7 @@ class DashboardController extends Controller
             'deptMutasi'       => $deptMutasi,
             'deptMutasiProduk' => $deptMutasiProduk,
             'deptMutasiBillet' => $deptMutasiBillet,
+            'deptProdukBaru'   => $deptProdukBaru,
 
             // Ket Process Stats
             'ketPending'       => (clone $query)->where('ket_process', 'Pending')->count(),

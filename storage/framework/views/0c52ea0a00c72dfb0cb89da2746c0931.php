@@ -378,6 +378,50 @@
     </div>
 
     
+    <h6 class="fw-bold text-dark mb-3 ps-1"><i class="bi bi-box-seam-fill me-2 text-primary"></i>Pengajuan Produk Baru</h6>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <a href="<?php echo e(route('superadmin.arsip.index', ['jenis' => 'Produk_Baru'])); ?>" class="text-decoration-none h-100 d-block">
+                <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="background: linear-gradient(135deg, #c084fc, #7c3aed); color: #fff;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-white-50 text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">TOTAL PRODUK BARU</small>
+                            <h3 class="fw-extrabold mt-1 mb-0"><?php echo e(number_format($produkBaruCount ?? 0)); ?></h3>
+                        </div>
+                        <i class="bi bi-box-seam-fill fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="<?php echo e(route('superadmin.arsip.index', ['jenis' => 'Produk_Baru', 'ket_process' => 'Done'])); ?>" class="text-decoration-none h-100 d-block">
+                <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="background: #ecfdf5; border-left: 4px solid #10b981 !important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="fw-bold text-uppercase text-success" style="font-size: 0.65rem; letter-spacing: 0.5px;">DONE / APPROVED</small>
+                            <h3 class="fw-extrabold mt-1 mb-0 text-success"><?php echo e(number_format($produkBaruDone ?? 0)); ?></h3>
+                        </div>
+                        <i class="bi bi-check-circle-fill fs-1 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="<?php echo e(route('superadmin.arsip.index', ['jenis' => 'Produk_Baru', 'ket_process' => 'Process'])); ?>" class="text-decoration-none h-100 d-block">
+                <div class="card border-0 shadow-sm rounded-4 h-100 p-3" style="background: #fefce8; border-left: 4px solid #eab308 !important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="fw-bold text-uppercase text-warning" style="font-size: 0.65rem; letter-spacing: 0.5px;">WAITING LIST</small>
+                            <h3 class="fw-extrabold mt-1 mb-0 text-warning"><?php echo e(number_format($produkBaruWaiting ?? 0)); ?></h3>
+                        </div>
+                        <i class="bi bi-hourglass-split fs-1 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    
     <div class="row g-4 mb-4">
         <!-- Monthly Trend -->
         <div class="col-md-8">
@@ -424,6 +468,7 @@
                 ['label' => 'MUTASI PROD', 'code' => 'Mutasi_Produk', 'color' => '#34d399'],
                 ['label' => 'BUNDEL', 'code' => 'Bundel', 'color' => '#f87171'],
                 ['label' => 'MUTASI BIL', 'code' => 'Mutasi_Billet', 'color' => '#818cf8'],
+                ['label' => 'PRODUK BARU', 'code' => 'Produk_Baru', 'color' => '#a855f7'],
             ];
         ?>
         <?php $__currentLoopData = $cats; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -628,12 +673,22 @@
                                 <th class="ps-4">No Registrasi</th>
                                 <th>User Pengaju</th>
                                 <th>Jenis</th>
+                                <th>Lot</th>
                                 <th>Status</th>
+                                <th class="text-center">Berkas</th>
                                 <th class="text-end pe-4">Tanggal</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php $__empty_1 = true; $__currentLoopData = $latestArsip; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $submission): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php
+                                    $lotList = collect();
+                                    if($submission->adjustItems && $submission->adjustItems->count() > 0) {
+                                        $lotList = $submission->adjustItems->pluck('lot')->filter()->unique();
+                                    } elseif($submission->mutasiItems && $submission->mutasiItems->count() > 0) {
+                                        $lotList = $submission->mutasiItems->pluck('lot')->filter()->unique();
+                                    }
+                                ?>
                                 <tr>
                                     <td class="ps-4">
                                         <span
@@ -656,6 +711,20 @@
                                             class="badge bg-light text-dark border fw-bold px-3 py-2" style="font-size: 0.65rem;"><?php echo e(str_replace('_', ' ', $submission->jenis_pengajuan)); ?></span>
                                     </td>
                                     <td>
+                                        <?php if($lotList->count() > 0): ?>
+                                            <div class="d-flex flex-wrap gap-1" style="max-width: 160px;">
+                                                <?php $__currentLoopData = $lotList->take(3); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 font-monospace fw-bold" style="font-size: 0.65rem;"><?php echo e($lot); ?></span>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                <?php if($lotList->count() > 3): ?>
+                                                    <span class="badge bg-light text-muted border" style="font-size: 0.65rem;" title="<?php echo e($lotList->skip(3)->implode(', ')); ?>">+<?php echo e($lotList->count() - 3); ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <span class="text-muted opacity-50 small">–</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
                                         <?php
                                             $colors = ['Review' => 'info', 'Process' => 'warning', 'Done' => 'success', 'Partial Done' => 'primary', 'Pending' => 'secondary'];
                                             $sc = $colors[$submission->ket_process] ?? 'secondary';
@@ -666,12 +735,28 @@
 
                                         </span>
                                     </td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1 justify-content-center align-items-center">
+                                            
+                                            <?php if($submission->scan_final): ?>
+                                                <a href="<?php echo e(url('/preview-file/' . $submission->scan_final)); ?>" target="_blank"
+                                                    class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 text-decoration-none"
+                                                    style="font-size: 0.6rem;" title="Scan Final (Tim IT)">
+                                                    <i class="bi bi-shield-fill-check"></i> FINAL
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="badge bg-light text-muted border" style="font-size: 0.6rem;" title="Scan Final IT belum dieksekusi">
+                                                    <i class="bi bi-shield"></i> FINAL
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                     <td class="text-end pe-4 small text-muted font-monospace">
                                         <?php echo e($submission->tgl_pengajuan ? $submission->tgl_pengajuan->format('d/m/y') : '-'); ?></td>
                                 </tr>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-5 small">Belum ada data terbaru.</td>
+                                    <td colspan="7" class="text-center text-muted py-5 small">Belum ada data terbaru.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

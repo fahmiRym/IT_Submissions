@@ -14,7 +14,7 @@ class DashboardController extends Controller
     {
         $adminId = auth()->id();
 
-        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems']);
+        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems']);
 
         // Jika bukan Accounting atau Superadmin, batasi hanya data milik sendiri
         if (!in_array(auth()->user()->role, ['accounting', 'superadmin'])) {
@@ -87,6 +87,9 @@ class DashboardController extends Controller
         $internalMemoCount = (clone $query)->where('jenis_pengajuan', 'Internal_Memo')->count();
         $bundelCount       = (clone $query)->where('jenis_pengajuan', 'Bundel')->count();
         $cancelCount       = (clone $query)->where('jenis_pengajuan', 'Cancel')->count();
+        $produkBaruCount   = (clone $query)->where('jenis_pengajuan', 'Produk_Baru')->count();
+        $produkBaruDone    = (clone $query)->where('jenis_pengajuan', 'Produk_Baru')->where('ket_process', 'Done')->count();
+        $produkBaruWaiting = (clone $query)->where('jenis_pengajuan', 'Produk_Baru')->whereIn('ket_process', ['Review', 'Process', 'Pending'])->count();
 
         // ================= HISTORY =================
         $arsips = (clone $query)->latest()->paginate(10);
@@ -108,6 +111,9 @@ class DashboardController extends Controller
             'internalMemoCount' => $internalMemoCount,
             'bundelCount'       => $bundelCount,
             'cancelCount'       => $cancelCount,
+            'produkBaruCount'   => $produkBaruCount,
+            'produkBaruDone'    => $produkBaruDone,
+            'produkBaruWaiting' => $produkBaruWaiting,
 
             // Charts
             'statusChart'   => $statusChart,

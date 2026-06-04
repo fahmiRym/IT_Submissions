@@ -122,6 +122,7 @@
     /* Optimized Typography */
     .qty-display-large { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.8px; }
     .text-primary-dark { color: #0f172a !important; }
+    .hover-opacity-100:hover { opacity: 1 !important; transition: opacity 0.2s; }
 </style>
 
 
@@ -211,7 +212,7 @@
                 <label class="form-label small fw-bold text-secondary mb-1">📄 Jenis Pengajuan</label>
                 <select name="jenis_pengajuan" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
                     <option value="">Semua</option>
-                    <?php $__currentLoopData = ['Cancel','Adjust','Mutasi_Billet','Mutasi_Produk','Internal_Memo','Bundel']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $jp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php $__currentLoopData = ['Cancel','Adjust','Mutasi_Billet','Mutasi_Produk','Internal_Memo','Bundel','Produk_Baru']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $jp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <option value="<?php echo e($jp); ?>" <?php echo e(request('jenis_pengajuan')==$jp?'selected':''); ?>><?php echo e(str_replace('_', ' ', $jp)); ?></option>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
@@ -293,10 +294,10 @@
 
 <?php
     $fJenis = request('jenis') ?? request('jenis_pengajuan');
-    
+
     // Config for Card 1 (Total)
     $sConfig = [
-        'title' => 'TOTAL ADJUSTMENT', // Disesuaikan dng screenshot "TOTAL ADJUSTMENT"
+        'title' => 'TOTAL ADJUSTMENT',
         'icon'  => 'bi-sliders',
         'color' => '#0ea5e9',
         'bg'    => 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
@@ -366,12 +367,10 @@
 
     <div class="col-xl-9">
         <div class="d-flex flex-column gap-3 h-100">
-            
             <div class="row g-2 flex-fill">
                 <?php $__currentLoopData = $mainStats; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ts): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="col">
                     <?php
-                        // Klik status utama membersihkan filter BA dan ARSIP agar data muncul (sesuai angka di kartu)
                         $cleanParams = array_diff_key(request()->all(), array_flip(['ba', 'arsip']));
                         $cleanParams[$ts['param']] = $ts['key'];
                     ?>
@@ -392,12 +391,10 @@
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
 
-            
             <div class="row g-2 flex-fill">
                 <?php $__currentLoopData = $docStats; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ts): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="col">
                     <?php
-                        // Klik status dokumen membersihkan filter STATUS UTAMA agar data muncul
                         $cleanParams = array_diff_key(request()->all(), array_flip(['ket_process']));
                         $cleanParams[$ts['param']] = $ts['val'];
                     ?>
@@ -481,23 +478,23 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-secondary">
                     <tr style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                         <th class="ps-4 text-center" width="40">
+                        <th class="ps-4 text-center" width="40">
                             <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'id', 'dir' => request('sort') == 'id' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
                                 #
                             </a>
                         </th>
                         <th width="100" class="text-nowrap ps-4">
-                             <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'tgl_pengajuan', 'dir' => request('sort') == 'tgl_pengajuan' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
+                            <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'tgl_pengajuan', 'dir' => request('sort') == 'tgl_pengajuan' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
                                 TGL PENGAJUAN
                             </a>
                         </th>
                         <th width="100" class="text-nowrap">
-                             <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'tgl_arsip', 'dir' => request('sort') == 'tgl_arsip' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
+                            <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'tgl_arsip', 'dir' => request('sort') == 'tgl_arsip' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
                                 TGL ARSIP
                             </a>
                         </th>
                         <th width="180" class="text-nowrap">
-                             <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'no_registrasi', 'dir' => request('sort') == 'no_registrasi' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
+                            <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'no_registrasi', 'dir' => request('sort') == 'no_registrasi' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
                                 NO REGISTRASI
                             </a>
                         </th>
@@ -508,12 +505,12 @@
                             </a>
                         </th>
                         <th width="150" class="text-nowrap">
-                             <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'department_id', 'dir' => request('sort') == 'department_id' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
+                            <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'department_id', 'dir' => request('sort') == 'department_id' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
                                 DEPT & UNIT
                             </a>
                         </th>
                         <th width="150" class="text-nowrap">
-                             <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'ket_process', 'dir' => request('sort') == 'ket_process' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
+                            <a href="<?php echo e(request()->fullUrlWithQuery(['sort' => 'ket_process', 'dir' => request('sort') == 'ket_process' && request('dir') == 'asc' ? 'desc' : 'asc'])); ?>" class="text-decoration-none text-secondary">
                                 STATUS DETAIL
                             </a>
                         </th>
@@ -529,13 +526,14 @@
                             <?php echo e(($arsips->currentPage() - 1) * $arsips->perPage() + $loop->iteration); ?>
 
                         </td>
-                        
+
                         <td class="text-nowrap ps-4 position-relative">
                             <div class="fw-bold text-dark" style="font-size: 0.85rem;"><?php echo e(optional($a->tgl_pengajuan)->format('d/m/Y')); ?></div>
                             <small class="text-primary fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
                                 <i class="bi bi-clock-history me-1"></i><?php echo e(optional($a->tgl_pengajuan)->format('H:i')); ?> WIB
                             </small>
                         </td>
+
                         <td class="text-nowrap ps-3 position-relative">
                             <?php if($a->tgl_arsip): ?>
                                 <div class="text-dark fw-bold" style="font-size: 0.85rem;"><?php echo e($a->tgl_arsip->format('d/m/Y')); ?></div>
@@ -560,51 +558,51 @@
                                 <span class="text-muted opacity-30 fw-bold fs-5">-</span>
                             <?php endif; ?>
                         </td>
-    
+
                         <td class="ps-3">
                             <div class="d-flex flex-column gap-1">
-                                
-                                 <?php if($a->no_registrasi): ?>
-                                     <div class="d-flex align-items-center mb-1">
-                                         <div class="px-3 py-1 rounded-pill fw-bold font-monospace bg-white border border-info border-opacity-50 text-info shadow-sm" 
-                                              style="font-size: 0.75rem; letter-spacing: 0.5px; border-width: 2px !important;">
-                                             <i class="bi bi-bookmark-fill me-2 opacity-50"></i><?php echo e($a->no_registrasi); ?>
+                                <?php if($a->no_registrasi): ?>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="px-3 py-1 rounded-pill fw-bold font-monospace bg-white border border-info border-opacity-50 text-info shadow-sm" 
+                                             style="font-size: 0.75rem; letter-spacing: 0.5px; border-width: 2px !important;">
+                                            <i class="bi bi-bookmark-fill me-2 opacity-50"></i><?php echo e($a->no_registrasi); ?>
 
-                                         </div>
-                                     </div>
-                                 <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
 
-                                 
-                                 <?php if($a->no_doc): ?>
-                                     <div class="d-flex align-items-center mb-1 ps-2">
-                                          <div class="text-primary fw-extrabold font-monospace" style="font-size: 0.82rem; border-left: 3px solid #0d6efd; padding-left: 8px;">
-                                              <?php echo e(strtoupper($a->no_doc)); ?>
+                                <?php if($a->no_doc): ?>
+                                    <div class="d-flex align-items-center mb-1 ps-2">
+                                        <div class="text-primary fw-extrabold font-monospace d-flex align-items-center gap-2" 
+                                             style="font-size: 0.82rem; border-left: 3px solid #0d6efd; padding-left: 8px; cursor: pointer;"
+                                             onclick="copyToClipboard(<?php echo e(json_encode($a->copy_all_text)); ?>, this)"
+                                             title="Klik untuk Salin No Doc & Transaksi">
+                                            <span><?php echo e(strtoupper($a->no_doc)); ?></span>
+                                            <i class="bi bi-clipboard small opacity-50"></i>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
 
-                                          </div>
-                                     </div>
-                                 <?php endif; ?>
-    
-                                 
-                                 <?php if($a->no_transaksi): ?>
-                                     <div class="d-flex flex-column gap-1 ps-2">
-                                         <?php if(!empty($a->no_transaksi_rows)): ?>
-                                             <?php $__currentLoopData = $a->no_transaksi_rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                 <?php $__currentLoopData = $group; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $line): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                     <?php $isInduk = $loop->first; ?>
-                                                     <div class="d-flex align-items-center <?php echo e($isInduk ? 'mb-1' : 'ms-3 mb-1'); ?>">
-                                                         <i class="bi <?php echo e($isInduk ? 'bi-file-earmark-text' : 'bi-arrow-return-right'); ?> hierarchy-connector"></i>
-                                                         <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem; letter-spacing: -0.2px;"><?php echo e($line); ?></span>
-                                                     </div>
-                                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                         <?php else: ?>
-                                             <div class="d-flex align-items-center">
-                                                 <i class="bi bi-file-earmark-text hierarchy-connector"></i>
-                                                 <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem;"><?php echo e($a->no_transaksi); ?></span>
-                                             </div>
-                                         <?php endif; ?>
-                                     </div>
-                                 <?php endif; ?>
+                                <?php if($a->no_transaksi): ?>
+                                    <div class="d-flex flex-column gap-1 ps-2">
+                                        <?php if(!empty($a->no_transaksi_rows)): ?>
+                                            <?php $__currentLoopData = $a->no_transaksi_rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <?php $__currentLoopData = $group; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $line): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <?php $isInduk = $loop->first; ?>
+                                                    <div class="d-flex align-items-center <?php echo e($isInduk ? 'mb-1' : 'ms-3 mb-1'); ?>">
+                                                        <i class="bi <?php echo e($isInduk ? 'bi-file-earmark-text' : 'bi-arrow-return-right'); ?> hierarchy-connector"></i>
+                                                        <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem; letter-spacing: -0.2px;"><?php echo e($line); ?></span>
+                                                    </div>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        <?php else: ?>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-file-earmark-text hierarchy-connector"></i>
+                                                <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem;"><?php echo e($a->no_transaksi); ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </td>
 
@@ -620,7 +618,7 @@
 
                             </span>
                         </td>
-    
+
                         <td class="text-nowrap">
                             <div class="d-flex align-items-center">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm text-white fw-bold" 
@@ -634,15 +632,14 @@
                                 </div>
                             </div>
                         </td>
-    
+
                         <td>
                             <div class="fw-bold text-dark lh-sm mb-1 text-truncate" style="max-width: 160px; font-size: 0.88rem;"><?php echo e($a->department->name ?? '-'); ?></div>
                             <span class="bg-light text-secondary px-2 py-0 rounded fw-bold" style="font-size: 0.68rem; border: 1px solid #cbd5e1;"><?php echo e($a->unit->name ?? '-'); ?></span>
                         </td>
-    
+
                         <td>
                             <div class="d-flex flex-column gap-2 align-items-start">
-                                
                                 <?php
                                     $kpC = match($a->ket_process) {
                                         'Review'  => ['bg' => '#fefce8', 'text' => '#854d0e', 'border' => '#fde047', 'dot' => '#facc15'],
@@ -680,12 +677,11 @@
                                 <span class="fw-bold text-danger" style="font-size: 0.85rem;">-<?php echo e($a->total_qty_out + 0); ?></span>
                             </div>
                         </td>
-    
+
                         <td class="ps-3 pe-2">
                             <div class="d-flex flex-column gap-2" style="max-width: 320px;">
                                 <?php $itemsFound = false; ?>
-                                
-                                
+
                                 <?php if($a->bundelItems && $a->bundelItems->count() > 0): ?>
                                     <?php $itemsFound = true; ?>
                                     <?php $__currentLoopData = $a->bundelItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -702,7 +698,6 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 <?php endif; ?>
 
-                                
                                 <?php if($a->mutasiItems && $a->mutasiItems->count() > 0): ?>
                                     <?php $itemsFound = true; ?>
                                     <?php $__currentLoopData = $a->mutasiItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -718,12 +713,6 @@
                                                 <div class="lh-1 pe-2">
                                                     <div class="fw-extrabold text-dark font-monospace mb-1" style="font-size: 0.82rem;"><?php echo e($item->product_code); ?></div>
                                                     <div class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;"><?php echo e($item->product_name); ?></div>
-                                                    <?php if($item->panjang || $item->location): ?>
-                                                        <div class="mt-1 d-flex gap-1" style="font-size: 0.62rem;">
-                                                            <?php if($item->panjang): ?> <span class="badge bg-secondary opacity-75">P: <?php echo e($item->panjang); ?></span> <?php endif; ?>
-                                                            <?php if($item->location): ?> <span class="badge bg-light text-dark border" title="<?php echo e($item->location); ?>"><i class="bi bi-geo-alt"></i> Loc</span> <?php endif; ?>
-                                                        </div>
-                                                    <?php endif; ?>
                                                 </div>
                                                 <div class="qty-bubble <?php echo e($qClass); ?>"><?php echo e($qPrefix); ?><?php echo e($item->qty + 0); ?></div>
                                             </div>
@@ -731,7 +720,39 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 <?php endif; ?>
 
-                                
+                                <?php if($a->produkBaruItems && $a->produkBaruItems->count() > 0): ?>
+                                    <?php $itemsFound = true; ?>
+                                    <?php $__currentLoopData = $a->produkBaruItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
+                                            $stColor = $item->status_approval === 'Done' ? 'success' : 'warning';
+                                        ?>
+                                        <div class="d-flex flex-column">
+                                            <div class="item-label-prefix">Produk Baru — <?php echo e($item->tipe_produk ?: '–'); ?></div>
+                                            <div class="item-detail-card">
+                                                <div class="lh-1 pe-2">
+                                                    <div class="fw-extrabold text-dark font-monospace mb-1" style="font-size: 0.82rem;"><?php echo e($item->product_code ?: '(tanpa kode)'); ?></div>
+                                                    <div class="text-muted fw-bold" style="font-size: 0.7rem;"><?php echo e($item->product_name); ?></div>
+                                                    <?php if($item->barcode): ?>
+                                                        <div class="d-inline-flex align-items-center gap-1 mt-1 px-2 py-0 rounded bg-dark text-white font-monospace" style="font-size: 0.6rem;">
+                                                            <i class="bi bi-upc"></i><?php echo e($item->barcode); ?>
+
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    <div class="d-flex gap-1 mt-1 flex-wrap">
+                                                        <?php if($item->kategori): ?>
+                                                            <span class="badge bg-light text-secondary border" style="font-size: 0.6rem;"><?php echo e($item->kategori); ?></span>
+                                                        <?php endif; ?>
+                                                        <?php if($item->satuan): ?>
+                                                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25" style="font-size: 0.6rem;"><?php echo e($item->satuan); ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <span class="badge bg-<?php echo e($stColor); ?> bg-opacity-10 text-<?php echo e($stColor); ?> border border-<?php echo e($stColor); ?> border-opacity-25 fw-bold" style="font-size: 0.62rem;"><?php echo e(strtoupper($item->status_approval ?? 'Waiting List')); ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php endif; ?>
+
                                 <?php if($a->adjustItems && $a->adjustItems->count() > 0): ?>
                                     <?php $itemsFound = true; ?>
                                     <?php $__currentLoopData = $a->adjustItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -755,7 +776,6 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 <?php endif; ?>
 
-                                
                                 <?php if($a->pemohon): ?>
                                     <div class="d-flex align-items-center gap-2 mt-1">
                                         <div class="badge bg-light text-primary border border-primary border-opacity-10 py-1 px-2" style="font-size: 0.65rem;">
@@ -765,7 +785,6 @@
                                     </div>
                                 <?php endif; ?>
 
-                                
                                 <?php if(!$itemsFound && $a->keterangan): ?>
                                     <div class="mt-1">
                                         <div class="text-muted italic fw-medium" style="font-size: 0.75rem; line-height: 1.2;">
@@ -780,31 +799,40 @@
 
                         <td class="text-center pe-4">
                             <div class="d-flex gap-2 justify-content-center">
-                                
-                                <a href="<?php echo e(route('superadmin.arsip.print-draft', $a->id)); ?>" target="_blank" class="btn btn-sm btn-secondary text-white shadow-sm rounded-3 p-2 d-flex align-items-center" title="Print Draft">
-                                    <i class="bi bi-printer-fill"></i>
+                                <?php if($a->jenis_pengajuan === 'Produk_Baru'): ?>
+                                    
+                                    <button class="btn btn-sm btn-primary text-white shadow-sm rounded-3 p-2 d-flex align-items-center btn-detail-produk"
+                                            data-id="<?php echo e($a->id); ?>" title="Detail Produk Baru">
+                                        <i class="bi bi-upc-scan"></i>
+                                    </button>
+                                <?php else: ?>
+                                    <a href="<?php echo e(route('superadmin.arsip.print-draft', $a->id)); ?>" target="_blank" class="btn btn-sm btn-secondary text-white shadow-sm rounded-3 p-2 d-flex align-items-center" title="Print Draft">
+                                        <i class="bi bi-printer-fill"></i>
+                                    </a>
+                                <?php endif; ?>
+
+                                <button class="btn btn-sm btn-warning text-dark shadow-sm rounded-3 p-2 d-flex align-items-center"
+                                        onclick="editArsip(<?php echo e($a->id); ?>)" title="Edit">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+
+                                <form action="<?php echo e(route('superadmin.arsip.sign', $a->id)); ?>" method="POST" class="d-inline" onsubmit="return confirm('Tanda tangani dokumen ini secara digital sebagai Departemen IT?')">
+                                    <?php echo csrf_field(); ?>
+                                    <button type="submit" class="btn btn-sm btn-primary text-white shadow-sm rounded-3 p-2 d-flex align-items-center" title="Tanda Tangan Digital (IT)">
+                                        <i class="bi bi-pen-fill"></i>
+                                    </button>
+                                </form>
+
+                                <button class="btn btn-sm btn-success text-white shadow-sm rounded-3 p-2 d-flex align-items-center btn-arsip-sistem"
+                                        data-id="<?php echo e($a->id); ?>" data-bs-toggle="modal" data-bs-target="#modalArsipSistem" title="Arsip">
+                                    <i class="bi bi-check-lg fw-bold"></i>
+                                </button>
+
+                                <a href="<?php echo e(route('superadmin.activity-logs.index', ['q' => $a->no_registrasi])); ?>" 
+                                   class="btn btn-sm btn-dark shadow-sm rounded-3 p-2 d-flex align-items-center" title="Log Riwayat">
+                                    <i class="bi bi-clock-history"></i>
                                 </a>
 
-                                
-                                <button class="btn btn-sm btn-info text-white shadow-sm rounded-3 p-2 d-flex align-items-center" 
-                                        onclick="showBukti('<?php echo e($a->bukti_scan ? url('/preview-file/'.$a->bukti_scan) : '#'); ?>')"
-                                        <?php echo e(!$a->bukti_scan ? 'disabled' : ''); ?> title="View">
-                                    <i class="bi bi-eye-fill"></i>
-                                </button>
-    
-                                 
-                                 <button class="btn btn-sm btn-warning text-dark shadow-sm rounded-3 p-2 d-flex align-items-center" 
-                                         onclick="editArsip(<?php echo e($a->id); ?>)" title="Edit">
-                                     <i class="bi bi-pencil-fill"></i>
-                                 </button>
-                                 
-                                 
-                                 <button class="btn btn-sm btn-success text-white shadow-sm rounded-3 p-2 d-flex align-items-center btn-arsip-sistem"
-                                         data-id="<?php echo e($a->id); ?>" data-bs-toggle="modal" data-bs-target="#modalArsipSistem" title="Arsip">
-                                     <i class="bi bi-check-lg fw-bold"></i>
-                                 </button>
-                                
-                                
                                 <form action="<?php echo e(route('superadmin.arsip.destroy', $a->id)); ?>" method="POST" class="d-inline" onsubmit="return confirm('Hapus arsip ini?')">
                                     <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
                                     <button type="submit" class="btn btn-sm btn-danger text-white shadow-sm rounded-3 p-2 d-flex align-items-center">
@@ -842,16 +870,15 @@
     document.getElementById('perPageSelect').addEventListener('change', function() {
         let url = new URL(window.location.href);
         url.searchParams.set('per_page', this.value);
-        url.searchParams.set('page', 1); // Reset to page 1
+        url.searchParams.set('page', 1);
         window.location.href = url.toString();
     });
 </script>
 
-
 <?php echo $__env->make('superadmin.arsip._create', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 <?php echo $__env->make('superadmin.arsip._view', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 <?php echo $__env->make('superadmin.arsip._arsip_sistem', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
-
+<?php echo $__env->make('partials._produk_detail_modal', ['detailBase' => url('superadmin/arsip')], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <div class="modal fade" id="modalEditArsip" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -893,24 +920,13 @@
 <script>
 $(document).ready(function() {
 
-    // =========================================================================
-    // A. LOGIKA TAMPILAN & TAMBAH DATA BARU (CREATE)
-    // =========================================================================
-    
-    // Check if element exists
     const $jenisSelect  = $('#jenisPengajuanTambah');
     const $wrapKategori = $('#wrapperKategori');
 
-    // 1. SHOW/HIDE SECTION
     if($jenisSelect.length) {
         $jenisSelect.on('change', function() {
             const val = $(this).val();
-            
-            // Reset tampilan
             $('.dynamic-section').addClass('d-none');
-            // Reset Inputs (Optional: clear value logic can be added here)
-            
-            // Clear dynamic rows
             $('tbody.dynamic-row-container').empty(); 
 
             if (val === 'Cancel') {
@@ -933,21 +949,21 @@ $(document).ready(function() {
                  $wrapKategori.addClass('d-none');
                  $('#sectionNoTrans').removeClass('d-none');
             }
+            else if (val === 'Produk_Baru') {
+                $wrapKategori.addClass('d-none');
+                $('#sectionProdukBaru').removeClass('d-none');
+            }
             else {
                 $wrapKategori.addClass('d-none');
             }
         });
-
-        // Trigger change on load
         $jenisSelect.trigger('change');
     }
 
-    // Helper Random Index
     function getIndex() { return Math.floor(Math.random() * 100000); }
 
-    // Helper Add Row Counter
     function refreshAllItemCounts() {
-        ['wrapperAdjust', 'wrapperAsal', 'wrapperTujuan', 'wrapperBundel'].forEach(id => {
+        ['wrapperAdjust', 'wrapperAsal', 'wrapperTujuan', 'wrapperBundel', 'wrapperProdukBaru'].forEach(id => {
             let count = $(`#${id} tr`).length;
             let badgeId = id.replace('wrapper', 'badgeCount');
             if (count > 0) {
@@ -958,31 +974,37 @@ $(document).ready(function() {
         });
     }
 
-    // 2. TAMBAH BARIS ITEM (CREATE)
-    // -- ADJUST --
     $('#btnAddAdjust').on('click', function() {
         let idx = getIndex();
+        let adjustLocations = <?php echo json_encode(\App\Models\ArsipAdjustItem::getLocations(), 15, 512) ?>;
+        let adjustLocOptions = '<option value="">-- Lokasi --</option>';
+        adjustLocations.forEach(loc => { adjustLocOptions += `<option value="${loc}">${loc}</option>`; });
+
         $('#wrapperAdjust').append(`
             <tr>
-                <td><input type="text" name="detail_barang[adjust][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode"></td>
-                <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Barang" required></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-success fw-bold" value="0"></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-danger fw-bold" value="0"></td>
-                <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot"></td>
+                <td><input type="text" name="detail_barang[adjust][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" style="min-width: 70px;"></td>
+                <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Barang" required style="min-width: 150px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][odoo]" class="form-control form-control-sm border-0 bg-light text-secondary fw-bold px-1 text-center" placeholder="Odoo" style="min-width: 50px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][fisik]" class="form-control form-control-sm border-0 bg-light text-secondary fw-bold px-1 text-center" placeholder="Fisik" style="min-width: 50px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-success fw-bold px-1 text-center" value="0" style="min-width: 50px;"></td>
+                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-danger fw-bold px-1 text-center" value="0" style="min-width: 50px;"></td>
+                <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" style="min-width: 70px;"></td>
+                <td>
+                    <select name="detail_barang[adjust][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="min-width: 150px;">
+                        ${adjustLocOptions}
+                    </select>
+                </td>
                 <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
             </tr>
         `);
         refreshAllItemCounts();
     });
 
-    // -- MUTASI --
     window.addMutasiRow = function(targetId, type) {
         let idx = getIndex();
         let locations = <?php echo json_encode(\App\Models\ArsipMutasiItem::getLocations(), 15, 512) ?>;
         let locationOptions = '<option value="">-- Pilih Lokasi --</option>';
-        locations.forEach(loc => {
-            locationOptions += `<option value="${loc}">${loc}</option>`;
-        });
+        locations.forEach(loc => { locationOptions += `<option value="${loc}">${loc}</option>`; });
 
         $(`#${targetId}`).append(`
             <tr>
@@ -1000,10 +1022,10 @@ $(document).ready(function() {
             </tr>
         `);
     }
+
     $('#btnAddAsal').on('click', () => { window.addMutasiRow('wrapperAsal', 'asal'); refreshAllItemCounts(); });
     $('#btnAddTujuan').on('click', () => { window.addMutasiRow('wrapperTujuan', 'tujuan'); refreshAllItemCounts(); });
 
-    // -- BUNDEL --
     $('#btnAddBundel').on('click', function() {
         let idx = getIndex();
         $('#wrapperBundel').append(`
@@ -1017,29 +1039,72 @@ $(document).ready(function() {
         refreshAllItemCounts();
     });
 
-    // -- HAPUS BARIS --
+    // PRODUK BARU — row builder + handlers
+    window.buildProdukBaruRow = function(namePrefix, idx, data = {}) {
+        const tipeOpts   = <?php echo json_encode(\App\Models\ArsipProdukBaruItem::getTipeOptions(), 15, 512) ?>;
+        const katOpts    = <?php echo json_encode(\App\Models\ArsipProdukBaruItem::getKategoriOptions(), 15, 512) ?>;
+        const satOpts    = <?php echo json_encode(\App\Models\ArsipProdukBaruItem::getSatuanOptions(), 15, 512) ?>;
+        const statusOpts = <?php echo json_encode(\App\Models\ArsipProdukBaruItem::getStatusApprovalOptions(), 15, 512) ?>;
+        const buildOpt = (arr, val) => arr.map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
+
+        return `
+        <tr>
+            <td>
+                <input type="hidden" name="${namePrefix}[${idx}][id]" value="${data.id || ''}">
+                <input type="hidden" name="${namePrefix}[${idx}][barcode]" value="${data.barcode || ''}">
+                <input type="text" name="${namePrefix}[${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" value="${data.product_code || ''}" style="min-width: 80px;">
+            </td>
+            <td><input type="text" name="${namePrefix}[${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Produk" value="${data.product_name || ''}" required style="min-width: 160px;"></td>
+            <td>
+                <select name="${namePrefix}[${idx}][tipe_produk]" class="form-select form-select-sm border-0 bg-light" style="min-width: 100px;">
+                    <option value="">-- Tipe --</option>
+                    ${buildOpt(tipeOpts, data.tipe_produk)}
+                </select>
+            </td>
+            <td>
+                <select name="${namePrefix}[${idx}][kategori]" class="form-select form-select-sm border-0 bg-light" style="min-width: 180px;">
+                    <option value="">-- Kategori --</option>
+                    ${buildOpt(katOpts, data.kategori)}
+                </select>
+            </td>
+            <td>
+                <select name="${namePrefix}[${idx}][satuan]" class="form-select form-select-sm border-0 bg-light" style="min-width: 90px;">
+                    <option value="">-- Satuan --</option>
+                    ${buildOpt(satOpts, data.satuan)}
+                </select>
+            </td>
+            <td>
+                <select name="${namePrefix}[${idx}][status_approval]" class="form-select form-select-sm border-0 bg-light" style="min-width: 110px;">
+                    ${buildOpt(statusOpts, data.status_approval || 'Waiting List')}
+                </select>
+            </td>
+            <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
+        </tr>`;
+    };
+
+    $('#btnAddProdukBaru').on('click', function() {
+        let idx = getIndex();
+        $('#wrapperProdukBaru').append(window.buildProdukBaruRow('detail_barang[produk_baru]', idx));
+        refreshAllItemCounts();
+    });
+
+    window.addProdukBaruRowEdit = function(item = {}) {
+        let idx = Date.now() + Math.floor(Math.random() * 1000);
+        $('#wrapperProdukBaruEdit').append(window.buildProdukBaruRow('detail_barang[produk_baru]', idx, item));
+    };
+
     $(document).on('click', '.btnRemove', function() { $(this).closest('tr').remove(); refreshAllItemCounts(); });
 
-
-    // =========================================================================
-    // B. LOGIKA EDIT (AJAX)
-    // =========================================================================
-    
-    // Logic Show/Hide Fields di Edit
     $('#editJenisPengajuan').on('change', function() {
         const val = $(this).val();
-        
-        // Reset Inputs
         $('.dynamic-section-edit').addClass('d-none');
-        
-        // IMPORTANT: Kita tidak mengosongkan tbody disini agar data lama tidak hilang saat user main-main ganti jenis (UI only)
-        // Tapi idealnya bisa di-warning. Untuk simpelnya kita show/hide saja.
-        
+
         if (val === 'Cancel') {
             $('#editWrapperKategori').removeClass('d-none');
             $('#sectionNoTransEdit').removeClass('d-none');
         } 
         else if (val === 'Adjust') {
+            $('#sectionAdjustExtraEdit').removeClass('d-none');
             $('#sectionAdjustEdit').removeClass('d-none');
         } 
         else if (val && val.includes('Mutasi')) {
@@ -1051,36 +1116,30 @@ $(document).ready(function() {
         else if (val === 'Internal_Memo') {
              $('#sectionNoTransEdit').removeClass('d-none');
         }
+        else if (val === 'Produk_Baru') {
+             $('#sectionProdukBaruEdit').removeClass('d-none');
+        }
     });
 
     window.editArsip = function(id) {
-        // 1. Reset Form
         $('#formEditArsip')[0].reset();
         $('.dynamic-section-edit').addClass('d-none');
-        $('#wrapperAdjustEdit, #wrapperAsalEdit, #wrapperTujuanEdit, #wrapperBundelEdit').empty();
+        $('#wrapperAdjustEdit, #wrapperAsalEdit, #wrapperTujuanEdit, #wrapperBundelEdit, #wrapperProdukBaruEdit').empty();
         $('#editArsipId').val(id);
-        $('#linkBuktiSaatIni').text('');
 
-        // 2. Fetch Data
         $.ajax({
-            url: "/superadmin/arsip/" + id + "/edit", // Pastikan Route ini ADA
+            url: "/superadmin/arsip/" + id + "/edit",
             type: "GET",
-            beforeSend: function() {
-                // Bisa kasih loading spinner
-            },
             success: function(response) {
                 let data = response.data;
-                
-                // 3. Set URL Update
                 $('#formEditArsip').attr('action', "/superadmin/arsip/" + id);
-                
-                // 4. Fill Data
+
                 $('#editUserId').val(data.admin_id).trigger('change');
                 $('#editNoRegistrasi').val(data.no_registrasi);
                 $('#editNoDoc').val(data.no_doc);
                 $('#editTglPengajuan').val(data.tgl_pengajuan ? data.tgl_pengajuan.substring(0, 10) : '');
                 $('#editTglArsip').val(data.tgl_arsip ? data.tgl_arsip.substring(0, 10) : '');
-                
+
                 $('#editJenisPengajuan').val(data.jenis_pengajuan);
                 $('#editKategori').val(data.kategori);
                 $('#editDepartment').val(data.department_id);
@@ -1089,28 +1148,41 @@ $(document).ready(function() {
                 $('#editNoTransaksi').val(data.no_transaksi);
                 $('#editPemohon').val(data.pemohon);
                 $('#editKeterangan').val(data.keterangan);
-                
+                $('#editTindakan').val(data.tindakan || '');
+                $('#editCatatanIt').val(data.catatan_it || '');
+
+                // Tindakan IT per baris
+                $('#wrapperTindakanItEdit').empty();
+                if (data.tindakan_it_rows && data.tindakan_it_rows.length > 0) {
+                    data.tindakan_it_rows.forEach((row, idx) => {
+                        window.addTindakanItRowEdit(row.tindakan_in, row.ket_tindakan_in, row.tindakan_out, row.ket_tindakan_out, idx);
+                    });
+                } else {
+                    // fallback kompatibilitas field lama
+                    window.addTindakanItRowEdit(data.tindakan_in || '', data.ket_tindakan_in || '', data.tindakan_out || '', data.ket_tindakan_out || '', 0);
+                }
+
+
                 $('#editStatus').val(data.status);
                 $('#editKetProcess').val(data.ket_process);
                 $('#editBa').val(data.ba);
                 $('#editArsipStatus').val(data.arsip);
 
-                // 5. Bukti Scan & Audit Trail
-                if(data.bukti_scan) {
-                     $('#linkBuktiSaatIni').html(
-                        `<a href="/pdf-viewer/${data.bukti_scan}" target="_blank" class="text-decoration-none fw-bold small text-primary">
-                            <i class="bi bi-file-earmark-pdf"></i> Lihat File Saat Ini
+                if(data.scan_final) {
+                    $('#linkScanFinal').html(
+                        `<a href="/pdf-viewer/${data.scan_final}" target="_blank" class="text-decoration-none fw-bold small text-success">
+                            <i class="bi bi-shield-fill-check"></i> Lihat Scan Final (IT)
                         </a>`
                     );
                 } else {
-                    $('#linkBuktiSaatIni').text('');
+                    $('#linkScanFinal').html('<span class="text-muted fst-italic">Belum ada Scan Final.</span>');
                 }
-                
+
                 if(data.updated_by && data.editor) {
                     $('#auditTrailEdit').removeClass('d-none');
                     $('#auditEditorName').text(data.editor.name);
                     $('#auditEditorAvatar').text(data.editor.name.substring(0,1).toUpperCase());
-                    
+
                     let ud = new Date(data.updated_at);
                     let formattedDate = ud.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                     $('#auditUpdatedAt').text(formattedDate + ' WIB');
@@ -1118,27 +1190,24 @@ $(document).ready(function() {
                     $('#auditTrailEdit').addClass('d-none');
                 }
 
-                // 6. trigger change untuk nampilin section yg benar
                 $('#editJenisPengajuan').trigger('change');
 
-                // 7. Fill Detail Items
-                // Perlu handling field JSON vs Relasi. Controller edit with relations.
-                
-                // A. Bundel
                 if(data.bundel_items && data.bundel_items.length > 0) {
                     data.bundel_items.forEach(item => {
                         window.addBundelRowEdit(item.no_doc, item.qty, item.keterangan);
                     });
                 }
-                
-                // B. Adjust
+
+                if(data.produk_baru_items && data.produk_baru_items.length > 0) {
+                    data.produk_baru_items.forEach(item => window.addProdukBaruRowEdit(item));
+                }
+
                 if(data.adjust_items && data.adjust_items.length > 0) {
                     data.adjust_items.forEach(item => {
-                        window.addAdjustRowEdit(item.product_code, item.product_name, item.qty_in, item.qty_out, item.lot);
+                        window.addAdjustRowEdit(item.product_code, item.product_name, item.qty_in, item.qty_out, item.lot, item.odoo, item.fisik, item.keterangan_in, item.keterangan_out, item.location);
                     });
                 }
 
-                // C. Mutasi
                 if(data.mutasi_items && data.mutasi_items.length > 0) {
                     data.mutasi_items.forEach(item => {
                         let type = (item.type === 'asal') ? 'asal' : 'tujuan';
@@ -1146,29 +1215,58 @@ $(document).ready(function() {
                     });
                 }
 
-                // Fallback Legacy JSON (If needed)
-                if((!data.bundel_items || data.bundel_items.length==0) && (!data.adjust_items || data.adjust_items.length==0) && (!data.mutasi_items || data.mutasi_items.length==0)) {
-                    // Try parsing details column if exist
-                }
+                window.renderApprovalEdit(data);
 
                 $('#modalEditArsip').modal('show');
             },
-            error: function(xgb) {
-                alert("Gagal mengambil data arsip.");
-            }
+            error: function() { alert("Gagal mengambil data arsip."); }
         });
     }
-    
-    // =========================================================================
-    // 2.1 STATUS SYNC LOGIC (Superadmin)
-    // =========================================================================
+
+    // Render timeline approval + isi approver terpilih di modal edit (Superadmin)
+    window.renderApprovalEdit = function (data) {
+        const tl = $('#editApprovalTimeline');
+        const steps = data.approvals || [];
+        if (steps.length) {
+            let html = '';
+            steps.forEach(s => {
+                const map = { approved: ['#dcfce7', '#166534', 'Disetujui'], rejected: ['#fee2e2', '#991b1b', 'Ditolak'] };
+                const c = map[s.status] || ['#f1f5f9', '#475569', 'Menunggu'];
+                const who = (s.approver && s.approver.name) ? s.approver.name : (s.role_label === 'Departemen IT' ? 'Tim IT' : 'belum ditentukan');
+                const at = s.acted_at ? new Date(s.acted_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                html += `<div class="d-flex align-items-center gap-2 px-2 py-1 rounded-2 mb-1" style="background:${c[0]};">
+                    <span class="fw-bold" style="font-size:0.72rem; color:${c[1]};">${s.step_order}. ${s.role_label}</span>
+                    <span class="text-muted" style="font-size:0.66rem;">— ${who} ${at ? '· ' + at : ''}</span>
+                    <span class="badge ms-auto" style="background:${c[1]}; font-size:0.55rem;">${c[2].toUpperCase()}</span>
+                </div>`;
+            });
+            tl.html(html);
+        } else {
+            tl.html('<span class="text-muted small fst-italic">Belum ada alur persetujuan.</span>');
+        }
+
+        const m = data.approval_map || {};
+        ['SPV', 'Kabag', 'Manager', 'Accounting'].forEach(role => {
+            $('#formEditArsip select[name="approvers[' + role + ']"]').val(m[role] ? String(m[role]) : '');
+        });
+
+        $('#editJenisPengajuan').trigger('change');
+
+        const started = !!data.approval_started;
+        const note = $('#editApprovalNote');
+        if (started) {
+            $('#formEditArsip select[name^="approvers["]').prop('disabled', true);
+            $('#editApproverWrap .approver-card').css('opacity', '0.6');
+            note.removeClass('d-none').html('<i class="bi bi-lock-fill me-1"></i>Persetujuan sudah berjalan — approver tidak dapat diubah.');
+        } else {
+            $('#editApproverWrap .approver-card').css('opacity', '1');
+            note.addClass('d-none');
+        }
+    };
+
     $('#editKetProcess').on('change', function() {
         let val = $(this).val();
         let target = $('#editStatus');
-        
-        // Auto-Sync Status Utama based on Ket. Proses
-        // NOTE: We map 'Done' in Ket. Proses to 'Process' in Status Utama
-        // to prevent premature archival date population. Final archival is done via 'Arsip Sistem'.
         if (val === 'Done') target.val('Process');
         else if (val === 'Void') target.val('Void');
         else if (val === 'Pending') target.val('Pending');
@@ -1180,8 +1278,6 @@ $(document).ready(function() {
     $('#editStatus').on('change', function() {
         let val = $(this).val();
         let target = $('#editKetProcess');
-        
-        // Auto-Suggest Ket. Proses based on Status Utama
         if (val === 'Done') target.val('Done');
         else if (val === 'Void') target.val('Void');
         else if (val === 'Reject') target.val('Void');
@@ -1190,7 +1286,6 @@ $(document).ready(function() {
         else if (val === 'Check') target.val('Review');
     });
 
-    // 3. ARSIP SISTEM - AJAX SUBMIT
     let _arsipSistemCurrentId = null;
 
     $('.btn-arsip-sistem').on('click', function() {
@@ -1200,7 +1295,6 @@ $(document).ready(function() {
 
     $('#formArsipSistem').on('submit', function(e) {
         e.preventDefault();
-
         if (!_arsipSistemCurrentId) return;
 
         const btn = $('#btnSubmitArsipSistem');
@@ -1214,36 +1308,26 @@ $(document).ready(function() {
             data: formData,
             contentType: false,
             processData: false,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
             success: function(res) {
-                // Tutup modal arsip sistem
                 bootstrap.Modal.getInstance(document.getElementById('modalArsipSistem')).hide();
 
                 const isCancel = (res.jenis_pengajuan === 'Cancel' || res.jenis_pengajuan === 'Cancelled');
 
-                // Isi no_doc & no_registrasi (untuk section non-cancel)
                 $('#resultNoDoc').text(res.no_doc || '-');
                 $('#resultNoReg').text(res.no_registrasi || '-');
 
                 if (isCancel) {
-                    // Section Cancel: tampilkan preview gabungan
                     $('#sectionCancelResult').removeClass('d-none');
                     $('#sectionNonCancelResult').addClass('d-none');
 
-                    // Isi teks Copy All: No Doc + baris sub transaksi
                     const copyAll = res.copy_all_text || res.no_doc || '';
                     $('#resultCopyAll').text(copyAll);
-
                 } else {
-                    // Section non-Cancel: tampilkan no_doc + no_registrasi
                     $('#sectionCancelResult').addClass('d-none');
                     $('#sectionNonCancelResult').removeClass('d-none');
                 }
 
-                // Tampilkan modal hasil
                 new bootstrap.Modal(document.getElementById('modalHasilArsip')).show();
             },
             error: function(xhr) {
@@ -1260,7 +1344,6 @@ $(document).ready(function() {
         });
     });
 
-    // 4. AJAX SUBMIT EDIT FORM
     $('#formEditArsip').on('submit', function(e) {
         e.preventDefault();
         let form = $(this);
@@ -1272,7 +1355,7 @@ $(document).ready(function() {
 
         $.ajax({
             url: url,
-            type: 'POST', // Method PUT handled by _method field
+            type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
@@ -1283,16 +1366,14 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.status === 'success') {
                     alertBox.removeClass('d-none').addClass('alert-success').text(response.message || 'Perubahan berhasil disimpan.');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
+                    setTimeout(() => { location.reload(); }, 1000);
                 }
             },
             error: function(xhr) {
                 form.find('button[type="submit"]').prop('disabled', false).html('<i class="bi bi-save me-1"></i> Simpan Perubahan');
                 let res = xhr.responseJSON;
-                let msg = res.message || 'Terjadi kesalahan saat menyimpan data.';
-                if(res.errors) {
+                let msg = res && res.message ? res.message : 'Terjadi kesalahan saat menyimpan data.';
+                if(res && res.errors) {
                     msg = '';
                     $.each(res.errors, function(k, v) {
                         msg += `<div>- ${v[0]}</div>`;
@@ -1305,25 +1386,29 @@ $(document).ready(function() {
 
 });
 
-// =========================================================================
-// C. HELPERS UNTUK EDIT ROW
-// =========================================================================
-
-window.addAdjustRowEdit = function(code='', name='', qtyIn=0, qtyOut=0, lot='') {
+window.addAdjustRowEdit = function(code='', name='', qtyIn=0, qtyOut=0, lot='', odoo='', fisik='', keteranganIn='', keteranganOut='', location='') {
     let idx = Date.now() + Math.floor(Math.random() * 1000);
-    // Note: Name input hrs sesuai dengan Controller update method expectation. 
-    // Di Superadmin ArsipController::update, 'detail_barang' diambil array.
-    // Kita samakan structure dengan create: items[adjust][...] atau detail_barang[adjust]...
-    // Cek Controller update.. dia merge $request->detail_barang.
-    // Jadi name harus: detail_barang[adjust][idx][...]
-    
+    let adjustLocations = <?php echo json_encode(\App\Models\ArsipAdjustItem::getLocations(), 15, 512) ?>;
+    let adjustLocOptions = '<option value="">-- Pilih Lokasi --</option>';
+    adjustLocations.forEach(loc => {
+        let selected = (loc === location) ? 'selected' : '';
+        adjustLocOptions += `<option value="${loc}" ${selected}>${loc}</option>`;
+    });
+
     $('#wrapperAdjustEdit').append(`
         <tr>
-            <td><input type="text" name="detail_barang[adjust][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" value="${code ?? ''}"></td>
-            <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" value="${name ?? ''}" required></td>
-            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-center" value="${qtyIn}"></td>
-            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-center" value="${qtyOut}"></td>
-            <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" value="${lot ?? ''}"></td>
+            <td><input type="text" name="detail_barang[adjust][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" value="${code ?? ''}" style="min-width: 70px;"></td>
+            <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" value="${name ?? ''}" required style="min-width: 150px;"></td>
+            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][odoo]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${odoo !== null ? odoo : ''}" placeholder="Odoo" style="min-width: 50px;"></td>
+            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][fisik]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${fisik !== null ? fisik : ''}" placeholder="Fisik" style="min-width: 50px;"></td>
+            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${qtyIn}" style="min-width: 50px;"></td>
+            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${qtyOut}" style="min-width: 50px;"></td>
+            <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" value="${lot ?? ''}" style="min-width: 70px;"></td>
+            <td>
+                <select name="detail_barang[adjust][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="min-width: 150px;">
+                    ${adjustLocOptions}
+                </select>
+            </td>
             <td><button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-x-circle-fill"></i></button></td>
         </tr>
     `);
@@ -1333,7 +1418,7 @@ window.addMutasiRowEdit = function(type, code='', name='', qty=0, lot='', panjan
     let idx = Date.now() + Math.floor(Math.random() * 1000);
     let wrapper = (type === 'asal') ? '#wrapperAsalEdit' : '#wrapperTujuanEdit';
     let key = (type === 'asal') ? 'mutasi_asal' : 'mutasi_tujuan'; 
-    
+
     let locations = <?php echo json_encode(\App\Models\ArsipMutasiItem::getLocations(), 15, 512) ?>;
     let locationOptions = '<option value="">-- Pilih Lokasi --</option>';
     locations.forEach(loc => {
@@ -1370,107 +1455,30 @@ window.addBundelRowEdit = function(no_doc='', qty=1, ket='') {
     `);
 };
 
-// =========================================================================
-// HELPER: COPY TEXT ke clipboard
-// =========================================================================
-window.copyText = function(elementId, btn) {
-    const el = document.getElementById(elementId);
-    const text = el ? el.textContent.trim() : '';
-    if (!text) return;
-
-    navigator.clipboard.writeText(text).then(function() {
-        const original = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-clipboard-check-fill me-1"></i>Disalin!';
-        btn.classList.add('btn-success');
-        btn.classList.remove('btn-warning', 'btn-outline-info');
-        setTimeout(function() {
-            btn.innerHTML = original;
-            btn.classList.remove('btn-success');
-        }, 2000);
-    }).catch(function() {
-        // Fallback untuk browser lama
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        try { document.execCommand('copy'); } catch(err) {}
-        sel.removeAllRanges();
-    });
+window.addTindakanItRowEdit = function(tindakanIn='', ketTindakanIn='', tindakanOut='', ketTindakanOut='', sortOrder=0) {
+    const idx = Date.now() + Math.floor(Math.random() * 1000);
+    $('#wrapperTindakanItEdit').append(`
+        <tr>
+            <td>
+                <input type="text" name="tindakan_it_rows[${idx}][tindakan_in]" class="form-control form-control-sm border-0 bg-light" value="${tindakanIn ?? ''}" placeholder="No DC IN...">
+            </td>
+            <td>
+                <textarea name="tindakan_it_rows[${idx}][ket_tindakan_in]" class="form-control form-control-sm border-0 bg-light" rows="2" placeholder="Keterangan IN...">${ketTindakanIn ?? ''}</textarea>
+            </td>
+            <td>
+                <input type="text" name="tindakan_it_rows[${idx}][tindakan_out]" class="form-control form-control-sm border-0 bg-light" value="${tindakanOut ?? ''}" placeholder="No DC OUT...">
+            </td>
+            <td>
+                <textarea name="tindakan_it_rows[${idx}][ket_tindakan_out]" class="form-control form-control-sm border-0 bg-light" rows="2" placeholder="Keterangan OUT...">${ketTindakanOut ?? ''}</textarea>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-x-circle-fill"></i></button>
+            </td>
+        </tr>
+    `);
 };
-
-// =========================================================================
-// HELPER: COPY ALL (untuk tombol di section Cancel)
-// =========================================================================
-window.copyAllResult = function(btn) {
-    const el = document.getElementById('resultCopyAll');
-    const text = el ? el.textContent.trim() : '';
-    if (!text) return;
-
-    const doCopy = function() {
-        const original = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-clipboard-check-fill me-1"></i>Disalin!';
-        btn.classList.replace('btn-success', 'btn-dark');
-        setTimeout(function() {
-            btn.innerHTML = original;
-            btn.classList.replace('btn-dark', 'btn-success');
-        }, 2500);
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(doCopy).catch(function() {
-            fallbackCopy(el, doCopy);
-        });
-    } else {
-        fallbackCopy(el, doCopy);
-    }
-};
-
-function fallbackCopy(el, callback) {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    try { document.execCommand('copy'); callback(); } catch(err) {}
-    sel.removeAllRanges();
-}
-
-// =========================================================================
-// AUTO REFRESH (AJAX POLLING)
-// =========================================================================
-let currentLastUpdate = null;
-let currentCount = null;
-
-function checkArsipUpdates() {
-    // JANGAN auto-refresh jika user sedang membuka modal (form tambah/edit)
-    if ($('.modal.show').length > 0) return;
-
-    $.ajax({
-        url: "<?php echo e(route('arsip.check-updates')); ?>",
-        type: "GET",
-        cache: false,
-        success: function(res) {
-            if (currentLastUpdate === null) {
-                currentLastUpdate = res.last_update;
-                currentCount = res.count;
-                return;
-            }
-
-            // Jika terdeteksi waktu update maju atau jumlah baris beda, muat ulang!
-            if (res.last_update !== currentLastUpdate || res.count !== currentCount) {
-                console.log("Perubahan data terdeteksi! Memuat ulang...");
-                window.location.reload();
-            }
-        },
-        error: function() { console.log('Gagal mengecek update'); }
-    });
-}
-
-// Set polling tiap 15 detik (15000ms)
-setInterval(checkArsipUpdates, 15000);
-checkArsipUpdates();
-
 </script>
 <?php $__env->stopPush(); ?>
+
+
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\e_arsip\resources\views/superadmin/arsip/index.blade.php ENDPATH**/ ?>

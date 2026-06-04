@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase Cloud Messaging (FCM)
+    |--------------------------------------------------------------------------
+    |
+    | Push notification ke aplikasi Android. Gunakan FCM HTTP v1 API yang
+    | otentikasinya memakai Service Account (file JSON dari Firebase Console:
+    | Project Settings > Service accounts > Generate new private key).
+    |
+    | FCM_CREDENTIALS_FILE : path absolut ke file JSON service account.
+    | FCM_PROJECT_ID       : opsional; bila kosong diambil dari file JSON.
+    |
+    */
+    'fcm' => [
+        'credentials' => env('FCM_CREDENTIALS_FILE', storage_path('app/firebase/firebase-credentials.json')),
+        'project_id' => env('FCM_PROJECT_ID'),
+    ],
+
 ];

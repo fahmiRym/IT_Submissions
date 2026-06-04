@@ -114,7 +114,7 @@
         }
 
         .qr-wrapper {
-            width: 65px;
+            width: 110px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -271,15 +271,20 @@
         .watermark-lengkap  { color: #059669; border-color: #059669; }
         .watermark-void     { color: #dc2626; border-color: #dc2626; }
         .watermark-reject   { color: #7c3aed; border-color: #7c3aed; }
+        .watermark-digital  { color: #1d4ed8; border-color: #1d4ed8; font-size: 58px; letter-spacing: 4px; padding: 12px 28px; }
     </style>
 </head>
 
 <body onload="window.print()">
-    {{-- ── WATERMARK BASED ON STATUS ── --}}
+    {{-- ── WATERMARK BASED ON STATUS / APPROVAL ── --}}
     @php
         $status = strtolower($arsip->status ?? 'pending');
-        
-        if ($status === 'done') {
+        $fullySigned = $arsip->signatures->count() > 0 && $arsip->isFullyApproved();
+
+        if ($status === 'done' && $fullySigned) {
+            $wmClass = 'watermark-digital';
+            $wmText  = 'TERTANDATANGANI DIGITAL';
+        } elseif ($status === 'done') {
             $wmClass = 'watermark-lengkap';
             $wmText  = \App\Models\Setting::get('wm_done', 'DONE');
         } elseif ($status === 'void') {
@@ -310,9 +315,12 @@
 
         @php
             $isAdjust = $arsip->jenis_pengajuan === 'Adjust';
-            $title = $isAdjust ? 'BERITA ACARA PENGAJUAN ADJUSTMENT' : 'BERITA ACARA PENGAJUAN SYSTEM ODOO';
+            $isProdukBaru = $arsip->jenis_pengajuan === 'Produk_Baru';
+            $title = $isAdjust ? 'BERITA ACARA PENGAJUAN ADJUSTMENT'
+                    : ($isProdukBaru ? 'BERITA ACARA PENGAJUAN PRODUK BARU' : 'BERITA ACARA PENGAJUAN SYSTEM ODOO');
             $adjustItemsCount = isset($arsip->adjustItems) ? count($arsip->adjustItems) : 0;
-            $isCompact = $isAdjust && $adjustItemsCount > 9;
+            $produkBaruItemsCount = isset($arsip->produkBaruItems) ? count($arsip->produkBaruItems) : 0;
+            $isCompact = ($isAdjust && $adjustItemsCount > 9) || ($isProdukBaru && $produkBaruItemsCount > 9);
         @endphp
 
         @if($isCompact)
@@ -353,8 +361,13 @@
 
         {{-- ── DOCUMENT HEADER ── --}}
         <div class="doc-header">
-            {{-- Spacer kiri agar title tetap center --}}
-            <div style="width: 65px; flex-shrink: 0;"></div>
+            {{-- Kiri atas: QR Verifikasi --}}
+            <div class="qr-wrapper" style="width: 70px;">
+                <div id="qrcode"></div>
+                @if($arsip->verify_token)
+                    <div class="qr-label" style="color:#1d4ed8;">SCAN VERIFIKASI</div>
+                @endif
+            </div>
 
             <div class="doc-header-center">
                 <div class="header-title">{{ $title }}</div>
@@ -368,10 +381,10 @@
                 <div class="header-doc-note">(DIISI OLEH DEPARTEMEN IT)*</div>
             </div>
 
-            {{-- QR Code kanan atas --}}
-            <div class="qr-wrapper">
-                <div id="qrcode"></div>
-                <div class="qr-label">{{ Str::limit($arsip->no_registrasi, 14, '') }}</div>
+            {{-- Kanan atas: QR No Registrasi --}}
+            <div class="qr-wrapper" style="width: 70px;">
+                <div id="regQrcode"></div>
+                <div class="qr-label" style="font-family:monospace; color:#111;">{{ $arsip->no_registrasi }}</div>
             </div>
         </div>
 
@@ -413,12 +426,14 @@
                 <table class="main-table">
                     <thead>
                         <tr>
-                            <th style="width: 25%;">KODE BARANG</th>
-                            <th style="width: 35%;">NAMA BARANG</th>
-                            <th style="width: 10%;">ODOO</th>
-                            <th style="width: 10%;">FISIK</th>
-                            <th style="width: 10%;">SELISIH</th>
-                            <th style="width: 10%;">ADJUST</th>
+                            <th style="width: 18%;">KODE BARANG</th>
+                            <th style="width: 28%;">NAMA BARANG</th>
+                            <th style="width: 14%;">LOT</th>
+                            <th style="width: 14%;">LOKASI</th>
+                            <th style="width: 8%;">ODOO</th>
+                            <th style="width: 8%;">FISIK</th>
+                            <th style="width: 5%;">SELISIH</th>
+                            <th style="width: 5%;">ADJUST</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -427,12 +442,43 @@
                             <tr>
                                 <td style="height: 18px;">{{ $adjustItems[$i]->product_code ?? '' }}</td>
                                 <td style="text-align: left;">{{ $adjustItems[$i]->product_name ?? '' }}</td>
-                                <td></td>
-                                <td></td>
+                                <td>{{ $adjustItems[$i]->lot ?? '' }}</td>
+                                <td>{{ $adjustItems[$i]->location ?? '' }}</td>
+                                <td>{{ $adjustItems[$i]->odoo ?? '' }}</td>
+                                <td>{{ $adjustItems[$i]->fisik ?? '' }}</td>
                                 <td>{{ isset($adjustItems[$i]) ? (($adjustItems[$i]->qty_in ?? 0) - ($adjustItems[$i]->qty_out ?? 0)) : '' }}
                                 </td>
                                 <td>{{ isset($adjustItems[$i]) ? ((($adjustItems[$i]->qty_in ?? 0) > 0) ? 'IN' : 'OUT') : '' }}
                                 </td>
+                            </tr>
+                        @endfor
+                    </tbody>
+                </table>
+                <div style="font-weight: 800; margin-top: 5px; height: 18.5px;">CATATAN:</div>
+            @endif
+
+            @if($isProdukBaru)
+                <table class="main-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 14%;">KODE</th>
+                            <th style="width: 30%;">NAMA PRODUK</th>
+                            <th style="width: 12%;">TIPE</th>
+                            <th style="width: 22%;">KATEGORI</th>
+                            <th style="width: 10%;">SATUAN</th>
+                            <th style="width: 12%;">STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $produkBaruItems = $arsip->produkBaruItems ?? []; @endphp
+                        @for($i = 0; $i < max(4, count($produkBaruItems)); $i++)
+                            <tr>
+                                <td style="height: 18px;">{{ $produkBaruItems[$i]->product_code ?? '' }}</td>
+                                <td style="text-align: left;">{{ $produkBaruItems[$i]->product_name ?? '' }}</td>
+                                <td>{{ $produkBaruItems[$i]->tipe_produk ?? '' }}</td>
+                                <td style="text-align: left;">{{ $produkBaruItems[$i]->kategori ?? '' }}</td>
+                                <td>{{ $produkBaruItems[$i]->satuan ?? '' }}</td>
+                                <td>{{ $produkBaruItems[$i]->status_approval ?? '' }}</td>
                             </tr>
                         @endfor
                     </tbody>
@@ -486,7 +532,7 @@
                         </div>
                     </div>
                 @endif
-                @if(!$isAdjust)
+                @if(!$isAdjust && !$isProdukBaru)
                     @if(str_contains($arsip->jenis_pengajuan, 'Mutasi'))
                         @foreach($arsip->mutasiItems as $m)
                             <div>{{ strtoupper($m->type) }}: {{ $m->product_code }} - {{ $m->product_name }} ({{ $m->qty }})</div>
@@ -512,27 +558,33 @@
                 <table class="main-table" style="margin-top: 5px;">
                     <thead>
                         <tr>
-                            <th style="width: 25%;">IN</th>
-                            <th style="width: 25%;">KETERANGAN</th>
-                            <th style="width: 25%;">OUT</th>
-                            <th style="width: 25%;">KETERANGAN</th>
+                            <th style="width: 20%;">IN</th>
+                            <th style="width: 30%;">KETERANGAN</th>
+                            <th style="width: 20%;">OUT</th>
+                            <th style="width: 30%;">KETERANGAN</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @for($j = 0; $j < 3; $j++)
-                            <tr>
-                                <td style="height: 18px;"></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        @endfor
+                        <tr>
+                            <td style="height: 22px; font-weight: 700;">{{ $arsip->tindakan_in ?? '' }}</td>
+                            <td style="text-align: left;">{{ $arsip->ket_tindakan_in ?? '' }}</td>
+                            <td style="font-weight: 700;">{{ $arsip->tindakan_out ?? '' }}</td>
+                            <td style="text-align: left;">{{ $arsip->ket_tindakan_out ?? '' }}</td>
+                        </tr>
+                        <tr><td style="height: 22px;"></td><td></td><td></td><td></td></tr>
+                        <tr><td style="height: 22px;"></td><td></td><td></td><td></td></tr>
                     </tbody>
                 </table>
             @endif
 
             <div class="ruled"
                 style="flex-grow: 1; min-height: {{ $tindakanLines * 23.5 }}px; margin-top: 5px; margin-bottom: 18px;">
+                @if(!empty(trim($arsip->tindakan)))
+                    <div style="font-weight: bold; white-space: pre-wrap;">TINDAKAN: {{ trim($arsip->tindakan) }}</div>
+                @endif
+                @if(!empty(trim($arsip->catatan_it)))
+                    <div style="font-weight: bold; white-space: pre-wrap; margin-top: 5px;">CATATAN IT: {{ trim($arsip->catatan_it) }}</div>
+                @endif
             </div>
         </div>
 
@@ -555,39 +607,65 @@
                     @endif
                     <th style="width: 20%;">Dikerjakan Oleh,</th>
                 </tr>
+                @php
+                    // Helper: render specimen TTD digital di dalam kotak tanda tangan
+                    $renderSig = function ($sig) {
+                        if (!$sig) return '';
+                        $html = '';
+                        if ($sig->signatureUrl()) {
+                            $html .= '<img src="' . $sig->signatureUrl() . '" style="max-height:45px; max-width:120px; object-fit:contain;">';
+                        }
+                        $html .= '<div style="font-size:8px; font-weight:700; margin-top:2px;">' . e($sig->signer_name) . '</div>';
+                        $html .= '<div style="font-size:7px; color:#555; font-style:italic;">' . optional($sig->signed_at)->format('d/m/Y H:i') . ' WIB</div>';                         return $html;
+                    };
+                    $sigPemohon = $arsip->signatureFor('Pemohon');
+                    $sigAccounting = $arsip->signatureFor('Accounting');
+                    $sigIT = $arsip->signatureFor('Departemen IT');
+                    $sigSPV = $arsip->signatureFor('SPV');
+                    $sigKabag = $arsip->signatureFor('Kabag');
+                    $sigManager = $arsip->signatureFor('Manager');
+                @endphp
                 <tr>
-                    <td>
+                    <td style="vertical-align: bottom;">
+                        <div style="min-height:48px;">{!! $renderSig($sigPemohon) !!}</div>
                         <div style="font-weight: 800; font-size: 10px;">Pemohon</div>
                         <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                     </td>
                     @if($isAdjust)
-                        <td style="width: 20%;">
+                        <td style="width: 20%; vertical-align: bottom;">
+                            <div style="min-height:48px;">{!! $renderSig($sigSPV ?: $sigKabag) !!}</div>
                             <div style="font-weight: 800; font-size: 10px;">SPV / Kabag</div>
                             <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%;">
+                        <td style="width: 20%; vertical-align: bottom;">
+                            <div style="min-height:48px;">{!! $renderSig($sigManager) !!}</div>
                             <div style="font-weight: 800; font-size: 10px;">Manager</div>
                             <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%;">
+                        <td style="width: 20%; vertical-align: bottom;">
+                            <div style="min-height:48px;">{!! $renderSig($sigAccounting) !!}</div>
                             <div style="font-weight: 800; font-size: 10px;">Accounting</div>
                             <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
                     @else
-                        <td style="width: 20%;">
+                        <td style="width: 20%; vertical-align: bottom;">
+                            <div style="min-height:48px;">{!! $renderSig($sigSPV) !!}</div>
                             <div style="font-weight: 800; font-size: 10px;">SPV</div>
                             <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%;">
+                        <td style="width: 20%; vertical-align: bottom;">
+                            <div style="min-height:48px;">{!! $renderSig($sigKabag) !!}</div>
                             <div style="font-weight: 800; font-size: 10px;">Kabag</div>
                             <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%;">
+                        <td style="width: 20%; vertical-align: bottom;">
+                            <div style="min-height:48px;">{!! $renderSig($sigManager) !!}</div>
                             <div style="font-weight: 800; font-size: 10px;">Manager</div>
                             <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
                     @endif
-                    <td>
+                    <td style="vertical-align: bottom;">
+                        <div style="min-height:48px;">{!! $renderSig($sigIT) !!}</div>
                         <div style="font-weight: 800; font-size: 10px;">Departemen IT</div>
                         <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
                     </td>
@@ -597,6 +675,17 @@
             <div class="doc-footer-note">
                 {{ $isAdjust ? 'Adjustment' : 'System Odoo' }} / 01 / 15 Januari 2025
             </div>
+
+            {{-- Catatan validasi TTD digital --}}
+            @if($arsip->signatures->count() > 0)
+                @php $signedNames = $arsip->signatures->pluck('role_label')->all(); @endphp
+                <div style="margin-top:4px; padding:4px 8px; border:1px dashed #1d4ed8; border-radius:4px; font-size:8.5px; font-weight:700; color:#1e293b; display:flex; justify-content:space-between; align-items:center;">
+                    <span><i style="color:#1d4ed8;">✓</i> Dokumen ini ditandatangani secara digital ({{ implode(', ', $signedNames) }}). Scan QR di pojok kanan atas untuk verifikasi.</span>
+                    @if($arsip->verify_token)
+                        <span style="font-family:monospace; color:#1d4ed8;">#{{ \Illuminate\Support\Str::limit($arsip->verify_token, 12, '') }}</span>
+                    @endif
+                </div>
+            @endif
         </div>
         <div class="meta-bar">
             <div class="meta-left">
@@ -616,9 +705,19 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             new QRCode(document.getElementById("qrcode"), {
-                text: "{{ $arsip->no_registrasi }}",
+                text: "{{ $arsip->verify_token ? route('verify.show', $arsip->verify_token) : $arsip->no_registrasi }}",
                 width: 62,
                 height: 62,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            // QR No Registrasi — sama seperti sebelumnya, untuk identifikasi cepat dokumen
+            new QRCode(document.getElementById("regQrcode"), {
+                text: "{{ $arsip->no_registrasi }}",
+                width: 56,
+                height: 56,
                 colorDark: "#000000",
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.M

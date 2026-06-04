@@ -56,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
                 $view->with([
                     'notifications' => $notifications,
                     'unreadCount'   => $unreadCount,
+                    'pendingApprovalCount' => \App\Models\ArsipApproval::pendingCountFor($user),
                 ]);
             }
         });

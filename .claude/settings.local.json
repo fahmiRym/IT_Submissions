@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(php -l /c/laragon/www/e_arsip/app/Models/ArsipProdukBaruItem.php)",
+      "Bash(php -l /c/laragon/www/e_arsip/app/Http/Controllers/Admin/ArsipController.php)",
+      "Bash(php -l /c/laragon/www/e_arsip/app/Http/Controllers/Superadmin/ArsipController.php)",
+      "Bash(php -r \"require '/c/laragon/www/e_arsip/vendor/autoload.php'; require '/c/laragon/www/e_arsip/bootstrap/app.php'->bootstrapWith\\([Illuminate\\\\Foundation\\\\Bootstrap\\\\LoadEnvironmentVariables::class]\\); echo count\\(App\\\\Models\\\\ArsipProdukBaruItem::getKategoriOptions\\(\\)\\);\")",
+      "Bash(grep -rn 'sort_order\\\\|tindakan_it_rows\\\\|\\(int\\)$i' /c/laragon/www/e_arsip/app/Http/Controllers/)",
+      "Bash(php -r ' *)"
+    ]
+  }
+}

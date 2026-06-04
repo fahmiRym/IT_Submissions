@@ -23,7 +23,7 @@
                 <div class="modal-body bg-light p-4">
                     <div class="row g-4">
                         {{-- LEFT COLUMN: INFORMASI DASAR --}}
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
                             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Informasi Utama</h6>
                             
                             {{-- 1. JENIS PENGAJUAN --}}
@@ -39,6 +39,7 @@
                                         <option value="Bundel">Bundel</option>
                                         <option value="Cancel">Cancel</option>
                                         <option value="Internal_Memo">Internal Memo</option>
+                                        <option value="Produk_Baru">Pengajuan Produk Baru</option>
                                     </select>
                                 </div>
                             </div>
@@ -78,8 +79,8 @@ BPB-25/12/0327
                                 </select>
                             </div>
 
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
+                            <div class="row g-3 mb-3">
+                                <div class="col-12">
                                     <label class="form-label small fw-bold text-secondary text-uppercase">Unit</label>
                                     <select name="unit_id" class="form-select bg-white border-0 shadow-sm" required>
                                         <option value="">Pilih...</option>
@@ -88,7 +89,7 @@ BPB-25/12/0327
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12">
                                     <label class="form-label small fw-bold text-secondary text-uppercase">Manager</label>
                                     <select name="manager_id" class="form-select bg-white border-0 shadow-sm" required>
                                         <option value="">Pilih...</option>
@@ -115,10 +116,13 @@ BPB-25/12/0327
                                     </select>
                                 </div>
                             </div>
+
+                            {{-- ALUR PERSETUJUAN (Approver bertingkat) --}}
+                            @include('partials._approver_select', ['approverUsers' => $approverUsers ?? collect(), 'jenisSelectId' => 'jenisPengajuanTambahAdmin'])
                         </div>
 
                         {{-- RIGHT COLUMN: DETAIL & ITEMS --}}
-                        <div class="col-lg-8">
+                        <div class="col-lg-9">
                             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-list-check me-2"></i>Detail Dokumen & Item</h6>
 
                             {{-- SECTION NO TRANSAKSI (CANCEL) --}}
@@ -150,9 +154,12 @@ BPB-25/12/0327
                                                     <tr>
                                                         <th class="ps-3" width="110">Kode</th>
                                                         <th>Item Produk</th>
-                                                        <th width="80" class="text-center">IN</th>
-                                                        <th width="80" class="text-center">OUT</th>
-                                                        <th>Lot/Ket</th>
+                                                        <th width="70" class="text-center">Odoo</th>
+                                                        <th width="70" class="text-center">Fisik</th>
+                                                        <th width="80" class="text-center">QTY IN</th>
+                                                        <th width="80" class="text-center">QTY OUT</th>
+                                                        <th width="110">Lot/Ket</th>
+                                                        <th width="160">Lokasi</th>
                                                         <th width="40"></th>
                                                     </tr>
                                                 </thead>
@@ -223,6 +230,39 @@ BPB-25/12/0327
                                 </div>
                             </div>
 
+                            {{-- SECTION PRODUK BARU --}}
+                            <div id="sectionProdukBaru" class="d-none dynamic-section mb-4">
+                                <div class="card border-0 shadow-sm overflow-hidden border-start border-4 border-primary">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                        <div>
+                                            <span class="fw-bold text-primary"><i class="bi bi-box-seam me-1"></i> PENGAJUAN PRODUK BARU</span>
+                                            <span id="badgeCountProdukBaru" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="btnAddProdukBaru">
+                                            <i class="bi bi-plus-circle me-1"></i> Tambah Produk
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-striped mb-0 align-middle">
+                                                <thead class="bg-light text-muted small text-uppercase">
+                                                    <tr>
+                                                        <th class="ps-3" width="110">Kode</th>
+                                                        <th>Nama Produk</th>
+                                                        <th width="110">Tipe</th>
+                                                        <th width="180">Kategori</th>
+                                                        <th width="100">Satuan</th>
+                                                        <th width="120">Status</th>
+                                                        <th width="40"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="wrapperProdukBaru"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- SECTION BUNDEL --}}
                             <div id="sectionBundel" class="d-none dynamic-section mb-4">
                                 <div class="card border-0 shadow-sm border-start border-4 border-info">
@@ -254,17 +294,10 @@ BPB-25/12/0327
                             {{-- COMMON FIELDS --}}
                             <div class="card border-0 shadow-sm bg-white mb-3">
                                 <div class="card-body">
-                                    <div class="form-floating mb-3">
+                                    <div class="form-floating mb-0">
                                         <textarea name="keterangan" class="form-control border-light" placeholder="Keterangan" style="height: 80px"></textarea>
                                         <label class="text-muted"><i class="bi bi-chat-text me-1"></i> Deskripsi / Permasalahan</label>
                                     </div>
-                                    
-                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Upload Bukti Scan (Opsional jika ingin Draft)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light border-0"><i class="bi bi-file-earmark-pdf text-danger"></i></span>
-                                        <input type="file" name="bukti_scan" accept=".pdf" class="form-control border-white bg-light shadow-none">
-                                    </div>
-                                    <div class="form-text small opacity-75 mt-1 fst-italic">Format: PDF (Max 5MB)</div>
                                 </div>
                             </div>
                         </div>

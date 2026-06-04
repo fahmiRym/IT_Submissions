@@ -30,6 +30,9 @@
     <link href="<?php echo e(asset('css/modern-theme.css')); ?>?v=<?php echo e(filemtime(public_path('css/modern-theme.css'))); ?>" rel="stylesheet">
 
     
+    <link href="<?php echo e(asset('css/responsive-mobile.css')); ?>?v=<?php echo e(filemtime(public_path('css/responsive-mobile.css'))); ?>" rel="stylesheet">
+
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>

@@ -1,0 +1,494 @@
+/* =====================================================================
+   RESPONSIVE-MOBILE.CSS — Global mobile/tablet polish for e_arsip
+   Loaded AFTER modern-theme.css in resources/views/layouts/app.blade.php
+   ===================================================================== */
+
+/* ====== 0. Universal safety net (all sizes) ====== */
+html, body {
+    overflow-x: hidden;
+}
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+img, svg, video, canvas {
+    max-width: 100%;
+    height: auto;
+}
+/* Tables should never push the page wider than viewport on mobile */
+.table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+}
+/* Prevent inline pre/code from breaking layout */
+pre {
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ====== 1. Tablet & smaller (<=991.98px) ====== */
+@media (max-width: 991.98px) {
+    main {
+        padding: 1rem !important;
+    }
+
+    /* Sidebar always slides over on tablet/phone */
+    .sidebar {
+        width: 78vw !important;
+        max-width: 300px;
+    }
+
+    /* Topbar tighter */
+    .topbar {
+        padding: 0.6rem 0.85rem !important;
+    }
+    .topbar .page-title-text {
+        font-size: 1rem !important;
+        max-width: 45vw;
+    }
+
+    /* Profile dropdown name visible only sm+ already, but ensure button doesn't overflow */
+    .topbar .dropdown > button {
+        padding: 0.4rem 0.65rem !important;
+    }
+
+    /* Section headers (h5 with action area) — stack action area below */
+    .d-flex.flex-md-row.justify-content-between {
+        gap: 0.75rem !important;
+    }
+
+    /* Filter cards — labels stay readable */
+    .card-body label.form-label {
+        margin-bottom: 0.25rem !important;
+    }
+}
+
+/* ====== 2. Phone landscape & small tablets (<=767.98px) ====== */
+@media (max-width: 767.98px) {
+    main {
+        padding: 0.85rem !important;
+    }
+
+    /* Page title smaller */
+    .topbar .page-title-text {
+        font-size: 0.95rem !important;
+        max-width: 55vw;
+    }
+
+    /* Card body breathing room */
+    .card-body {
+        padding: 1rem !important;
+    }
+    .card-header {
+        padding: 0.85rem 1rem !important;
+    }
+
+    /* Stat cards: shrink mesh/pattern card heading */
+    .stat-card-main .card-body h1 {
+        font-size: 1.85rem !important;
+    }
+    .stat-card-main {
+        min-height: auto !important;
+    }
+    .stat-card-main .bg-white.bg-opacity-20 {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    .stat-card-main .bg-white.bg-opacity-20 i {
+        font-size: 1.5rem !important;
+    }
+
+    /* Mini stats: shrink circle */
+    .mini-stat-card .rounded-circle {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    .mini-stat-card h5 {
+        font-size: 1rem !important;
+    }
+
+    /* Generic numeric heading inside dashboard cards */
+    .card-stat-vibrant h2,
+    .card-stat-vibrant h3 {
+        font-size: 1.5rem !important;
+    }
+    .stat-overlay-icon {
+        font-size: 5rem !important;
+    }
+
+    /* Page-header action rows: stack with full-width buttons */
+    .d-flex.flex-column.flex-md-row.justify-content-between > * {
+        width: 100%;
+    }
+
+    /* The "SHOW + Buat Baru" action row — let it wrap nicely */
+    .d-flex.flex-wrap.align-items-center.gap-2.gap-md-3 {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+    }
+    .d-flex.flex-wrap.align-items-center.gap-2.gap-md-3 > .btn,
+    .d-flex.flex-wrap.align-items-center.gap-2.gap-md-3 > a.btn {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* Buttons inside action cells: keep them tight */
+    .btn-group .btn {
+        padding: 0.4rem 0.6rem !important;
+    }
+
+    /* Action button squares (38x38) inside tables — shrink */
+    td .btn[style*="width: 38px"],
+    td .btn[style*="height: 38px"] {
+        width: 34px !important;
+        height: 34px !important;
+        padding: 0 !important;
+    }
+
+    /* Pagination tighter */
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px;
+    }
+    .pagination .page-link {
+        padding: 0.4rem 0.65rem;
+        font-size: 0.85rem;
+    }
+
+    /* Filter form: more vertical breathing */
+    form.row.g-3 > [class*="col-"] {
+        margin-bottom: 0.25rem;
+    }
+
+    /* Inputs/selects in filter card take full width */
+    .form-control,
+    .form-select {
+        font-size: 0.9rem !important;
+    }
+
+    /* Notification dropdown safer on phones */
+    .topbar .dropdown-menu {
+        width: 92vw !important;
+        max-width: 360px !important;
+        max-height: 70vh !important;
+        right: 0 !important;
+    }
+}
+
+/* ====== 3. Phones (<=575.98px) ====== */
+@media (max-width: 575.98px) {
+    main {
+        padding: 0.7rem !important;
+    }
+
+    /* Topbar profile name stays hidden (already d-none d-sm-block), just tighten button */
+    .topbar .btn.rounded-pill {
+        padding: 0.3rem 0.55rem !important;
+    }
+
+    /* Tighter sidebar mobile width */
+    .sidebar {
+        width: 84vw !important;
+        max-width: 300px;
+    }
+
+    /* Sidebar items: slightly smaller padding */
+    .sidebar .nav-link {
+        padding: 0.7rem 0.9rem !important;
+        font-size: 0.92rem;
+    }
+
+    /* Card paddings */
+    .card-body {
+        padding: 0.9rem !important;
+    }
+    .card-header {
+        padding: 0.75rem 0.9rem !important;
+        font-size: 0.95rem;
+    }
+
+    /* Headings size scale */
+    h1 { font-size: 1.4rem !important; }
+    h2 { font-size: 1.2rem !important; }
+    h3 { font-size: 1.05rem !important; }
+    h4 { font-size: 1rem !important; }
+    h5 { font-size: 0.95rem !important; }
+    h6 { font-size: 0.85rem !important; }
+
+    /* Tables: tighter cell padding */
+    .table thead th,
+    .table tbody td {
+        padding: 0.7rem 0.5rem !important;
+        font-size: 0.78rem !important;
+    }
+    .table thead th {
+        font-size: 0.65rem !important;
+    }
+
+    /* Modals: nearly full-screen and scrollable */
+    .modal-dialog,
+    .modal-dialog.modal-xl,
+    .modal-dialog.modal-lg,
+    .modal-dialog.modal-md {
+        margin: 0.35rem auto !important;
+        max-width: calc(100vw - 0.7rem) !important;
+        width: calc(100vw - 0.7rem) !important;
+    }
+    .modal-dialog.modal-dialog-centered {
+        min-height: calc(100vh - 0.7rem);
+    }
+    .modal-content {
+        border-radius: 14px !important;
+        max-height: calc(100vh - 0.7rem) !important;
+    }
+    .modal-body {
+        padding: 1rem !important;
+        max-height: calc(100vh - 160px) !important;
+    }
+    .modal-header {
+        padding: 0.8rem 1rem !important;
+    }
+    .modal-header h5,
+    .modal-header .modal-title {
+        font-size: 1rem !important;
+    }
+    .modal-footer {
+        padding: 0.7rem 0.9rem !important;
+        gap: 0.4rem;
+    }
+    .modal-footer .btn {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* Forms inside modals: collapse row gutters */
+    .modal-body .row.g-4 {
+        --bs-gutter-y: 1rem;
+    }
+
+    /* Stat cards: ultra compact */
+    .stat-card-main .card-body {
+        padding: 1rem !important;
+        gap: 0.85rem !important;
+    }
+    .stat-card-main h1 {
+        font-size: 1.6rem !important;
+    }
+    .stat-card-main .bg-white.bg-opacity-20 {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    .stat-card-main .bg-white.bg-opacity-20 i {
+        font-size: 1.25rem !important;
+    }
+    .stat-card-main .glass-badge {
+        font-size: 0.55rem !important;
+        padding: 3px 8px !important;
+    }
+    .stat-card-main .position-absolute.top-0.end-0 {
+        padding: 0.5rem !important;
+    }
+
+    /* Mini stat card text */
+    .mini-stat-card .card-body {
+        padding: 0.6rem !important;
+    }
+    .mini-stat-card .text-secondary.text-uppercase {
+        font-size: 0.45rem !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* Buttons: prevent overlap, allow wrap text */
+    .btn {
+        padding: 0.5rem 0.85rem !important;
+        font-size: 0.85rem;
+    }
+    .btn-sm {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.78rem;
+    }
+    .btn.rounded-pill {
+        padding: 0.45rem 0.85rem !important;
+    }
+
+    /* Forms: smaller padding so labels + inputs fit nicely */
+    .form-control,
+    .form-select {
+        padding: 0.55rem 0.75rem !important;
+        font-size: 0.9rem !important;
+    }
+    .input-group-text {
+        padding: 0.45rem 0.6rem !important;
+        font-size: 0.85rem;
+    }
+    label.form-label {
+        font-size: 0.72rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* Dashboard chart canvas: don't overflow */
+    canvas {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    .card-chart {
+        min-height: auto !important;
+    }
+
+    /* Profile card */
+    .profile-header {
+        height: 100px !important;
+    }
+    .avatar-circle {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    .avatar-wrapper {
+        margin-top: -50px !important;
+    }
+    .stat-box {
+        padding: 0.55rem !important;
+    }
+    .stat-value {
+        font-size: 0.95rem !important;
+    }
+    .stat-label {
+        font-size: 0.55rem !important;
+    }
+
+    /* Generic gap reductions for row.g-3 / g-4 used across pages */
+    .row.g-4 { --bs-gutter-y: 0.85rem; --bs-gutter-x: 0.6rem; }
+    .row.g-3 { --bs-gutter-y: 0.7rem; --bs-gutter-x: 0.5rem; }
+
+    /* Filter form: each input fills its half */
+    form.row.g-3 > [class*="col-"] {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+    }
+
+    /* Approval timeline / partials: don't burst */
+    #editApprovalTimeline,
+    #approvalTimeline,
+    .approval-timeline {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    /* Pagination compact */
+    .pagination .page-link {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.8rem;
+    }
+
+    /* Activity log / notification list rows */
+    .list-group-item {
+        padding: 0.75rem !important;
+    }
+
+    /* Badge wraps */
+    .badge {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* Sidebar footer profile chip: shrink */
+    .sidebar-footer .bg-light.rounded-4 {
+        padding: 0.4rem 0.6rem !important;
+    }
+    .sidebar-footer img,
+    .sidebar-footer .rounded-circle {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        font-size: 0.85rem;
+    }
+}
+
+/* ====== 4. Tiny phones (<=380px) ====== */
+@media (max-width: 380px) {
+    main {
+        padding: 0.55rem !important;
+    }
+    .topbar .page-title-text {
+        font-size: 0.85rem !important;
+        max-width: 50vw;
+    }
+    .stat-card-main h1 {
+        font-size: 1.35rem !important;
+    }
+    .btn,
+    .btn-sm {
+        font-size: 0.78rem;
+    }
+    .modal-header h5 {
+        font-size: 0.9rem !important;
+    }
+    .form-control,
+    .form-select {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* ====== 5. Landscape-orientation phone tweaks ====== */
+@media (max-width: 991.98px) and (orientation: landscape) {
+    .modal-dialog {
+        max-width: 92vw !important;
+    }
+    .modal-body {
+        max-height: calc(100vh - 130px) !important;
+    }
+}
+
+/* ====== 6. Accessibility / touch targets ====== */
+@media (hover: none) and (pointer: coarse) {
+    /* Make all clickable squares at minimum 36px touch target on touch devices */
+    .btn,
+    .nav-link,
+    .dropdown-item {
+        min-height: 36px;
+    }
+    a, button {
+        touch-action: manipulation;
+    }
+}
+
+/* ====== 7. Fix common overflow culprits ====== */
+.card,
+.card-body,
+.modal-body,
+.table-responsive,
+.dropdown-menu,
+.list-group {
+    max-width: 100%;
+}
+/* Long monospace strings (no_doc, transaksi) shouldn't break the layout */
+.font-monospace,
+code,
+.text-truncate-soft {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* Prevent fixed-width inline styles inside form tables from making modal scroll horizontally too aggressively on phone */
+@media (max-width: 575.98px) {
+    .modal-body table input.form-control,
+    .modal-body table input.form-control-sm,
+    .modal-body table select.form-select,
+    .modal-body table select.form-select-sm {
+        min-width: 60px !important;
+        font-size: 0.78rem !important;
+        padding: 0.35rem 0.4rem !important;
+    }
+}

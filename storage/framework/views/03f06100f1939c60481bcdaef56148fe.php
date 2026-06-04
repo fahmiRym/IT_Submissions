@@ -32,7 +32,7 @@
                     <div class="row g-4">
                         
                         
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
                             <div class="card border-0 shadow-sm rounded-4 h-100">
                                 <div class="card-body p-4">
                                     <h6 class="fw-bold text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Informasi Dasar</h6>
@@ -83,6 +83,7 @@ Bundel   : DO/PL/<?php echo e(date('Y')); ?>/001
                                             <option value="Mutasi_Produk">Mutasi Produk</option>
                                             <option value="Bundel">Bundel Dokumen</option>
                                             <option value="Internal_Memo">Internal Memo</option>
+                                            <option value="Produk_Baru">Pengajuan Produk Baru</option>
                                         </select>
                                     </div>
 
@@ -106,8 +107,8 @@ Bundel   : DO/PL/<?php echo e(date('Y')); ?>/001
                                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-6">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-12">
                                             <label class="form-label small fw-bold text-secondary">Unit <span class="text-danger">*</span></label>
                                             <select name="unit_id" class="form-select bg-light border-0" required>
                                                 <?php $__currentLoopData = $units; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $u): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -115,7 +116,7 @@ Bundel   : DO/PL/<?php echo e(date('Y')); ?>/001
                                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </select>
                                         </div>
-                                        <div class="col-6">
+                                        <div class="col-12">
                                             <label class="form-label small fw-bold text-secondary">Manager <span class="text-danger">*</span></label>
                                             <select name="manager_id" class="form-select bg-light border-0" required>
                                                 <?php $__currentLoopData = $managers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -163,12 +164,15 @@ Bundel   : DO/PL/<?php echo e(date('Y')); ?>/001
                                         </div>
                                     </div>
 
+                                    
+                                    <?php echo $__env->make('partials._approver_select', ['approverUsers' => $approverUsers ?? collect(), 'jenisSelectId' => 'jenisPengajuanTambah'], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
                                 </div>
                             </div>
                         </div>
 
                         
-                        <div class="col-lg-8">
+                        <div class="col-lg-9">
                             <div class="card border-0 shadow-sm rounded-4 h-100">
                                 <div class="card-body p-4">
                                     <h6 class="fw-bold text-primary mb-3"><i class="bi bi-list-check me-2"></i>Detail Pengajuan</h6>
@@ -224,11 +228,14 @@ Bundel   : DO/PL/<?php echo e(date('Y')); ?>/001
                                             <table class="table table-sm table-borderless mb-0 align-middle">
                                                 <thead class="bg-light text-secondary">
                                                     <tr class="text-xs">
-                                                        <th class="ps-3" width="15%">Kode</th>
+                                                        <th class="ps-3" width="13%">Kode</th>
                                                         <th>Nama Barang</th>
-                                                        <th width="10%" class="text-center">In</th>
-                                                        <th width="10%" class="text-center">Out</th>
-                                                        <th width="15%">Lot</th>
+                                                        <th width="8%" class="text-center">Odoo</th>
+                                                        <th width="8%" class="text-center">Fisik</th>
+                                                        <th width="70" class="text-center">QTY In</th>
+                                                        <th width="70" class="text-center">QTY Out</th>
+                                                        <th width="12%">Lot</th>
+                                                        <th width="14%">Lokasi</th>
                                                         <th width="5%"></th>
                                                     </tr>
                                                 </thead>
@@ -302,15 +309,38 @@ Bundel   : DO/PL/<?php echo e(date('Y')); ?>/001
                                     </div>
 
                                     
+                                    <div class="mb-4 d-none dynamic-section" id="sectionProdukBaru">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <label class="form-label small fw-bold text-primary mb-0"><i class="bi bi-box-seam me-1"></i> Pengajuan Produk Baru</label>
+                                                <span id="badgeCountProdukBaru" class="badge bg-light border text-secondary ms-2 d-none" style="font-size:0.65rem;"></span>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="btnAddProdukBaru">
+                                                <i class="bi bi-plus-lg me-1"></i> Tambah Produk
+                                            </button>
+                                        </div>
+                                        <div class="table-responsive rounded-3 border border-light">
+                                            <table class="table table-sm table-borderless mb-0 align-middle">
+                                                <thead class="bg-light text-secondary">
+                                                    <tr class="text-xs">
+                                                        <th class="ps-3" width="100">Kode</th>
+                                                        <th>Nama Produk</th>
+                                                        <th width="110">Tipe</th>
+                                                        <th width="180">Kategori</th>
+                                                        <th width="100">Satuan</th>
+                                                        <th width="120">Status</th>
+                                                        <th width="5%"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="wrapperProdukBaru" class="dynamic-row-container"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold text-secondary">Keterangan / Alasan</label>
                                         <textarea name="keterangan" class="form-control bg-light border-0" rows="2" placeholder="Jelaskan alasan pengajuan ini..."></textarea>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label small fw-bold text-secondary">Upload Bukti Scan (PDF) - (Opsional jika ingin Draft)</label>
-                                        <input type="file" name="bukti_scan" accept=".pdf" class="form-control bg-light border-0">
-                                        <div class="form-text text-xs">Maks 2MB. Format: PDF.</div>
                                     </div>
 
                                 </div>

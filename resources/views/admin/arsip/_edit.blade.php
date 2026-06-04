@@ -25,7 +25,7 @@
                 <div class="modal-body bg-light p-4">
                     <div class="row g-4">
                         {{-- LEFT COLUMN: INFO UTAMA --}}
-                        <div class="col-lg-4">
+                        <div class="col-lg-3">
                             <h6 class="fw-bold text-warning mb-3"><i class="bi bi-info-circle me-2"></i>Informasi Utama</h6>
                             
                             {{-- READ-ONLY INFO --}}
@@ -43,6 +43,7 @@
                                         <option value="Mutasi_Produk">Mutasi Produk</option>
                                         <option value="Internal_Memo">Internal Memo</option>
                                         <option value="Bundel">Bundel Dokumen</option>
+                                        <option value="Produk_Baru">Pengajuan Produk Baru</option>
                                     </select>
                                 </div>
                             </div>
@@ -57,8 +58,8 @@
                                 </select>
                             </div>
 
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
+                            <div class="row g-3 mb-3">
+                                <div class="col-12">
                                     <label class="form-label small fw-bold text-secondary text-uppercase">Unit</label>
                                     <select name="unit_id" id="editUnit" class="form-select border-0 shadow-sm bg-white" required>
                                         @foreach($units as $u)
@@ -66,7 +67,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12">
                                     <label class="form-label small fw-bold text-secondary text-uppercase">Manager</label>
                                     <select name="manager_id" id="editManager" class="form-select border-0 shadow-sm bg-white" required>
                                         @foreach($managers as $m)
@@ -95,7 +96,7 @@
                         </div>
 
                         {{-- RIGHT COLUMN: DETAIL & ITEMS --}}
-                        <div class="col-lg-8">
+                        <div class="col-lg-9">
                             <h6 class="fw-bold text-warning mb-3"><i class="bi bi-list-check me-2"></i>Daftar Dokumen & Item Terdata</h6>
 
                             {{-- NO TRANSAKSI (CANCEL) --}}
@@ -119,16 +120,19 @@
                                     </div>
                                     <div class="card-body p-0 table-responsive">
                                         <table class="table table-sm table-striped mb-0 align-middle">
-                                            <thead class="bg-light text-muted small">
-                                                <tr>
-                                                    <th class="ps-3" width="90">Kode</th>
-                                                    <th>Item Produk</th>
-                                                    <th width="80" class="text-center">IN</th>
-                                                    <th width="80" class="text-center">OUT</th>
-                                                    <th>Lot/Ket</th>
-                                                    <th width="40"></th>
-                                                </tr>
-                                            </thead>
+                                             <thead class="bg-light text-muted small">
+                                                 <tr>
+                                                     <th class="ps-3" width="90">Kode</th>
+                                                     <th>Item Produk</th>
+                                                     <th width="70" class="text-center">Odoo</th>
+                                                     <th width="70" class="text-center">Fisik</th>
+                                                     <th width="80" class="text-center">QTY IN</th>
+                                                     <th width="80" class="text-center">QTY OUT</th>
+                                                     <th width="110">Lot/Ket</th>
+                                                     <th width="160">Lokasi</th>
+                                                     <th width="40"></th>
+                                                 </tr>
+                                             </thead>
                                             <tbody id="wrapperAdjustEdit"></tbody>
                                         </table>
                                     </div>
@@ -189,6 +193,34 @@
                                 </div>
                             </div>
 
+                            {{-- PRODUK BARU --}}
+                            <div id="sectionProdukBaruEdit" class="d-none dynamic-section-edit mb-4">
+                                <div class="card border-0 shadow-sm overflow-hidden border-start border-4 border-primary">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                        <span class="fw-bold text-primary small"><i class="bi bi-box-seam me-1"></i> PENGAJUAN PRODUK BARU</span>
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="addProdukBaruRowEdit()">
+                                            <i class="bi bi-plus"></i> Tambah
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-0 table-responsive">
+                                        <table class="table table-sm table-striped mb-0 align-middle">
+                                            <thead class="bg-light text-muted small">
+                                                <tr>
+                                                    <th class="ps-3" width="100">Kode</th>
+                                                    <th>Nama Produk</th>
+                                                    <th width="110">Tipe</th>
+                                                    <th width="180">Kategori</th>
+                                                    <th width="100">Satuan</th>
+                                                    <th width="120">Status</th>
+                                                    <th width="40"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="wrapperProdukBaruEdit"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- BUNDEL --}}
                             <div id="sectionBundelEdit" class="d-none dynamic-section-edit mb-4">
                                  <div class="card border-0 shadow-sm border-start border-4 border-info">
@@ -221,15 +253,17 @@
                                         <label class="small fw-bold text-muted text-uppercase mb-1">Keterangan Tambahan</label>
                                         <textarea name="keterangan" id="editKeterangan" class="form-control bg-light border-0" rows="3" placeholder="Alasan atau catatan khusus..."></textarea>
                                     </div>
-                                    
-                                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light border border-dashed border-secondary border-opacity-25">
-                                        <div>
-                                            <label class="fw-bold small text-muted d-block text-uppercase mb-1">Bukti Scan (PDF)</label>
-                                            <span id="linkBuktiSaatIni"></span>
-                                        </div>
-                                        <div class="w-50">
-                                            <input type="file" name="bukti_scan" accept=".pdf" class="form-control form-control-sm border-white">
-                                        </div>
+                                </div>
+                            </div>
+
+                            {{-- ALUR PERSETUJUAN (status + ubah approver bila belum berjalan) --}}
+                            <div class="card border-0 shadow-sm bg-white mb-2">
+                                <div class="card-body">
+                                    <h6 class="fw-bold text-primary mb-2" style="font-size:0.85rem;"><i class="bi bi-diagram-3-fill me-1"></i>Alur Persetujuan</h6>
+                                    <div id="editApprovalTimeline" class="mb-3"></div>
+                                    <div id="editApprovalNote" class="alert alert-warning border-0 small d-none mb-2"></div>
+                                    <div id="editApproverWrap">
+                                        @include('partials._approver_select', ['approverUsers' => $approverUsers ?? collect(), 'jenisSelectId' => 'editJenisPengajuan'])
                                     </div>
                                 </div>
                             </div>

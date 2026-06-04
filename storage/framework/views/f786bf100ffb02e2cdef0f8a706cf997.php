@@ -1,0 +1,285 @@
+<div class="modal fade" id="modalEditArsip" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+
+            
+            <form id="formEditArsip" method="POST" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="id" id="editArsipId">
+
+                
+                <div class="modal-header bg-warning bg-gradient text-dark py-3">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-white bg-opacity-50 rounded-circle p-2 me-3 shadow-sm text-dark">
+                            <i class="bi bi-pencil-square fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0">Perbarui Pengajuan</h5>
+                            <small class="text-dark opacity-75">Sesuaikan informasi detail dokumen Anda</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                
+                <div class="modal-body bg-light p-4">
+                    <div class="row g-4">
+                        
+                        <div class="col-lg-3">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-info-circle me-2"></i>Informasi Utama</h6>
+                            
+                            
+                            <div class="p-3 rounded-3 bg-white border border-warning border-opacity-25 shadow-sm mb-4">
+                                <div class="mb-3">
+                                    <label class="small fw-bold text-muted text-uppercase mb-1">No Registrasi</label>
+                                    <input type="text" id="editNoRegistrasi" class="form-control border-0 bg-light fw-bold text-primary font-monospace" readonly>
+                                </div>
+                                <div class="">
+                                    <label class="small fw-bold text-muted text-uppercase mb-1">Jenis Transaksi</label>
+                                    <select name="jenis_pengajuan" id="editJenisPengajuan" class="form-select border-0 bg-light fw-bold text-dark" style="pointer-events: none; -webkit-appearance: none;">
+                                        <option value="Cancel">Cancel Transaksi</option>
+                                        <option value="Adjust">Adjust Stock</option>
+                                        <option value="Mutasi_Billet">Mutasi Billet</option>
+                                        <option value="Mutasi_Produk">Mutasi Produk</option>
+                                        <option value="Internal_Memo">Internal Memo</option>
+                                        <option value="Bundel">Bundel Dokumen</option>
+                                        <option value="Produk_Baru">Pengajuan Produk Baru</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-secondary text-uppercase">Departemen</label>
+                                <select name="department_id" id="editDepartment" class="form-select border-0 shadow-sm bg-white" required>
+                                    <?php $__currentLoopData = $departments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($d->id); ?>"><?php echo e($d->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-secondary text-uppercase">Unit</label>
+                                    <select name="unit_id" id="editUnit" class="form-select border-0 shadow-sm bg-white" required>
+                                        <?php $__currentLoopData = $units; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $u): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($u->id); ?>"><?php echo e($u->name); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-secondary text-uppercase">Manager</label>
+                                    <select name="manager_id" id="editManager" class="form-select border-0 shadow-sm bg-white" required>
+                                        <?php $__currentLoopData = $managers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($m->id); ?>"><?php echo e($m->name); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-secondary text-uppercase">Penyusun / Pemohon</label>
+                                <textarea name="pemohon" id="editPemohon" class="form-control border-0 shadow-sm bg-white" rows="2" placeholder="Nama-nama..."></textarea>
+                            </div>
+
+                            
+                            <div class="mb-3 d-none dynamic-section-edit" id="editWrapperKategori">
+                                <div class="p-3 rounded-3 bg-danger bg-opacity-10 shadow-sm">
+                                    <label class="small fw-bold text-danger text-uppercase mb-1">Alasan Pembatalan</label>
+                                    <select name="kategori" id="editKategori" class="form-select form-select-sm border-danger-subtle fw-bold">
+                                        <option value="Human">Human Error</option>
+                                        <option value="System">System Error</option>
+                                        <option value="None">Lainnya / None</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div class="col-lg-9">
+                            <h6 class="fw-bold text-warning mb-3"><i class="bi bi-list-check me-2"></i>Daftar Dokumen & Item Terdata</h6>
+
+                            
+                            <div id="sectionNoTransEdit" class="d-none dynamic-section-edit mb-4">
+                                <div class="card border-0 shadow-sm border-start border-4 border-danger">
+                                    <div class="card-body">
+                                        <label class="fw-bold text-danger small text-uppercase mb-2">No. Transaksi Dicancel</label>
+                                        <textarea name="no_transaksi" id="editNoTransaksi" class="form-control bg-light border-0" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div id="sectionAdjustEdit" class="d-none dynamic-section-edit mb-4">
+                                <div class="card border-0 shadow-sm overflow-hidden border-start border-4 border-primary">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                        <span class="fw-bold text-primary small">ITEM ADJUSTMENT</span>
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="addAdjustRowEdit()">
+                                            <i class="bi bi-plus"></i> Tambah
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-0 table-responsive">
+                                        <table class="table table-sm table-striped mb-0 align-middle">
+                                             <thead class="bg-light text-muted small">
+                                                 <tr>
+                                                     <th class="ps-3" width="90">Kode</th>
+                                                     <th>Item Produk</th>
+                                                     <th width="70" class="text-center">Odoo</th>
+                                                     <th width="70" class="text-center">Fisik</th>
+                                                     <th width="80" class="text-center">QTY IN</th>
+                                                     <th width="80" class="text-center">QTY OUT</th>
+                                                     <th width="110">Lot/Ket</th>
+                                                     <th width="160">Lokasi</th>
+                                                     <th width="40"></th>
+                                                 </tr>
+                                             </thead>
+                                            <tbody id="wrapperAdjustEdit"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div id="sectionMutasiEdit" class="d-none dynamic-section-edit mb-4">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="card border-0 shadow-sm border-start border-4 border-danger mb-2">
+                                             <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                                <span class="fw-bold text-danger small">ASAL (OUT)</span>
+                                                <button type="button" class="btn btn-xs btn-outline-danger rounded-pill" onclick="addMutasiRowEdit('asal')"><i class="bi bi-plus"></i></button>
+                                            </div>
+                                            <div class="card-body p-0 table-responsive">
+                                                <table class="table table-sm mb-0 align-middle">
+                                                    <thead class="bg-light text-muted small">
+                                                        <tr>
+                                                            <th width="90" class="ps-2">Kode</th>
+                                                            <th>Nama Produk</th>
+                                                            <th width="70" class="text-center">Qty</th>
+                                                            <th width="100">Lot</th>
+                                                            <th width="90">PJG</th>
+                                                            <th width="160">Lokasi</th>
+                                                            <th width="40"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="wrapperAsalEdit"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="card border-0 shadow-sm border-start border-4 border-success">
+                                             <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                                <span class="fw-bold text-success small">TUJUAN (IN)</span>
+                                                <button type="button" class="btn btn-xs btn-outline-success rounded-pill" onclick="addMutasiRowEdit('tujuan')"><i class="bi bi-plus"></i></button>
+                                            </div>
+                                            <div class="card-body p-0 table-responsive">
+                                                <table class="table table-sm mb-0 align-middle">
+                                                    <thead class="bg-light text-muted small">
+                                                        <tr>
+                                                            <th width="90" class="ps-2">Kode</th>
+                                                            <th>Nama Produk</th>
+                                                            <th width="70" class="text-center">Qty</th>
+                                                            <th width="100">Lot</th>
+                                                            <th width="90">Pjg</th>
+                                                            <th width="160">Lokasi</th>
+                                                            <th width="40"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="wrapperTujuanEdit"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div id="sectionProdukBaruEdit" class="d-none dynamic-section-edit mb-4">
+                                <div class="card border-0 shadow-sm overflow-hidden border-start border-4 border-primary">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                        <span class="fw-bold text-primary small"><i class="bi bi-box-seam me-1"></i> PENGAJUAN PRODUK BARU</span>
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="addProdukBaruRowEdit()">
+                                            <i class="bi bi-plus"></i> Tambah
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-0 table-responsive">
+                                        <table class="table table-sm table-striped mb-0 align-middle">
+                                            <thead class="bg-light text-muted small">
+                                                <tr>
+                                                    <th class="ps-3" width="100">Kode</th>
+                                                    <th>Nama Produk</th>
+                                                    <th width="110">Tipe</th>
+                                                    <th width="180">Kategori</th>
+                                                    <th width="100">Satuan</th>
+                                                    <th width="120">Status</th>
+                                                    <th width="40"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="wrapperProdukBaruEdit"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div id="sectionBundelEdit" class="d-none dynamic-section-edit mb-4">
+                                 <div class="card border-0 shadow-sm border-start border-4 border-info">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                                        <span class="fw-bold text-info small">DOKUMEN BUNDEL</span>
+                                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3" onclick="addBundelRowEdit()">
+                                            <i class="bi bi-plus"></i> Tambah
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-0 table-responsive">
+                                        <table class="table table-sm align-middle mb-0">
+                                            <thead class="bg-light text-muted small">
+                                                <tr>
+                                                    <th class="ps-3">No Dokumen</th>
+                                                    <th width="80">Qty</th>
+                                                    <th>Keterangan</th>
+                                                    <th width="40"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="wrapperBundelEdit"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                             <div class="card border-0 shadow-sm bg-white mb-2">
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="small fw-bold text-muted text-uppercase mb-1">Keterangan Tambahan</label>
+                                        <textarea name="keterangan" id="editKeterangan" class="form-control bg-light border-0" rows="3" placeholder="Alasan atau catatan khusus..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div class="card border-0 shadow-sm bg-white mb-2">
+                                <div class="card-body">
+                                    <h6 class="fw-bold text-primary mb-2" style="font-size:0.85rem;"><i class="bi bi-diagram-3-fill me-1"></i>Alur Persetujuan</h6>
+                                    <div id="editApprovalTimeline" class="mb-3"></div>
+                                    <div id="editApprovalNote" class="alert alert-warning border-0 small d-none mb-2"></div>
+                                    <div id="editApproverWrap">
+                                        <?php echo $__env->make('partials._approver_select', ['approverUsers' => $approverUsers ?? collect(), 'jenisSelectId' => 'editJenisPengajuan'], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="modal-footer bg-white border-top-0 py-3 px-4">
+                    <button type="button" class="btn btn-light text-muted fw-bold rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning fw-bold rounded-pill px-5 shadow-sm text-dark">
+                        <i class="bi bi-save-fill me-2 opacity-50"></i>SIMPAN PERUBAHAN
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div><?php /**PATH C:\laragon\www\e_arsip\resources\views\admin\arsip\_edit.blade.php ENDPATH**/ ?>

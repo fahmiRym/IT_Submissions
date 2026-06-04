@@ -1,7 +1,7 @@
 {{-- NOTE: This view is allocated inside the modal-body of #modalEditArsip in index.blade.php --}}
 <div class="row g-4">
     {{-- LEFT COLUMN: INFO UTAMA --}}
-    <div class="col-lg-4">
+    <div class="col-lg-3">
         <h6 class="fw-bold text-warning mb-3"><i class="bi bi-info-circle me-2"></i>Informasi Dasar</h6>
         
         {{-- HIDDEN ID --}}
@@ -50,6 +50,7 @@
                 <option value="Mutasi_Produk">Mutasi Produk</option>
                 <option value="Bundel">Bundel</option>
                 <option value="Internal_Memo">Internal Memo</option>
+                <option value="Produk_Baru">Pengajuan Produk Baru</option>
             </select>
         </div>
 
@@ -72,8 +73,8 @@
                 @endforeach
             </select>
         </div>
-        <div class="row g-2 mb-3">
-            <div class="col-6">
+        <div class="row g-3 mb-3">
+            <div class="col-12">
                 <label class="form-label small fw-bold text-secondary">Unit</label>
                 <select name="unit_id" id="editUnit" class="form-select bg-light border-0" required>
                     @foreach($units as $u)
@@ -81,7 +82,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-6">
+            <div class="col-12">
                 <label class="form-label small fw-bold text-secondary">Manager</label>
                 <select name="manager_id" id="editManager" class="form-select bg-light border-0" required>
                     @foreach($managers as $m)
@@ -127,7 +128,7 @@
                         <option value="Void">Void (Batal)</option>
                      </select>
                 </div>
-                <div class="col-6">
+                <div class="col-12">
                     <label class="form-label text-xs fw-bold text-muted mb-1">Berita Acara (BA)</label>
                     <select name="ba" id="editBa" class="form-select form-select-sm bg-white border-warning border-opacity-25">
                         <option value="Process">Process</option>
@@ -136,7 +137,7 @@
                         <option value="None">None (Tidak Ada)</option>
                     </select>
                 </div>
-                <div class="col-6">
+                <div class="col-12">
                     <label class="form-label text-xs fw-bold text-muted mb-1">Fisik Arsip</label>
                     <select name="arsip" id="editArsipStatus" class="form-select form-select-sm bg-white border-warning border-opacity-25">
                         <option value="Pending">Pending (Belum)</option>
@@ -163,13 +164,23 @@
     </div>
 
     {{-- RIGHT COLUMN: DETAIL & ITEMS --}}
-    <div class="col-lg-8">
+    <div class="col-lg-9">
         <h6 class="fw-bold text-warning mb-3"><i class="bi bi-list-check me-2"></i>Detail Pengajuan</h6>
 
         {{-- A. NO TRANSAKSI (Cancel/Memo) --}}
         <div class="mb-4 dynamic-section-edit" id="sectionNoTransEdit">
             <label class="form-label small fw-bold text-secondary">No. Transaksi / Referensi</label>
-            <textarea name="no_transaksi" id="editNoTransaksi" class="form-control bg-light border-0" rows="3"></textarea>
+            <textarea name="no_transaksi" id="editNoTransaksi" class="form-control bg-light border-0" rows="3" style="min-height: 120px;"></textarea>
+        </div>
+
+        {{-- EXTRA FIELDS untuk ADJUST: Deskripsi Masalah -> Catatan --}}
+        <div class="mb-4 d-none dynamic-section-edit" id="sectionAdjustExtraEdit" style="border:1px solid rgba(2,132,199,0.15); border-radius: 12px; padding: 12px 12px; background: rgba(14,165,233,0.03);">
+            <div class="mt-2">
+                <label class="form-label small fw-bold text-secondary">Deskripsi Masalah</label>
+                <textarea name="keterangan" id="editKeterangan" class="form-control bg-light border-0" rows="4" style="min-height: 140px;"></textarea>
+            </div>
+
+            <small class="text-muted" style="font-size: 0.65rem;">Deskripsi masalah akan muncul sebagai CATATAN pada output draft.</small>
         </div>
 
          {{-- B. BUNDEL SECTION --}}
@@ -201,9 +212,12 @@
                         <tr class="text-xs">
                             <th class="ps-3">Kode</th>
                             <th>Nama</th>
-                            <th class="text-center">In</th>
-                            <th class="text-center">Out</th>
-                            <th>Lot</th>
+                            <th class="text-center" width="70">Odoo</th>
+                            <th class="text-center" width="70">Fisik</th>
+                            <th class="text-center" width="80">Qty In</th>
+                            <th class="text-center" width="80">Qty Out</th>
+                            <th width="110">Lot</th>
+                            <th width="160">Lokasi</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -266,15 +280,95 @@
             </div>
         </div>
 
+        {{-- E. PRODUK BARU SECTION --}}
+        <div class="mb-4 d-none dynamic-section-edit" id="sectionProdukBaruEdit">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label small fw-bold text-primary mb-0"><i class="bi bi-box-seam me-1"></i> Pengajuan Produk Baru</label>
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="window.addProdukBaruRowEdit()">
+                    <i class="bi bi-plus-lg me-1"></i> Tambah
+                </button>
+            </div>
+            <div class="table-responsive rounded-3 border border-light">
+                <table class="table table-sm table-borderless mb-0 align-middle">
+                    <thead class="bg-light text-secondary">
+                        <tr class="text-xs">
+                            <th class="ps-3" width="100">Kode</th>
+                            <th>Nama Produk</th>
+                            <th width="110">Tipe</th>
+                            <th width="180">Kategori</th>
+                            <th width="100">Satuan</th>
+                            <th width="120">Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="wrapperProdukBaruEdit"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="mb-3">
             <label class="form-label small fw-bold text-secondary">Keterangan</label>
             <textarea name="keterangan" id="editKeterangan" class="form-control bg-light border-0" rows="2"></textarea>
         </div>
 
+        <div class="row g-2 mb-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-bold text-primary">Tindakan IT</label>
+                <textarea name="tindakan" id="editTindakan" class="form-control bg-light border-0" rows="2" placeholder="Tindakan yang diambil IT..."></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-bold text-primary">Catatan IT</label>
+                <textarea name="catatan_it" id="editCatatanIt" class="form-control bg-light border-0" rows="2" placeholder="Catatan internal IT..."></textarea>
+            </div>
+        </div>
+
         <div class="mb-3">
-            <label class="form-label small fw-bold text-secondary">Bukti Scan</label>
-            <input type="file" name="bukti_scan" class="form-control bg-light border-0 mb-1" accept=".pdf">
-            <div id="linkBuktiSaatIni" class="mt-1 ps-1 text-xs"></div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label small fw-bold text-primary mb-0">Tindakan IT (per baris)</label>
+                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="window.addTindakanItRowEdit()">
+                    <i class="bi bi-plus-lg me-1"></i> Tambah Baris
+                </button>
+            </div>
+
+            <div class="table-responsive rounded-3 border border-light">
+                <table class="table table-sm table-borderless mb-0 align-middle">
+                    <thead class="bg-light text-secondary">
+                        <tr>
+                            <th class="text-center" width="22%">IN</th>
+                            <th>KETERANGAN IN</th>
+                            <th class="text-center" width="22%">OUT</th>
+                            <th>KETERANGAN OUT</th>
+                            <th width="36"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="wrapperTindakanItEdit"></tbody>
+                </table>
+            </div>
+
+            <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">
+                Isi baris IN/OUT dan keterangannya. Tersimpan ke tabel relasi `arsip_tindakan_items`.
+            </small>
+        </div>
+
+
+        {{-- ✅ SCAN FINAL (Khusus Superadmin / Tim IT) --}}
+        <div class="mb-3 p-3 rounded-3" style="background:#ecfdf5; border:1px solid #6ee7b7;">
+            <label class="form-label small fw-bold text-success d-block mb-1">
+                <i class="bi bi-shield-check me-1"></i> Scan Final (Eksekusi Tim IT)
+            </label>
+            <input type="file" name="scan_final" class="form-control bg-white border-0 mb-1" accept=".pdf">
+            <div id="linkScanFinal" class="mt-1 text-xs"></div>
+            <small class="text-muted d-block mt-1" style="font-size:0.65rem;">PDF maks 10MB. File final yang sudah lengkap (BA + tanda tangan) untuk arsip resmi IT.</small>
+        </div>
+
+        {{-- ALUR PERSETUJUAN (status + ubah approver bila belum berjalan) --}}
+        <div class="mb-3 p-3 rounded-3" style="background:#eef2ff; border:1px solid #c7d2fe;">
+            <h6 class="fw-bold text-primary mb-2" style="font-size:0.85rem;"><i class="bi bi-diagram-3-fill me-1"></i>Alur Persetujuan</h6>
+            <div id="editApprovalTimeline" class="mb-3"></div>
+            <div id="editApprovalNote" class="alert alert-warning border-0 small d-none mb-2"></div>
+            <div id="editApproverWrap">
+                @include('partials._approver_select', ['approverUsers' => $approverUsers ?? collect(), 'jenisSelectId' => 'editJenisPengajuan'])
+            </div>
         </div>
 
     </div>

@@ -16,18 +16,29 @@ class BarcodeController extends Controller
 
         $barcode = trim($request->barcode);
 
-        // Cari arsip berdasarkan no_registrasi beserta relasinya
-        $arsip = Arsip::with([
+        $relations = [
             'department',
             'unit',
             'admin',
             'superadmin',
             'adjustItems',
             'mutasiItems',
-            'bundelItems'
-        ])
+            'bundelItems',
+            'produkBaruItems',
+        ];
+
+        // 1) Cari berdasarkan No Registrasi (barcode arsip)
+        $arsip = Arsip::with($relations)
             ->where('no_registrasi', $barcode)
             ->first();
+
+        // 2) Fallback: barcode item Produk Baru (PB########)
+        if (!$arsip) {
+            $produkItem = \App\Models\ArsipProdukBaruItem::where('barcode', $barcode)->first();
+            if ($produkItem) {
+                $arsip = Arsip::with($relations)->find($produkItem->arsip_id);
+            }
+        }
 
         if (!$arsip) {
             return response()->json([
@@ -46,19 +57,20 @@ class BarcodeController extends Controller
         //     $message = 'Data arsip ditemukan (Sudah Diarsip sebelumnya)';
         // }
 
-        // Tambahkan URL lengkap untuk lampiran agar Android bisa akses langsung
-        if ($arsip->bukti_scan) {
-            $extension = pathinfo($arsip->bukti_scan, PATHINFO_EXTENSION);
-            if (strtolower($extension) === 'pdf') {
-                // Gunakan route() agar Laravel otomatis handle base URL dan HTTPS
-                $arsip->bukti_scan_url = route('pdf.viewer', ['filename' => $arsip->bukti_scan]);
-            } else {
-                // Gunakan asset() untuk file gambar
-                $arsip->bukti_scan_url = asset('storage/bukti_scan/' . $arsip->bukti_scan);
+        // Tambahkan URL lengkap untuk semua lampiran agar Android bisa akses langsung
+        $fileUrl = function (?string $filename) {
+            if (!$filename) {
+                return null;
             }
-        } else {
-            $arsip->bukti_scan_url = null;
-        }
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            return $ext === 'pdf'
+                ? route('pdf.viewer', ['filename' => $filename])
+                : asset('storage/bukti_scan/' . $filename);
+        };
+
+        $arsip->bukti_scan_url = $fileUrl($arsip->bukti_scan);
+        $arsip->scan_ba_accounting_url = $fileUrl($arsip->scan_ba_accounting);
+        $arsip->scan_final_url = $fileUrl($arsip->scan_final);
 
         return response()->json([
             'success' => true,

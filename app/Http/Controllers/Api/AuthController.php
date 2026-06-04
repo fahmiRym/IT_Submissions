@@ -54,6 +54,13 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Hapus token perangkat FCM agar tidak lagi menerima push setelah logout.
+        if ($request->filled('fcm_token')) {
+            \App\Models\DeviceToken::where('token', $request->fcm_token)
+                ->where('user_id', $request->user()->id)
+                ->delete();
+        }
+
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([

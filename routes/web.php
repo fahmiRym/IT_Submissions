@@ -47,6 +47,10 @@ Route::post('/logout', [LoginController::class,'logout'])->name('logout');
 */
 Route::get('/', fn () => redirect()->route('login'));
 
+// VERIFIKASI TANDA TANGAN DIGITAL (publik, via QR) — token UUID tidak bisa ditebak
+Route::get('/verify/{token}', [\App\Http\Controllers\VerificationController::class, 'show'])
+    ->name('verify.show');
+
 // FILE PREVIEW — Tidak perlu auth karena filename tidak bisa ditebak
 // Ini agar preview bisa jalan di HTTP maupun HTTPS tanpa masalah session cookie
 Route::get('/preview-file/{filename}', function ($filename) {
@@ -85,9 +89,10 @@ Route::get('/pdf-viewer/{filename}', function ($filename) {
 
     $fileUrl = route('preview.file', ['filename' => $filename]);
 
-    // Cari data arsip berdasarkan nama file (cek di bukti_scan atau scan_ba_accounting)
+    // Cari data arsip berdasarkan nama file (cek di bukti_scan, scan_ba_accounting, atau scan_final)
     $arsip = \App\Models\Arsip::where('bukti_scan', $filename)
                 ->orWhere('scan_ba_accounting', $filename)
+                ->orWhere('scan_final', $filename)
                 ->first();
 
     return view('vendor.pdfjs.viewer', [
@@ -142,12 +147,24 @@ Route::prefix('admin')
 
         Route::get('arsip/{id}/print-draft', [AdminArsip::class, 'printDraft'])->name('arsip.print-draft');
 
+        // ✅ DETAIL PRODUK BARU (barcode, tgl dibuat, log)
+        Route::get('arsip/{id}/produk-detail', [AdminArsip::class, 'produkDetail'])->name('arsip.produk-detail');
+
         // ✅ RE-UPLOAD BA SCAN (Khusus Accounting setelah Approve)
         Route::post('arsip/{id}/reupload-ba', [AdminArsip::class, 'reuploadBaScan'])->name('arsip.reupload-ba');
 
         // ✅ PROFILE ADMIN
         Route::get('profile', [AdminProfile::class,'index'])->name('profile');
         Route::put('profile', [AdminProfile::class,'update'])->name('profile.update');
+        Route::post('profile/signature', [AdminProfile::class,'updateSignature'])->name('profile.signature');
+
+        // ✅ TANDA TANGAN DIGITAL pada pengajuan
+        Route::post('arsip/{id}/sign', [AdminArsip::class, 'signArsip'])->name('arsip.sign');
+
+        // ✅ APPROVAL BERTINGKAT
+        Route::get('approvals', [AdminArsip::class, 'myApprovals'])->name('approvals.index');
+        Route::post('arsip/{id}/approve', [AdminArsip::class, 'approveArsip'])->name('arsip.approve');
+        Route::post('arsip/{id}/reject', [AdminArsip::class, 'rejectArsip'])->name('arsip.reject');
 
         // ✅ NOTIFIKASI ADMIN
         Route::get('notifications', [AdminNotification::class,'index'])->name('notifications.index');
@@ -172,6 +189,15 @@ Route::prefix('superadmin')
         // ✅ PROFILE SUPERADMIN
         Route::get('profile', [SuperProfile::class,'index'])->name('profile');
         Route::put('profile', [SuperProfile::class,'update'])->name('profile.update');
+        Route::post('profile/signature', [SuperProfile::class,'updateSignature'])->name('profile.signature');
+
+        // ✅ TANDA TANGAN DIGITAL pada pengajuan
+        Route::post('arsip/{id}/sign', [SuperArsip::class, 'signArsip'])->name('arsip.sign');
+
+        // ✅ APPROVAL BERTINGKAT
+        Route::get('approvals', [SuperArsip::class, 'myApprovals'])->name('approvals.index');
+        Route::post('arsip/{id}/approve', [SuperArsip::class, 'approveArsip'])->name('arsip.approve');
+        Route::post('arsip/{id}/reject', [SuperArsip::class, 'rejectArsip'])->name('arsip.reject');
 
         Route::get('laporan/pdf-viewer', [SuperLaporan::class, 'pdfViewer'])->name('laporan.pdf-viewer');
         Route::get('laporan/pdf', [SuperLaporan::class, 'printPdf'])->name('laporan.pdf');
@@ -183,6 +209,7 @@ Route::prefix('superadmin')
         
         // Custom Arsip Action
         Route::get('arsip/{id}/print-draft', [SuperArsip::class, 'printDraft'])->name('arsip.print-draft');
+        Route::get('arsip/{id}/produk-detail', [SuperArsip::class, 'produkDetail'])->name('arsip.produk-detail');
         Route::put('arsip/{id}/arsip-sistem',[SuperArsip::class, 'arsipSistem'])->name('arsip.arsip-sistem');
         Route::post('arsip/cleanup-storage', [SuperArsip::class, 'cleanupStorage'])->name('arsip.cleanup-storage');
         Route::patch('arsip/{id}/no-registrasi', [SuperBackup::class, 'updateNoRegistrasi'])->name('arsip.update-no-registrasi');

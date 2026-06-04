@@ -13,13 +13,19 @@ use App\Models\Product;           // Tambahan
 use App\Models\ArsipMutasiItem;   // Tambahan
 use App\Models\ArsipAdjustItem; // Tambahan
 use App\Models\ArsipBundelItem; // Tambahan
+use App\Models\ArsipProdukBaruItem; // Tambahan
+use App\Models\ArsipTindakanItem; // Tambahan
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // Tambahan untuk Transaction
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
+
 class ArsipController extends Controller
 {
+    use \App\Traits\SignsArsip;
+    use \App\Traits\HandlesApproval;
+
     /**
      * ===============================
      * INDEX – LIST + FILTER + SEARCH
@@ -27,7 +33,7 @@ class ArsipController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Arsip::with(['admin', 'department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems']);
+        $query = Arsip::with(['admin', 'department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems']);
 
         /* ================= FILTER LOGIC ================= */
         // Use a helper array to store filters that should apply to stats too
@@ -68,7 +74,11 @@ class ArsipController extends Controller
             $query->where('ket_process', $request->ket_process);
         }
         if ($request->filled('ba')) {
-            $query->where('ba', $request->ba);
+            if ($request->ba === 'Outstanding') {
+                $query->whereIn('ba', ['Pending', 'Process']);
+            } else {
+                $query->where('ba', $request->ba);
+            }
         }
         if ($request->filled('arsip')) {
             $query->where('arsip', $request->arsip);
@@ -116,6 +126,7 @@ class ArsipController extends Controller
             'Void' => (clone $statsQuery)->where('ket_process', 'Void')->count(),
             'ba_pending' => (clone $statsQuery)->where('ba', 'Pending')->count(),
             'ba_process' => (clone $statsQuery)->where('ba', 'Process')->count(),
+            'ba_outstanding' => (clone $statsQuery)->whereIn('ba', ['Pending', 'Process'])->count(),
             'ba_done' => (clone $statsQuery)->where('ba', 'Done')->count(),
             'arsip_pending' => (clone $statsQuery)->where('arsip', 'Pending')->count(),
             'arsip_process' => (clone $statsQuery)->where('arsip', 'Process')->count(),
@@ -129,6 +140,7 @@ class ArsipController extends Controller
             'units' => Unit::where('is_active', true)->orderBy('name')->get(),
             'users' => User::where('role', 'admin')->where('is_active', true)->orderBy('name')->get(),
             'superadmins' => User::where('role', 'superadmin')->where('is_active', true)->orderBy('name')->get(),
+            'approverUsers' => User::where('is_active', true)->orderBy('jabatan')->orderBy('name')->get(['id', 'name', 'jabatan', 'role']),
             'sort' => $sort,
             'dir' => $dir,
             'stats' => $stats
@@ -151,6 +163,13 @@ class ArsipController extends Controller
             'jenis_pengajuan' => 'required|string|max:30',
             'status' => 'required|in:Check,Process,Done,Reject,Void',
             'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
+            'tindakan' => 'nullable|string',
+            'catatan_it' => 'nullable|string',
+            'tindakan_it_rows' => 'nullable|array',
+            'tindakan_it_rows.*.tindakan_in' => 'nullable|string',
+            'tindakan_it_rows.*.ket_tindakan_in' => 'nullable|string',
+            'tindakan_it_rows.*.tindakan_out' => 'nullable|string',
+            'tindakan_it_rows.*.ket_tindakan_out' => 'nullable|string',
         ]);
 
         try {
@@ -206,6 +225,12 @@ class ArsipController extends Controller
                 'kategori' => $request->kategori ?: 'None', // Handle empty string
                 'pemohon' => $request->pemohon,
                 'keterangan' => $request->keterangan,
+                'tindakan' => $request->tindakan,
+                'catatan_it' => $request->catatan_it,
+                'tindakan_in' => null,
+                'ket_tindakan_in' => null,
+                'tindakan_out' => null,
+                'ket_tindakan_out' => null,
                 'no_doc' => $request->no_doc,
                 'no_transaksi' => $request->no_transaksi,
                 'jenis_pengajuan' => $request->jenis_pengajuan,
@@ -224,8 +249,17 @@ class ArsipController extends Controller
 
             // SIMPAN DETIL KE TABLE RELASI
             $this->saveDetailItems($arsip, $rawItems);
+            $this->syncProdukBaruItems($arsip, $rawItems['produk_baru'] ?? []);
+            $this->syncTindakanItems($arsip, $request);
+
+            // BANGUN RANTAI APPROVAL BERTINGKAT (approver dipilih per pengajuan)
+            $pengaju = \App\Models\User::find($arsip->admin_id);
+            if ($pengaju) {
+                $this->initApprovalChain($arsip, (array) $request->input('approvers', []), $pengaju);
+            }
 
             DB::commit();
+
 
             return redirect()->route('superadmin.arsip.index')->with('success', 'Data arsip berhasil ditambahkan');
 
@@ -243,21 +277,106 @@ class ArsipController extends Controller
      */
     public function edit($id)
     {
-        $arsip = Arsip::with([
-            'admin',
-            'department',
-            'manager',
-            'unit',
-            'adjustItems',
-            'mutasiItems',
-            'bundelItems',
-            'editor'
-        ])->findOrFail($id);
+        try {
+            $arsip = Arsip::with([
+                'admin',
+                'department',
+                'manager',
+                'unit',
+                'adjustItems',
+                'mutasiItems',
+                'bundelItems',
+                'produkBaruItems',
+                'tindakanItems',
+                'approvals.approver',
+                'editor'
+            ])->findOrFail($id);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $arsip
-        ]);
+            $tindakanRows = $arsip->tindakanItems
+                ? $arsip->tindakanItems->map(fn($row) => [
+                    'tindakan_in' => $row->tindakan_in,
+                    'ket_tindakan_in' => $row->ket_tindakan_in,
+                    'tindakan_out' => $row->tindakan_out,
+                    'ket_tindakan_out' => $row->ket_tindakan_out,
+                ])->values()->all()
+                : [];
+
+            return response()->json([
+                'status' => 'success',
+                'data' => array_merge(
+                    $arsip->toArray(),
+                    [
+                        'tindakan_it_rows' => $tindakanRows,
+                        'approval_started' => $arsip->approvalStarted(),
+                        'approval_map' => $arsip->approvals->whereNotNull('approver_id')
+                            ->pluck('approver_id', 'role_label'),
+                    ]
+                )
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengambil data arsip: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    /**
+     * ===============================
+     * DETAIL PRODUK BARU (barcode, tgl dibuat, last modify, change log)
+     * ===============================
+     */
+    public function produkDetail($id)
+    {
+        try {
+            $arsip = Arsip::with(['admin', 'department', 'unit', 'editor', 'produkBaruItems.editor'])
+                ->findOrFail($id);
+
+            $logs = \App\Models\AuditLog::with('user')
+                ->where('arsip_id', $arsip->id)
+                ->latest()
+                ->limit(50)
+                ->get()
+                ->map(fn($l) => [
+                    'action'     => $l->action,
+                    'user'       => $l->user->name ?? 'System',
+                    'changes'    => $l->new_values,
+                    'created_at' => optional($l->created_at)->format('d/m/Y H:i'),
+                ]);
+
+            return response()->json([
+                'status' => 'success',
+                'arsip'  => [
+                    'no_registrasi' => $arsip->no_registrasi,
+                    'no_doc'        => $arsip->no_doc,
+                    'pengaju'       => $arsip->admin->name ?? '-',
+                    'department'    => $arsip->department->name ?? '-',
+                    'unit'          => $arsip->unit->name ?? '-',
+                    'status'        => $arsip->status,
+                    'ket_process'   => $arsip->ket_process,
+                    'created_at'    => optional($arsip->created_at)->format('d/m/Y H:i'),
+                    'updated_at'    => optional($arsip->updated_at)->format('d/m/Y H:i'),
+                    'editor'        => $arsip->editor->name ?? null,
+                ],
+                'items'  => $arsip->produkBaruItems->map(fn($it) => [
+                    'product_code'    => $it->product_code,
+                    'product_name'    => $it->product_name,
+                    'barcode'         => $it->barcode,
+                    'tipe_produk'     => $it->tipe_produk,
+                    'kategori'        => $it->kategori,
+                    'satuan'          => $it->satuan,
+                    'status_approval' => $it->status_approval,
+                    'keterangan'      => $it->keterangan,
+                    'created_at'      => optional($it->created_at)->format('d/m/Y H:i'),
+                    'updated_at'      => optional($it->updated_at)->format('d/m/Y H:i'),
+                    'editor'          => $it->editor->name ?? null,
+                ]),
+                'logs'   => $logs,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -383,6 +502,9 @@ class ArsipController extends Controller
             'ba' => 'nullable',
             'arsip' => 'nullable',
             'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
+            'scan_final' => 'nullable|file|mimes:pdf|max:10240',
+            'tindakan' => 'nullable|string',
+            'catatan_it' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -393,6 +515,19 @@ class ArsipController extends Controller
                 $cleanName = preg_replace('/[^A-Za-z0-9\.\_\-]/', '_', $file->getClientOriginalName());
                 $filename = time() . '_' . $cleanName;
                 $file->storeAs('bukti_scan', $filename, ['disk' => 'public', 'visibility' => 'public']);
+            }
+
+            // ✅ SCAN FINAL (Tim IT / Superadmin)
+            $scanFinalName = $arsip->scan_final;
+            if ($request->hasFile('scan_final')) {
+                if ($scanFinalName) {
+                    Storage::disk('public')->delete('bukti_scan/' . $scanFinalName);
+                }
+                $fFinal = $request->file('scan_final');
+                $cleanFinal = preg_replace('/[^A-Za-z0-9\.\_\-]/', '_', $fFinal->getClientOriginalName());
+                $scanFinalName = 'FINAL_' . ($arsip->no_registrasi ?: 'NR') . '_' . time() . '_' . $cleanFinal;
+                $scanFinalName = preg_replace('/[^A-Za-z0-9\.\_\-]/', '_', $scanFinalName);
+                $fFinal->storeAs('bukti_scan', $scanFinalName, ['disk' => 'public', 'visibility' => 'public']);
             }
 
             // MAP STATUS UTAMA
@@ -439,9 +574,16 @@ class ArsipController extends Controller
                 'pemohon' => $request->pemohon,
                 'target_qty' => $request->target_qty ?? $arsip->target_qty,
                 'keterangan' => $request->keterangan ?? $arsip->keterangan,
+                'tindakan' => $request->tindakan,
+                'catatan_it' => $request->catatan_it,
+                'tindakan_in' => $request->tindakan_in,
+                'ket_tindakan_in' => $request->ket_tindakan_in,
+                'tindakan_out' => $request->tindakan_out,
+                'ket_tindakan_out' => $request->ket_tindakan_out,
                 'sub_jenis' => $request->sub_jenis ?? $arsip->sub_jenis,
                 'status' => $request->status,
                 'bukti_scan' => $filename,
+                'scan_final' => $scanFinalName,
                 'detail_barang' => $rawItems,
                 'total_qty_in' => $totalIn,
                 'total_qty_out' => $totalOut,
@@ -467,11 +609,22 @@ class ArsipController extends Controller
             $arsip->update($updateData);
 
             // 4. Sinkronisasi Tabel Relasi (Hapus Lama, Buat Baru)
+            // Produk Baru TIDAK di-delete: di-upsert agar barcode & tanggal dibuat tetap stabil.
             ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
             ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
             ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
+            ArsipTindakanItem::where('arsip_id', $arsip->id)->delete();
 
             $this->saveDetailItems($arsip, $rawItems);
+            $this->syncProdukBaruItems($arsip, $rawItems['produk_baru'] ?? []);
+            $this->syncTindakanItems($arsip, $request);
+
+            // Bangun ulang rantai approval HANYA jika belum berjalan
+            $arsip->load('approvals');
+            if (!$arsip->approvalStarted() && $request->has('approvers')) {
+                $pengaju = \App\Models\User::find($arsip->admin_id) ?? auth()->user();
+                $this->initApprovalChain($arsip, (array) $request->input('approvers', []), $pengaju);
+            }
 
             DB::commit();
         } catch (\Exception $e) {
@@ -529,8 +682,52 @@ class ArsipController extends Controller
      * HELPER: SAVE DETAIL ITEMS
      * ===============================
      */
+    private function syncTindakanItems(Arsip $arsip, Request $request)
+    {
+        $rows = $request->input('tindakan_it_rows', []);
+
+        if (!is_array($rows)) {
+            $rows = [];
+        }
+
+        if (empty($rows)) {
+            return;
+        }
+
+        // Catatan: jika tabel belum ada (belum migrate), request yang membuka modal edit
+        // akan tetap gagal di bagian `edit()` karena eager-load `tindakanItems`.
+        // Namun penyimpanan tetap dijaga agar tidak bikin error saat empty rows.
+
+        // Gunakan counter berurutan untuk sort_order. Key array ($i) berasal dari
+        // Date.now() di sisi JS (mis. 1779964800462) yang melebihi jangkauan INT.
+        $order = 0;
+        foreach ($rows as $row) {
+            if (!is_array($row)) continue;
+
+            $tIn = trim((string)($row['tindakan_in'] ?? ''));
+            $kIn = trim((string)($row['ket_tindakan_in'] ?? ''));
+            $tOut = trim((string)($row['tindakan_out'] ?? ''));
+            $kOut = trim((string)($row['ket_tindakan_out'] ?? ''));
+
+            if ($tIn === '' && $kIn === '' && $tOut === '' && $kOut === '') {
+                continue;
+            }
+
+            ArsipTindakanItem::create([
+                'arsip_id' => $arsip->id,
+                'tindakan_in' => $tIn !== '' ? $tIn : null,
+                'ket_tindakan_in' => $kIn !== '' ? $kIn : null,
+                'tindakan_out' => $tOut !== '' ? $tOut : null,
+                'ket_tindakan_out' => $kOut !== '' ? $kOut : null,
+                'sort_order' => $order++,
+            ]);
+        }
+    }
+
+
     private function saveDetailItems($arsip, $data)
     {
+
         // 1. MUTASI
         $saveMutasi = function ($items, $type) use ($arsip) {
             if (!is_array($items))
@@ -579,16 +776,76 @@ class ArsipController extends Controller
                 if (!$identifier)
                     continue;
 
-                ArsipAdjustItem::create([
+ArsipAdjustItem::create([
                     'arsip_id' => $arsip->id,
                     'product_code' => $item['product_code'] ?? null,
                     'product_name' => $item['nama_produk'] ?? $item['no_doc'] ?? '-',
                     'qty_in' => $item['qty_in'] ?? 0,
                     'qty_out' => $item['qty_out'] ?? 0,
                     'lot' => $item['lot'] ?? $item['keterangan'] ?? null,
+                    'location' => $item['location'] ?? null,
+                    // Draft Adjust extra fields (sudah ditambahkan via migration)
+                    'odoo' => $item['odoo'] ?? null,
+                    'fisik' => $item['fisik'] ?? null,
+                    'keterangan_in' => $item['keterangan_in'] ?? null,
+                    'keterangan_out' => $item['keterangan_out'] ?? null,
                 ]);
             }
         }
+
+        // Produk Baru ditangani terpisah via syncProdukBaruItems() (upsert).
+    }
+
+    /**
+     * Upsert item Produk Baru: pertahankan barcode & created_at untuk row lama,
+     * update row yang berubah, buat row baru, hapus row yang dihapus dari form.
+     */
+    private function syncProdukBaruItems(Arsip $arsip, $items)
+    {
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $keepIds = [];
+
+        foreach ($items as $row) {
+            if (!is_array($row)) continue;
+
+            $name = trim((string) ($row['nama_produk'] ?? ''));
+            $code = trim((string) ($row['product_code'] ?? ''));
+            if ($name === '' && $code === '') continue;
+
+            $payload = [
+                'product_code'    => $row['product_code'] ?? null,
+                'product_name'    => $row['nama_produk'] ?? '-',
+                'tipe_produk'     => $row['tipe_produk'] ?? null,
+                'kategori'        => $row['kategori'] ?? null,
+                'satuan'          => $row['satuan'] ?? null,
+                'status_approval' => $row['status_approval'] ?? 'Waiting List',
+                'keterangan'      => $row['keterangan'] ?? null,
+                'updated_by'      => auth()->id(),
+            ];
+
+            $existingId = !empty($row['id']) ? (int) $row['id'] : null;
+            $existing = $existingId
+                ? ArsipProdukBaruItem::where('arsip_id', $arsip->id)->find($existingId)
+                : null;
+
+            if ($existing) {
+                $existing->update($payload);
+                $keepIds[] = $existing->id;
+            } else {
+                $new = ArsipProdukBaruItem::create(array_merge($payload, [
+                    'arsip_id' => $arsip->id,
+                    'barcode'  => !empty($row['barcode']) ? $row['barcode'] : null,
+                ]));
+                $keepIds[] = $new->id;
+            }
+        }
+
+        ArsipProdukBaruItem::where('arsip_id', $arsip->id)
+            ->whereNotIn('id', $keepIds ?: [0])
+            ->delete();
     }
 
     /**
@@ -598,7 +855,14 @@ class ArsipController extends Controller
      */
     public function printDraft($id)
     {
-        $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems'])->findOrFail($id);
+        $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems', 'produkBaruItems', 'signatures.user'])->findOrFail($id);
+        $arsip->ensureVerifyToken();
+
+        // Produk Baru tidak punya draft dokumen — hanya form yang diproses superadmin.
+        if ($arsip->jenis_pengajuan === 'Produk_Baru') {
+            return redirect()->route('superadmin.arsip.index', ['jenis' => 'Produk_Baru'])
+                ->with('error', 'Pengajuan Produk Baru tidak memiliki draft dokumen.');
+        }
 
         if ($arsip->jenis_pengajuan === 'Bundel') {
             return view('print.arsip_draft_bundel', compact('arsip'));

@@ -403,6 +403,8 @@
                         </button>
                     </div>
                 </form>
+
+                @include('partials._signature_specimen', ['action' => route('superadmin.profile.signature')])
             </div>
         </div>
     </div>

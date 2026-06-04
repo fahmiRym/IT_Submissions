@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Enterprise Portal | IT Submissions</title>
+    <title>IT Submissions | V2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -238,17 +238,35 @@
         }
 
         @media (max-width: 850px) {
-            .glass-card { flex-direction: column; max-width: 500px; }
+            .glass-card { flex-direction: column; max-width: 500px; min-height: auto; }
             .side-info { display: none; }
-            .side-form { padding: 4rem 2.5rem; border-radius: 2.5rem; }
+            .side-form { padding: 3.5rem 2.25rem; border-radius: 2.5rem; }
         }
 
-        @media (max-width: 480px) {
-            body { padding: 10px; }
-            .side-form { padding: 3rem 1.5rem; }
-            .form-control, .btn-login { height: 55px; }
+        @media (max-width: 575.98px) {
+            body { padding: 14px; align-items: flex-start; padding-top: 24px; padding-bottom: 24px; }
+            .side-form { padding: 2.25rem 1.4rem; }
+            .form-control, .btn-login { height: 52px; }
             .glass-card { border-radius: 1.5rem; }
+            .input-box { margin-bottom: 1.15rem; }
+            .input-box i { left: 1rem; }
+            .form-control { padding-left: 3rem; font-size: 0.95rem; }
+            .btn-login { font-size: 0.95rem; }
+            h3.fw-800 { font-size: 1.35rem; }
         }
+
+        @media (max-width: 380px) {
+            body { padding: 10px; padding-top: 18px; padding-bottom: 18px; }
+            .side-form { padding: 1.85rem 1.05rem; }
+            .form-control, .btn-login { height: 48px; }
+            .form-control { padding-left: 2.75rem; font-size: 0.9rem; }
+            .input-box i { left: 0.85rem; font-size: 1rem !important; }
+            .password-toggle { right: 0.6rem; width: 38px; height: 38px; }
+            h3.fw-800 { font-size: 1.2rem; }
+        }
+
+        /* OG modal/preview should never exceed viewport */
+        .og-modal img { max-width: 100%; height: auto; }
     </style>
 
     <script>
@@ -374,7 +392,7 @@
 
         <div class="side-info">
             <div class="badge-new">
-                <span class="badge bg-primary me-2">New</span> IT Submissions v2
+                <span class="badge bg-primary me-2">New</span> IT Submissions V2
             </div>
             <!-- <h1 class="display-5 fw-800 mb-4 lh-sm"><br>
                 <span style="color: var(--accent);">IT Submission</span>

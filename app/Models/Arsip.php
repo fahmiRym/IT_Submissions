@@ -6,12 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 
+use App\Traits\HasAuditLogs;
+
 class Arsip extends Model
 {
+    use HasAuditLogs;
+
     protected $fillable = [
         'no_registrasi',
+        'verify_token',
         'jenis_pengajuan',
         'keterangan',
+        'tindakan',
+        'catatan_it',
+        'tindakan_in',
+        'ket_tindakan_in',
+        'tindakan_out',
+        'ket_tindakan_out',
         'ket_eror',
         'kategori',
         'tgl_pengajuan',
@@ -29,6 +40,7 @@ class Arsip extends Model
         'status',
         'bukti_scan',
         'scan_ba_accounting',
+        'scan_final',
         'total_qty_in',
         'total_qty_out',
         'detail_barang',
@@ -56,7 +68,7 @@ class Arsip extends Model
 
         // Hanya blokir jika sudah punya No Dokumen (Final)
         if ($arsip->status === 'Done' && !empty($arsip->no_doc)) {
-             throw new \Exception('Dokumen ini sudah diarsipkan dengan No Doc: ' . $arsip->no_doc);
+            throw new \Exception('Dokumen ini sudah diarsipkan dengan No Doc: ' . $arsip->no_doc);
         }
 
         return DB::transaction(function () use ($arsip, $sequenceNumber, $id) {
@@ -101,13 +113,42 @@ class Arsip extends Model
 
             $jenis = trim(str_replace(' ', '_', $arsip->jenis_pengajuan));
             switch ($jenis) {
-                case 'Mutasi_Produk': $prefixDoc = 'RPP'; $padding = 4; $useDay = false; break;
-                case 'Mutasi_Billet': $prefixDoc = 'DCB'; $padding = 5; $useDay = false; break;
-                case 'Adjust': $prefixDoc = 'DC'; $padding = 4; $useDay = true; break;
-                case 'Internal_Memo': $prefixDoc = 'IM'; $padding = 4; $useDay = false; break;
-                case 'Bundel': $prefixDoc = 'BDL'; $padding = 4; $useDay = false; break;
+                case 'Mutasi_Produk':
+                    $prefixDoc = 'RPP';
+                    $padding = 4;
+                    $useDay = false;
+                    break;
+                case 'Mutasi_Billet':
+                    $prefixDoc = 'DCB';
+                    $padding = 5;
+                    $useDay = false;
+                    break;
+                case 'Adjust':
+                    $prefixDoc = 'DC';
+                    $padding = 4;
+                    $useDay = true;
+                    break;
+                case 'Internal_Memo':
+                    $prefixDoc = 'IM';
+                    $padding = 4;
+                    $useDay = false;
+                    break;
+                case 'Bundel':
+                    $prefixDoc = 'BDL';
+                    $padding = 4;
+                    $useDay = false;
+                    break;
+                case 'Produk_Baru':
+                    $prefixDoc = 'PB';
+                    $padding = 4;
+                    $useDay = false;
+                    break;
                 case 'Cancel':
-                case 'Cancelled': $prefixDoc = 'CANCEL'; $padding = 4; $useDay = false; break;
+                case 'Cancelled':
+                    $prefixDoc = 'CANCEL';
+                    $padding = 4;
+                    $useDay = false;
+                    break;
                 default:
                     $prefixDoc = strtoupper(substr(str_replace(' ', '', $arsip->jenis_pengajuan), 0, 3));
                     $padding = 4;
@@ -246,6 +287,11 @@ class Arsip extends Model
 
     /* ===================== ITEMS ===================== */
 
+    public function tindakanItems()
+    {
+        return $this->hasMany(ArsipTindakanItem::class)->orderBy('sort_order');
+    }
+
     public function adjustItems()
     {
         return $this->hasMany(ArsipAdjustItem::class);
@@ -261,7 +307,88 @@ class Arsip extends Model
         return $this->hasMany(ArsipBundelItem::class);
     }
 
+    public function produkBaruItems()
+    {
+        return $this->hasMany(ArsipProdukBaruItem::class);
+    }
+
+    public function signatures()
+    {
+        return $this->hasMany(ArsipSignature::class);
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(ArsipApproval::class)->orderBy('step_order');
+    }
+
+    /**
+     * Tahap approval yang sedang aktif (boleh ditindak):
+     * step pending paling awal yang semua step sebelumnya sudah approved.
+     * null = belum ada chain, sudah selesai, atau ada yang rejected.
+     */
+    public function currentApproval()
+    {
+        $steps = $this->relationLoaded('approvals')
+            ? $this->approvals
+            : $this->approvals()->get();
+
+        foreach ($steps as $step) {
+            if ($step->status === 'rejected') {
+                return null;
+            }
+            if ($step->status === 'pending') {
+                return $step;
+            }
+        }
+        return null;
+    }
+
+    public function isFullyApproved(): bool
+    {
+        $steps = $this->relationLoaded('approvals') ? $this->approvals : $this->approvals()->get();
+        return $steps->isNotEmpty() && $steps->every(fn($s) => $s->status === 'approved');
+    }
+
+    public function hasApprovalChain(): bool
+    {
+        return ($this->relationLoaded('approvals') ? $this->approvals->count() : $this->approvals()->count()) > 0;
+    }
+
+    /**
+     * True jika rantai approval sudah mulai berjalan (ada selain Pemohon yg approved/rejected).
+     */
+    public function approvalStarted(): bool
+    {
+        $steps = $this->relationLoaded('approvals') ? $this->approvals : $this->approvals()->get();
+        return $steps->contains(fn($s) => $s->role_label !== 'Pemohon' && in_array($s->status, ['approved', 'rejected']));
+    }
+
+    /**
+     * Pastikan dokumen punya token verifikasi publik (untuk QR).
+     */
+    public function ensureVerifyToken(): string
+    {
+        if (empty($this->verify_token)) {
+            $this->verify_token = (string) \Illuminate\Support\Str::uuid();
+            $this->saveQuietly();
+        }
+        return $this->verify_token;
+    }
+
+    /**
+     * Ambil tanda tangan untuk satu peran (Pemohon / Accounting / Departemen IT).
+     */
+    public function signatureFor(string $roleLabel)
+    {
+        if ($this->relationLoaded('signatures')) {
+            return $this->signatures->firstWhere('role_label', $roleLabel);
+        }
+        return $this->signatures()->where('role_label', $roleLabel)->first();
+    }
+
     /* ===================== HELPERS ===================== */
+
 
     public function isAdjust()
     {
@@ -291,6 +418,11 @@ class Arsip extends Model
     public function isBundel()
     {
         return $this->jenis_pengajuan === 'Bundel';
+    }
+
+    public function isProdukBaru()
+    {
+        return $this->jenis_pengajuan === 'Produk_Baru';
     }
 
     /**
@@ -370,5 +502,37 @@ class Arsip extends Model
         return collect(preg_split("/\n\s*\n/", trim($this->no_transaksi)))
             ->map(fn($b) => array_values(array_filter(array_map('trim', preg_split("/\r\n|\n|\r/", $b)))))
             ->toArray();
+    }
+
+    /**
+     * Text for Copy All (No Doc + Sub Transaksi for Cancel, or No Doc + Transaksi)
+     */
+    public function getCopyAllTextAttribute(): string
+    {
+        $text = $this->no_doc ?? '';
+        if (!$this->no_transaksi)
+            return $text;
+
+        if (in_array(trim($this->jenis_pengajuan), ['Cancel', 'Cancelled'])) {
+            $indukPrefixes = ['MO', 'PO', 'SOF', 'LL'];
+            $lines = preg_split('/\r\n|\n|\r/', $this->no_transaksi);
+            $subLines = array_filter($lines, function ($line) use ($indukPrefixes) {
+                $trimmed = trim($line);
+                if ($trimmed === '')
+                    return false;
+                foreach ($indukPrefixes as $prefix) {
+                    if (str_starts_with($trimmed, $prefix))
+                        return false;
+                }
+                return true;
+            });
+            $subText = implode("\n", array_map('trim', array_values($subLines)));
+            if ($subText) {
+                $text .= ($text ? "\n" : "") . $subText;
+            }
+        } else {
+            $text .= ($text ? "\n" : "") . trim($this->no_transaksi);
+        }
+        return $text;
     }
 }

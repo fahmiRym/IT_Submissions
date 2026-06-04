@@ -14,6 +14,7 @@ use App\Models\Arsip;
 use App\Models\ArsipMutasiItem;
 use App\Models\ArsipAdjustItem;
 use App\Models\ArsipBundelItem;
+use App\Models\ArsipProdukBaruItem;
 use App\Models\Unit;
 use App\Models\Department;
 use App\Models\Manager;
@@ -22,12 +23,21 @@ use App\Models\Notification;
 
 class ArsipController extends Controller
 {
+    use \App\Traits\SignsArsip;
+    use \App\Traits\HandlesApproval;
+
     public function index(Request $request)
     {
-        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems']);
+        $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems', 'approvals']);
 
-        // Jika bukan Accounting atau Superadmin, batasi hanya data milik sendiri
-        if (!in_array(auth()->user()->role, ['accounting', 'superadmin'])) {
+        // Jika Accounting, izinkan data milik sendiri ATAU semua data Adjustment.
+        // Jika bukan Accounting dan bukan Superadmin, batasi hanya data milik sendiri.
+        if (auth()->user()->role === 'accounting') {
+            $query->where(function ($q) {
+                $q->where('admin_id', auth()->id())
+                  ->orWhere('jenis_pengajuan', 'Adjust');
+            });
+        } elseif (auth()->user()->role !== 'superadmin') {
             $query->where('admin_id', auth()->id());
         }
 
@@ -84,7 +94,12 @@ class ArsipController extends Controller
 
         /* ================= STATS (Dynamic) ================= */
         $statsQuery = Arsip::query();
-        if (!in_array(auth()->user()->role, ['accounting', 'superadmin'])) {
+        if (auth()->user()->role === 'accounting') {
+            $statsQuery->where(function ($q) {
+                $q->where('admin_id', auth()->id())
+                  ->orWhere('jenis_pengajuan', 'Adjust');
+            });
+        } elseif (auth()->user()->role !== 'superadmin') {
             $statsQuery->where('admin_id', auth()->id());
         }
         foreach ($filters as $key => $value) {
@@ -134,6 +149,9 @@ class ArsipController extends Controller
             'units' => Unit::where('is_active', true)->orderBy('name')->get(),
             'departments' => Department::where('is_active', true)->orderBy('name')->get(),
             'managers' => Manager::where('is_active', true)->orderBy('name')->get(),
+            'approverUsers' => \App\Models\User::where('is_active', true)
+                ->where('id', '!=', auth()->id())
+                ->orderBy('jabatan')->orderBy('name')->get(['id', 'name', 'jabatan', 'role']),
             'sort' => $sort,
             'dir' => $dir,
             'stats' => $stats
@@ -150,15 +168,34 @@ class ArsipController extends Controller
             'adjustItems',
             'mutasiItems',
             'bundelItems',
+            'produkBaruItems',
+            'approvals.approver',
             'department',
             'unit',
             'manager'
         ])->findOrFail($id);
 
+        // Security check for non-superadmins
+        if (auth()->user()->role !== 'superadmin') {
+            if (auth()->user()->role === 'accounting') {
+                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ($arsip->admin_id !== auth()->id()) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
+        }
+
         // 2. Kembalikan JSON agar bisa dibaca JavaScript
         return response()->json([
             'status' => 'success',
-            'data' => $arsip
+            'data' => array_merge($arsip->toArray(), [
+                'approval_started' => $arsip->approvalStarted(),
+                'approval_map' => $arsip->approvals->whereNotNull('approver_id')
+                    ->pluck('approver_id', 'role_label'),
+            ])
         ]);
     }
 
@@ -222,7 +259,7 @@ class ArsipController extends Controller
                 'kategori' => $request->kategori ?? 'None',
                 'pemohon' => $request->pemohon,
                 'keterangan' => $request->keterangan,
-                'detail_barang' => $request->only(['mutasi_asal', 'mutasi_tujuan', 'bundel', 'adjust']),
+                'detail_barang' => $request->only(['mutasi_asal', 'mutasi_tujuan', 'bundel', 'adjust', 'produk_baru']),
                 'total_qty_in' => $totalIn,
                 'total_qty_out' => $totalOut,
                 'bukti_scan' => $filename,
@@ -234,6 +271,10 @@ class ArsipController extends Controller
 
             // E. SIMPAN DETAIL (Gunakan Helper Lokal)
             $this->saveDetailItems($arsip, $request->all());
+            $this->syncProdukBaruItems($arsip, $request->input('produk_baru', []));
+
+            // E2. BANGUN RANTAI APPROVAL BERTINGKAT (approver dipilih per pengajuan)
+            $this->initApprovalChain($arsip, (array) $request->input('approvers', []), auth()->user());
 
             // F. NOTIFIKASI KE SUPERADMIN
             // Cari salah satu user superadmin untuk mengisi user_id (karena constraint NOT NULL)
@@ -264,6 +305,19 @@ class ArsipController extends Controller
     public function update(Request $request, $id)
     {
         $arsip = Arsip::findOrFail($id);
+
+        // Security check for non-superadmins
+        if (auth()->user()->role !== 'superadmin') {
+            if (auth()->user()->role === 'accounting') {
+                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ($arsip->admin_id !== auth()->id()) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
+        }
 
         if (in_array($arsip->status, ['Done', 'Reject', 'Void']) || in_array($arsip->ket_process, ['Done', 'Void'])) {
             if ($request->ajax())
@@ -335,6 +389,15 @@ class ArsipController extends Controller
 
             // Simpan Item Baru
             $this->saveDetailItems($arsip, $dataToProcess);
+            // Produk Baru: upsert (jaga barcode & tanggal dibuat)
+            $this->syncProdukBaruItems($arsip, $dataToProcess['produk_baru'] ?? []);
+
+            // Bangun ulang rantai approval HANYA jika belum berjalan
+            $arsip->load('approvals');
+            if (!$arsip->approvalStarted() && $request->has('approvers')) {
+                $pengaju = \App\Models\User::find($arsip->admin_id) ?? auth()->user();
+                $this->initApprovalChain($arsip, (array) $request->input('approvers', []), $pengaju);
+            }
 
             DB::commit();
 
@@ -421,9 +484,127 @@ class ArsipController extends Controller
                     'qty_in' => $item['qty_in'] ?? 0,
                     'qty_out' => $item['qty_out'] ?? 0,
                     'lot' => $item['lot'] ?? $item['keterangan'] ?? null,
+                    'location' => $item['location'] ?? null,
+                    'odoo' => $item['odoo'] ?? null,
+                    'fisik' => $item['fisik'] ?? null,
+                    'keterangan_in' => $item['keterangan_in'] ?? null,
+                    'keterangan_out' => $item['keterangan_out'] ?? null,
                 ]);
             }
         }
+
+        // Produk Baru ditangani terpisah via syncProdukBaruItems() (upsert).
+    }
+
+    /**
+     * Upsert item Produk Baru: pertahankan barcode & created_at untuk row lama,
+     * update yang berubah, buat row baru, hapus row yang dihapus dari form.
+     */
+    private function syncProdukBaruItems($arsip, $items)
+    {
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $keepIds = [];
+
+        foreach ($items as $row) {
+            if (!is_array($row)) continue;
+
+            $name = trim((string) ($row['nama_produk'] ?? ''));
+            $code = trim((string) ($row['product_code'] ?? ''));
+            if ($name === '' && $code === '') continue;
+
+            $payload = [
+                'product_code'    => $row['product_code'] ?? null,
+                'product_name'    => $row['nama_produk'] ?? '-',
+                'tipe_produk'     => $row['tipe_produk'] ?? null,
+                'kategori'        => $row['kategori'] ?? null,
+                'satuan'          => $row['satuan'] ?? null,
+                'status_approval' => $row['status_approval'] ?? 'Waiting List',
+                'keterangan'      => $row['keterangan'] ?? null,
+                'updated_by'      => auth()->id(),
+            ];
+
+            $existingId = !empty($row['id']) ? (int) $row['id'] : null;
+            $existing = $existingId
+                ? ArsipProdukBaruItem::where('arsip_id', $arsip->id)->find($existingId)
+                : null;
+
+            if ($existing) {
+                $existing->update($payload);
+                $keepIds[] = $existing->id;
+            } else {
+                $new = ArsipProdukBaruItem::create(array_merge($payload, [
+                    'arsip_id' => $arsip->id,
+                    'barcode'  => !empty($row['barcode']) ? $row['barcode'] : null,
+                ]));
+                $keepIds[] = $new->id;
+            }
+        }
+
+        ArsipProdukBaruItem::where('arsip_id', $arsip->id)
+            ->whereNotIn('id', $keepIds ?: [0])
+            ->delete();
+    }
+
+    // ========================================================================
+    // DETAIL PRODUK BARU (barcode, tgl dibuat, last modify, change log)
+    // ========================================================================
+    public function produkDetail($id)
+    {
+        $arsip = Arsip::with(['admin', 'department', 'unit', 'produkBaruItems'])->findOrFail($id);
+
+        // Security check non-superadmin
+        if (auth()->user()->role !== 'superadmin') {
+            if (auth()->user()->role === 'accounting') {
+                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
+                    abort(403, 'Unauthorized action.');
+                }
+            } elseif ($arsip->admin_id !== auth()->id()) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
+
+        $logs = \App\Models\AuditLog::with('user')
+            ->where('arsip_id', $arsip->id)
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map(fn($l) => [
+                'action'     => $l->action,
+                'user'       => $l->user->name ?? 'System',
+                'changes'    => $l->new_values,
+                'created_at' => optional($l->created_at)->format('d/m/Y H:i'),
+            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'arsip'  => [
+                'no_registrasi' => $arsip->no_registrasi,
+                'no_doc'        => $arsip->no_doc,
+                'pengaju'       => $arsip->admin->name ?? '-',
+                'department'    => $arsip->department->name ?? '-',
+                'unit'          => $arsip->unit->name ?? '-',
+                'status'        => $arsip->status,
+                'ket_process'   => $arsip->ket_process,
+                'created_at'    => optional($arsip->created_at)->format('d/m/Y H:i'),
+                'updated_at'    => optional($arsip->updated_at)->format('d/m/Y H:i'),
+            ],
+            'items'  => $arsip->produkBaruItems->map(fn($it) => [
+                'product_code'    => $it->product_code,
+                'product_name'    => $it->product_name,
+                'barcode'         => $it->barcode,
+                'tipe_produk'     => $it->tipe_produk,
+                'kategori'        => $it->kategori,
+                'satuan'          => $it->satuan,
+                'status_approval' => $it->status_approval,
+                'keterangan'      => $it->keterangan,
+                'created_at'      => optional($it->created_at)->format('d/m/Y H:i'),
+                'updated_at'      => optional($it->updated_at)->format('d/m/Y H:i'),
+            ]),
+            'logs'   => $logs,
+        ]);
     }
 
     // ========================================================================
@@ -431,7 +612,28 @@ class ArsipController extends Controller
     // ========================================================================
     public function printDraft($id)
     {
-        $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems'])->findOrFail($id);
+        $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems', 'produkBaruItems', 'signatures.user'])->findOrFail($id);
+
+        // Security check for non-superadmins
+        if (auth()->user()->role !== 'superadmin') {
+            if (auth()->user()->role === 'accounting') {
+                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ($arsip->admin_id !== auth()->id()) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
+        }
+
+        $arsip->ensureVerifyToken();
+
+        // Produk Baru tidak punya draft dokumen — hanya form yang diproses superadmin.
+        if ($arsip->jenis_pengajuan === 'Produk_Baru') {
+            return redirect()->route('admin.arsip.index', ['jenis' => 'Produk_Baru'])
+                ->with('error', 'Pengajuan Produk Baru tidak memiliki draft dokumen.');
+        }
 
         if ($arsip->jenis_pengajuan === 'Bundel') {
             return view('print.arsip_draft_bundel', compact('arsip'));
@@ -447,6 +649,19 @@ class ArsipController extends Controller
     {
         // Hanya untuk jenis Adjust
         $arsip = Arsip::findOrFail($id);
+
+        // Security check for non-superadmins
+        if (auth()->user()->role !== 'superadmin') {
+            if (auth()->user()->role === 'accounting') {
+                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ($arsip->admin_id !== auth()->id()) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
+        }
 
         if ($arsip->jenis_pengajuan !== 'Adjust') {
             return back()->with('error', 'Fitur re-upload BA hanya tersedia untuk pengajuan Adjustment.');
