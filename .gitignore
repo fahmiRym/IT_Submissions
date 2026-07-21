@@ -10,6 +10,8 @@
 /bootstrap/cache/*.php
 .env
 .env.*
+!.env.example
+!.env.deploy.example
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
@@ -38,6 +40,13 @@ storage/framework/views/*
 # ===============================
 docker-compose.override.yml
 .env.docker
+
+# ===============================
+# DEPLOY SECRETS (credentials + SSH keys)
+# ===============================
+.env.deploy
+.deploy_keys/
+!.deploy_keys/.gitkeep
 
 # ===============================
 # CLOUDFARE

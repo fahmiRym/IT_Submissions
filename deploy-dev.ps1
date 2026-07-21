@@ -1,24 +1,72 @@
-# Deploy e_arsip ke Dev Server (192.168.11.199)
+# ============================================================
+# Deploy e_arsip ke Dev Server via SSH KEY (no password in file)
+# ============================================================
+# Prerequisite:
+#   1. Copy `.env.deploy.example` -> `.env.deploy` (gitignored)
+#   2. Isi credential asli di `.env.deploy`
+#   3. Install public key ke server (1x saja):
+#      ssh-copy-id -i .deploy_keys/deploy_key.pub root@192.168.11.199
+#      (butuh password sekali, setelah itu key auth aktif)
+#   4. Kosongkan DEV_FALLBACK_PASSWORD di `.env.deploy` setelah key jalan
+#
+# Usage: .\deploy-dev.ps1
+# ============================================================
 
 $ErrorActionPreference = 'Continue'
 
-$DEV_HOST = '192.168.11.199'
-$DEV_USER = 'root'
-$DEV_PASS = 'bismillah@'
-$projectDir = '/root/it_submissions'
-$stamp = Get-Date -Format 'yyyyMMddHHmmss'
+# ---- Load .env.deploy ----
+$envFile = Join-Path $PSScriptRoot '.env.deploy'
+if (!(Test-Path $envFile)) {
+    Write-Host "ERROR: File .env.deploy tidak ada. Copy dari .env.deploy.example dulu." -ForegroundColor Red
+    exit 1
+}
+$cfg = @{}
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match '^\s*#') { return }
+    if ($_ -match '^\s*$') { return }
+    if ($_ -match '^([^=]+)=(.*)$') { $cfg[$matches[1].Trim()] = $matches[2].Trim() }
+}
 
+$DEV_HOST     = $cfg['DEV_HOST']
+$DEV_USER     = $cfg['DEV_USER']
+$DEV_KEY      = Join-Path $PSScriptRoot $cfg['DEV_SSH_KEY']
+$projectDir   = $cfg['DEV_PROJECT_DIR']
+$dockerFile   = $cfg['DOCKER_COMPOSE_FILE']
+$dockerSvc    = $cfg['DOCKER_SERVICES']
+$fallbackPwd  = $cfg['DEV_FALLBACK_PASSWORD']
+$stamp        = Get-Date -Format 'yyyyMMddHHmmss'
+
+# ---- Auth method detection ----
+$useKey = (Test-Path $DEV_KEY) -and [string]::IsNullOrEmpty($fallbackPwd)
+if ($useKey) {
+    Write-Host "[AUTH] SSH KEY ($DEV_KEY)" -ForegroundColor Green
+} elseif ($fallbackPwd) {
+    Write-Host "[AUTH] PASSWORD fallback (setup SSH key untuk production)" -ForegroundColor Yellow
+} else {
+    Write-Host "ERROR: Tidak ada SSH key valid + tidak ada fallback password. Cek .env.deploy." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "==> Target: $DEV_USER@$DEV_HOST  dir: $projectDir" -ForegroundColor Cyan
+Write-Host ''
+
+# ---- SSH runner ----
 function Run-Ssh($title, $cmd) {
     Write-Host "==> $title" -ForegroundColor Cyan
-    & plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "bash -lc `"$cmd`""
+    if ($useKey) {
+        & ssh -i "$DEV_KEY" -o StrictHostKeyChecking=no -o BatchMode=yes "$DEV_USER@$DEV_HOST" "bash -lc `"$cmd`""
+    } else {
+        & plink -ssh -batch -pw "$fallbackPwd" "$DEV_USER@$DEV_HOST" "bash -lc `"$cmd`""
+    }
     Write-Host ''
 }
 
-Write-Host "==> Target: $DEV_USER@$DEV_HOST  dir: $projectDir" -ForegroundColor Green
-Write-Host ''
+# ============================================================
+# DEPLOY STEPS
+# ============================================================
 
 Run-Ssh '1) Pre-deploy info' `
-    "cd $projectDir && git rev-parse --short HEAD && (which php || echo 'php NOT FOUND') && (which composer || echo 'composer NOT FOUND')"
+    "cd $projectDir && git rev-parse --short HEAD && (which php || echo 'php NOT FOUND') && (which composer || echo 'composer NOT FOUND') && (which docker || echo 'docker NOT INSTALLED')"
 
 Run-Ssh '2) Backup .env' `
     "cd $projectDir && cp .env .env.bak.$stamp && ls -la .env.bak.$stamp"
@@ -50,4 +98,33 @@ Run-Ssh '10) Permission' `
 Run-Ssh '11) migrate:status' `
     "cd $projectDir && php artisan migrate:status 2>&1 | tail -12"
 
+# ============================================================
+# DOCKER RESTART (baru)
+# ============================================================
+
+if ($dockerFile) {
+    if ($dockerSvc) {
+        $svcList = $dockerSvc -replace ',', ' '
+        Run-Ssh "12) Restart Docker services: $dockerSvc" `
+            "cd $projectDir && (docker compose -f $dockerFile restart $svcList 2>&1 || docker-compose -f $dockerFile restart $svcList 2>&1) | tail -15"
+    } else {
+        Run-Ssh '12) Restart ALL Docker services di compose' `
+            "cd $projectDir && (docker compose -f $dockerFile restart 2>&1 || docker-compose -f $dockerFile restart 2>&1) | tail -15"
+    }
+
+    Run-Ssh '13) Docker ps setelah restart' `
+        "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' 2>&1 | head -15"
+} else {
+    Write-Host "==> Docker restart SKIPPED (DOCKER_COMPOSE_FILE kosong di .env.deploy)" -ForegroundColor Yellow
+    Write-Host ''
+}
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+Run-Ssh '14) Health check' `
+    "curl -s -o /dev/null -w 'GET /api/mobile/version: HTTP %{http_code}\n' http://localhost/api/mobile/version?app=itsubmissions 2>&1"
+
 Write-Host '==================== DEPLOY DEV DONE ====================' -ForegroundColor Green
+Write-Host "Timestamp: $stamp" -ForegroundColor DarkGray

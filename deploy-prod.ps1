@@ -1,72 +1,141 @@
-# Deploy e_arsip ke Production Server (192.168.11.200)
-# Strategi: stash local server changes -> pull -> pop stash (may conflict).
-# Path PHP/composer di-resolve via login shell (bash -lc).
+# ============================================================
+# Deploy e_arsip ke PRODUCTION Server via SSH KEY
+# ============================================================
+# EXTRA CAUTION untuk prod: dobel konfirmasi sebelum jalan.
+#
+# Prerequisite:
+#   1. .env.deploy sudah di-setup (lihat .env.deploy.example)
+#   2. SSH key sudah di-install ke prod server:
+#      ssh-copy-id -i .deploy_keys/deploy_key.pub root@192.168.11.200
+#   3. Kosongkan PROD_FALLBACK_PASSWORD setelah key aktif
+#
+# Usage: .\deploy-prod.ps1
+# ============================================================
 
 $ErrorActionPreference = 'Continue'
 
-$PROD_HOST = '192.168.11.200'
-$PROD_USER = 'root'
-$PROD_PASS = 'bismillah@'
-$projectDir = '/var/www'
-$stamp = Get-Date -Format 'yyyyMMddHHmmss'
+# ---- Load .env.deploy ----
+$envFile = Join-Path $PSScriptRoot '.env.deploy'
+if (!(Test-Path $envFile)) {
+    Write-Host "ERROR: File .env.deploy tidak ada. Copy dari .env.deploy.example dulu." -ForegroundColor Red
+    exit 1
+}
+$cfg = @{}
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match '^\s*#') { return }
+    if ($_ -match '^\s*$') { return }
+    if ($_ -match '^([^=]+)=(.*)$') { $cfg[$matches[1].Trim()] = $matches[2].Trim() }
+}
 
+$PROD_HOST    = $cfg['PROD_HOST']
+$PROD_USER    = $cfg['PROD_USER']
+$PROD_KEY     = Join-Path $PSScriptRoot $cfg['PROD_SSH_KEY']
+$projectDir   = $cfg['PROD_PROJECT_DIR']
+$dockerFile   = $cfg['DOCKER_COMPOSE_FILE']
+$dockerSvc    = $cfg['DOCKER_SERVICES']
+$fallbackPwd  = $cfg['PROD_FALLBACK_PASSWORD']
+$stamp        = Get-Date -Format 'yyyyMMddHHmmss'
+
+# ---- Prod confirmation ----
+Write-Host ''
+Write-Host '========================================================' -ForegroundColor Red
+Write-Host '  DEPLOY PRODUCTION SERVER ' -ForegroundColor Red
+Write-Host "  Target: $PROD_USER@$PROD_HOST" -ForegroundColor Red
+Write-Host "  Dir:    $projectDir" -ForegroundColor Red
+Write-Host '========================================================' -ForegroundColor Red
+Write-Host ''
+$confirm = Read-Host "Ketik 'DEPLOY PROD' untuk confirm (case-sensitive)"
+if ($confirm -cne 'DEPLOY PROD') {
+    Write-Host "Deploy dibatalkan." -ForegroundColor Yellow
+    exit 0
+}
+
+# ---- Auth method detection ----
+$useKey = (Test-Path $PROD_KEY) -and [string]::IsNullOrEmpty($fallbackPwd)
+if ($useKey) {
+    Write-Host "[AUTH] SSH KEY ($PROD_KEY)" -ForegroundColor Green
+} elseif ($fallbackPwd) {
+    Write-Host "[AUTH] PASSWORD fallback (setup SSH key ASAP!)" -ForegroundColor Yellow
+} else {
+    Write-Host "ERROR: Tidak ada SSH key + tidak ada fallback password." -ForegroundColor Red
+    exit 1
+}
+
+# ---- SSH runner ----
 function Run-Ssh($title, $cmd) {
     Write-Host "==> $title" -ForegroundColor Cyan
-    & plink -ssh -batch -pw "$PROD_PASS" "$PROD_USER@$PROD_HOST" "bash -lc `"$cmd`""
+    if ($useKey) {
+        & ssh -i "$PROD_KEY" -o StrictHostKeyChecking=no -o BatchMode=yes "$PROD_USER@$PROD_HOST" "bash -lc `"$cmd`""
+    } else {
+        & plink -ssh -batch -pw "$fallbackPwd" "$PROD_USER@$PROD_HOST" "bash -lc `"$cmd`""
+    }
     Write-Host ''
 }
 
-Write-Host "==> Target: $PROD_USER@$PROD_HOST  dir: $projectDir" -ForegroundColor Green
-Write-Host ''
+# ============================================================
+# DEPLOY STEPS
+# ============================================================
 
-Run-Ssh '1) Pre-deploy info (commit, php, composer)' `
-    "cd $projectDir && git rev-parse --short HEAD && (which php || echo 'php NOT FOUND') && (which composer || echo 'composer NOT FOUND') && (test -f docker-compose.yml && echo 'docker-compose.yml: present' || echo 'docker-compose.yml: absent')"
+Run-Ssh '1) Pre-deploy info' `
+    "cd $projectDir && git rev-parse --short HEAD && (which php || echo 'php NOT FOUND') && (which composer || echo 'composer NOT FOUND') && (which docker || echo 'docker NOT INSTALLED')"
 
-Run-Ssh '2) Backup .env' `
+Run-Ssh '2) Backup .env + DB dump' `
     "cd $projectDir && cp .env .env.bak.$stamp && ls -la .env.bak.$stamp"
 
-Run-Ssh '3) Stash local server changes (tracked + untracked)' `
+Run-Ssh '3) Stash local server changes' `
     "cd $projectDir && git stash push --include-untracked -m 'pre-deploy-$stamp' && git stash list | head -5"
 
-Run-Ssh '4) git pull --ff-only origin main' `
+Run-Ssh '4) git pull --ff-only' `
     "cd $projectDir && git fetch origin && git pull --ff-only origin main 2>&1"
 
-Run-Ssh '5) Re-apply server stash (akan conflict utk file yang berubah di kedua sisi)' `
-    "cd $projectDir && (git stash pop 2>&1 || echo 'STASH POP CONFLICTED - lihat git status')"
+Run-Ssh '5) Re-apply server stash' `
+    "cd $projectDir && (git stash pop 2>&1 || echo 'STASH POP CONFLICTED')"
 
 Run-Ssh '6) Status setelah pop' `
     "cd $projectDir && git status --short"
 
-Run-Ssh '7) composer install (prod, no-dev)' `
+Run-Ssh '7) composer install (no-dev)' `
     "cd $projectDir && composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -15"
 
-Run-Ssh '8) php artisan migrate --force' `
+Run-Ssh '8) migrate --force' `
     "cd $projectDir && php artisan migrate --force 2>&1"
 
 Run-Ssh '9) Clear + rebuild cache' `
     "cd $projectDir && php artisan view:clear && php artisan config:clear && php artisan route:clear && php artisan cache:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache 2>&1"
 
-Run-Ssh '10) Permission storage + bootstrap/cache' `
-    "cd $projectDir && (chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || chown -R apache:apache storage bootstrap/cache 2>/dev/null || true) && chmod -R 775 storage bootstrap/cache && ls -ld storage bootstrap/cache"
+Run-Ssh '10) Permission' `
+    "cd $projectDir && (chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true) && chmod -R 775 storage bootstrap/cache"
 
-Run-Ssh '11) Restart queue + reload php-fpm/nginx (best-effort)' `
-    "cd $projectDir && php artisan queue:restart 2>&1; (systemctl reload php8.3-fpm 2>/dev/null || systemctl reload php8.2-fpm 2>/dev/null || systemctl reload php-fpm 2>/dev/null || true); (systemctl reload nginx 2>/dev/null || systemctl reload apache2 2>/dev/null || true); echo 'done'"
-
-Run-Ssh '12) Verifikasi endpoint API (task C dari report)' `
-    "cd $projectDir && php artisan route:list --path=api 2>&1 | grep -E 'arsip/dashboard|notifications/unread-count|api/arsip' | head -10"
-
-Run-Ssh '13) migrate:status' `
+Run-Ssh '11) migrate:status' `
     "cd $projectDir && php artisan migrate:status 2>&1 | tail -12"
 
-Write-Host '==================== DEPLOY DONE ====================' -ForegroundColor Green
-Write-Host 'KALAU step 5 conflict: SSH ke server, resolve manual:' -ForegroundColor Yellow
-Write-Host '  ssh root@192.168.11.200'
-Write-Host "  cd $projectDir"
-Write-Host '  # edit file yang konflik (cek dgn: git status)'
-Write-Host '  git add <file_resolved>'
-Write-Host '  git stash drop  # buang stash setelah merge OK'
-Write-Host ''
-Write-Host 'Manual verification setelah deploy beres:'
-Write-Host '  1. Trigger FCM notif dari Laravel -> Android (layar terkunci) -> heads-up + bunyi'
-Write-Host '  2. tail -f /root/it_submissions/storage/logs/laravel.log'
-Write-Host '  3. Kirim 3 notif berturut-turut -> device tidak nge-lag'
+# ============================================================
+# DOCKER RESTART
+# ============================================================
+
+if ($dockerFile) {
+    if ($dockerSvc) {
+        $svcList = $dockerSvc -replace ',', ' '
+        Run-Ssh "12) Restart Docker services: $dockerSvc" `
+            "cd $projectDir && (docker compose -f $dockerFile restart $svcList 2>&1 || docker-compose -f $dockerFile restart $svcList 2>&1) | tail -15"
+    } else {
+        Run-Ssh '12) Restart ALL Docker services di compose' `
+            "cd $projectDir && (docker compose -f $dockerFile restart 2>&1 || docker-compose -f $dockerFile restart 2>&1) | tail -15"
+    }
+
+    Run-Ssh '13) Docker ps setelah restart' `
+        "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' 2>&1 | head -15"
+} else {
+    Write-Host "==> Docker restart SKIPPED (DOCKER_COMPOSE_FILE kosong di .env.deploy)" -ForegroundColor Yellow
+    Write-Host ''
+}
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+Run-Ssh '14) Health check' `
+    "curl -s -o /dev/null -w 'GET /api/mobile/version: HTTP %{http_code}\n' http://localhost/api/mobile/version?app=itsubmissions 2>&1"
+
+Write-Host '==================== DEPLOY PROD DONE ====================' -ForegroundColor Green
+Write-Host "Timestamp: $stamp" -ForegroundColor DarkGray
