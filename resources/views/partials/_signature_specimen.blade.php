@@ -1,94 +1,60 @@
-{{-- Specimen Tanda Tangan Digital. Pakai: @include('partials._signature_specimen', ['action' => route('admin.profile.signature')]) --}}
-<div class="card border-0 shadow-sm rounded-4 mt-4">
-    <div class="card-body p-4">
-        <h6 class="fw-bold text-primary mb-1"><i class="bi bi-pen me-2"></i>Tanda Tangan Digital (Specimen)</h6>
-        <p class="text-muted small mb-3">Gambar tanda tangan di kotak, atau unggah file PNG/JPG. Specimen ini distempel ke dokumen saat Anda menandatangani.</p>
+{{-- TTD Digital: sekarang otomatis via QR. Tidak butuh upload/gambar specimen.
+     Partial ini di-include di Profil — hanya tampilkan info + preview QR. --}}
+@php
+    $previewQrDataUri = \App\Services\QrSignatureService::renderTextQrDataUri(
+        'https://it-submissions/verify?preview-' . (auth()->user()->id ?? 'x'),
+        180
+    );
+@endphp
 
-        <div class="row g-4">
-            <div class="col-md-5">
-                <label class="form-label small fw-bold text-secondary">Specimen Saat Ini</label>
-                <div class="border rounded-3 d-flex align-items-center justify-content-center bg-light" style="height: 150px;">
-                    @if(auth()->user()->signature_path)
-                        <img src="{{ auth()->user()->signatureUrl() }}" alt="Specimen TTD" style="max-height: 130px; max-width: 100%; object-fit: contain;">
-                    @else
-                        <span class="text-muted small fst-italic">Belum ada tanda tangan.</span>
-                    @endif
+<div class="card border-0 shadow-sm rounded-4 mt-4 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="p-4 text-white" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-white bg-opacity-25 rounded-3 p-2" style="backdrop-filter: blur(8px);">
+                    <i class="bi bi-qr-code-scan fs-3"></i>
                 </div>
-                @if(auth()->user()->signature_path)
-                    <form method="POST" action="{{ $action }}" class="mt-2" onsubmit="return confirm('Hapus tanda tangan digital?')">
-                        @csrf
-                        <input type="hidden" name="remove_signature" value="1">
-                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-trash me-1"></i>Hapus</button>
-                    </form>
-                @endif
+                <div>
+                    <h5 class="fw-bold mb-0">Tanda Tangan Digital (QR-Based)</h5>
+                    <small class="opacity-75">TTD otomatis menggunakan QR Code unik per dokumen. Tidak perlu upload gambar.</small>
+                </div>
             </div>
+        </div>
 
-            <div class="col-md-7">
-                <form method="POST" action="{{ $action }}" enctype="multipart/form-data" id="formSignature">
-                    @csrf
-                    <ul class="nav nav-pills mb-2" id="sigTab" style="gap:6px;">
-                        <li class="nav-item"><button class="nav-link active py-1 px-3" type="button" data-bs-toggle="pill" data-bs-target="#sigDraw">Gambar</button></li>
-                        <li class="nav-item"><button class="nav-link py-1 px-3" type="button" data-bs-toggle="pill" data-bs-target="#sigUpload">Upload</button></li>
-                    </ul>
-                    <div class="tab-content">
-                        <div class="tab-pane fade show active" id="sigDraw">
-                            <div class="border rounded-3 bg-white" style="touch-action: none;">
-                                <canvas id="sigCanvas" style="width:100%; height:150px; display:block;"></canvas>
-                            </div>
-                            <div class="d-flex gap-2 mt-2">
-                                <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" id="sigClear"><i class="bi bi-eraser me-1"></i>Bersihkan</button>
-                                <input type="hidden" name="signature_data" id="signatureData">
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="sigUpload">
-                            <label class="form-label small fw-bold text-secondary">File Tanda Tangan (PNG/JPG, maks 2MB)</label>
-                            <input type="file" name="signature_file" accept="image/png,image/jpeg" class="form-control">
-                            <small class="text-muted">Disarankan PNG transparan agar rapi saat distempel.</small>
+        <div class="p-4">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-4 text-center">
+                    <div class="border rounded-4 p-3 bg-light d-inline-block">
+                        @if($previewQrDataUri)
+                            <img src="{{ $previewQrDataUri }}" alt="Preview QR" style="width: 140px; height: 140px;">
+                        @else
+                            <div style="width:140px;height:140px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#94a3b8;">QR Preview</div>
+                        @endif
+                    </div>
+                    <div class="text-muted small mt-2"><i class="bi bi-info-circle me-1"></i>Contoh QR — yang asli ter-generate per dokumen.</div>
+                </div>
+                <div class="col-md-8">
+                    <h6 class="fw-bold text-success mb-3"><i class="bi bi-check-circle-fill me-1"></i>Cara Kerja TTD Digital Baru</h6>
+                    <ol class="small text-secondary" style="line-height:1.7;">
+                        <li>Saat Anda klik <b>"Setujui &amp; Tanda Tangani"</b> pada pengajuan, sistem otomatis:
+                            <ul class="mt-1">
+                                <li>Membuat <b>hash unik</b> (SHA-256) dari ID Anda + ID dokumen + timestamp + secret key</li>
+                                <li>Mengeluarkan <b>QR code</b> yang berisi URL verifikasi</li>
+                                <li>Menempelkan QR di kotak tanda tangan dokumen draft</li>
+                            </ul>
+                        </li>
+                        <li>Siapapun bisa <b>scan QR</b> tersebut → masuk ke halaman <span class="font-monospace text-primary">/verify</span> yang menampilkan: nama penandatangan, jabatan, waktu TTD, hash valid.</li>
+                        <li>Hash <b>tidak bisa dipalsukan</b> karena pakai secret key server (anti-forgery).</li>
+                    </ol>
+                    <div class="alert alert-info border-0 small mt-3 d-flex align-items-start gap-2 mb-0"
+                         style="background:rgba(99,102,241,0.08); color:#4338ca;">
+                        <i class="bi bi-shield-fill-check mt-1"></i>
+                        <div>
+                            <b>Tidak perlu lagi</b> menggambar atau upload tanda tangan fisik. Sistem akan generate otomatis QR Code unik tiap kali Anda menandatangani dokumen.
                         </div>
                     </div>
-                    <div class="text-end mt-3">
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold"><i class="bi bi-save me-1"></i>Simpan Tanda Tangan</button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-<script>
-(function () {
-    const canvas = document.getElementById('sigCanvas');
-    if (!canvas) return;
-
-    function resize() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext('2d').scale(ratio, ratio);
-        if (pad) pad.clear();
-    }
-
-    const pad = new SignaturePad(canvas, { backgroundColor: 'rgba(255,255,255,0)', penColor: '#0f172a' });
-    // resize setelah elemen tampil (tab pertama aktif)
-    setTimeout(resize, 200);
-    window.addEventListener('resize', resize);
-
-    document.getElementById('sigClear').addEventListener('click', () => pad.clear());
-
-    document.getElementById('formSignature').addEventListener('submit', function (e) {
-        const fileInput = this.querySelector('input[name="signature_file"]');
-        const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
-        if (!hasFile) {
-            if (pad.isEmpty()) {
-                e.preventDefault();
-                alert('Gambar tanda tangan dulu, atau pilih file untuk diunggah.');
-                return;
-            }
-            document.getElementById('signatureData').value = pad.toDataURL('image/png');
-        }
-    });
-})();
-</script>
-@endpush

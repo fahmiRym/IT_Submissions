@@ -198,6 +198,18 @@
 
 @section('content')
 
+    {{-- ── HERO STRIP ── --}}
+    @include('partials._dashboard_hero', [
+        'role' => 'superadmin',
+        'arsipQuery' => \App\Models\Arsip::query()
+    ])
+
+    {{-- ── INOVASI BLOCK ── --}}
+    @include('partials._dashboard_innovation', [
+        'role' => 'superadmin',
+        'arsipQuery' => \App\Models\Arsip::query()
+    ])
+
     {{-- FILTER SECTION --}}
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
         <div class="card-body p-4">
@@ -288,12 +300,16 @@
         </div>
     </div>
 
-    {{-- 1. TOP CARDS --}}
+    {{-- 1. TOP CARDS — klik untuk popup detail --}}
     <div class="row g-4 mb-4">
         <!-- Terarsip -->
-        <div class="col-md-3">
-            <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['arsip' => 'Done'])) }}"
-                class="text-decoration-none h-100 d-block">
+        <div class="col-6 col-md-3">
+            <a href="#" class="text-decoration-none h-100 d-block dashboard-stat-trigger"
+               data-popup-title="Pengajuan Terarsip"
+               data-popup-status="Done"
+               data-popup-start="{{ request('start_date') }}"
+               data-popup-end="{{ request('end_date') }}"
+               data-popup-dept="{{ request('department_id') }}">
                 <div class="card-stat-vibrant bg-gradient-indigo h-100 p-4">
                     <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Pengajuan Terarsip</h6>
                     <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalArsip) }}</h2>
@@ -303,34 +319,44 @@
             </a>
         </div>
         <!-- Total -->
-        <div class="col-md-3">
-            <a href="{{ route('superadmin.arsip.index', request()->all()) }}" class="text-decoration-none h-100 d-block">
+        <div class="col-6 col-md-3">
+            <a href="#" class="text-decoration-none h-100 d-block dashboard-stat-trigger"
+               data-popup-title="Total Pengajuan"
+               data-popup-start="{{ request('start_date') }}"
+               data-popup-end="{{ request('end_date') }}"
+               data-popup-dept="{{ request('department_id') }}">
                 <div class="card-stat-vibrant bg-gradient-blue h-100 p-4">
                     <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Total Pengajuan</h6>
                     <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($totalPengajuan) }}</h2>
-                    <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-inbox-fill me-1"></i> ALL DATA
-                    </div>
+                    <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-inbox-fill me-1"></i> ALL DATA</div>
                     <i class="bi bi-layers-fill stat-overlay-icon"></i>
                 </div>
             </a>
         </div>
         <!-- Selesai -->
-        <div class="col-md-3">
-            <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Done'])) }}"
-                class="text-decoration-none h-100 d-block">
+        <div class="col-6 col-md-3">
+            <a href="#" class="text-decoration-none h-100 d-block dashboard-stat-trigger"
+               data-popup-title="Pengajuan Selesai (Done)"
+               data-popup-status="Done"
+               data-popup-start="{{ request('start_date') }}"
+               data-popup-end="{{ request('end_date') }}"
+               data-popup-dept="{{ request('department_id') }}">
                 <div class="card-stat-vibrant bg-gradient-green h-100 p-4">
                     <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Pengajuan Selesai</h6>
                     <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($arsipDone) }}</h2>
-                    <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-circle-fill me-1"></i>
-                        FINALIZED</div>
+                    <div class="mt-2 text-white-50 small font-monospace"><i class="bi bi-check-circle-fill me-1"></i> FINALIZED</div>
                     <i class="bi bi-check-circle-fill stat-overlay-icon"></i>
                 </div>
             </a>
         </div>
         <!-- Proses -->
-        <div class="col-md-3">
-            <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['ket_process' => 'Process'])) }}"
-                class="text-decoration-none h-100 d-block">
+        <div class="col-6 col-md-3">
+            <a href="#" class="text-decoration-none h-100 d-block dashboard-stat-trigger"
+               data-popup-title="Dinamika Proses (In Process)"
+               data-popup-status="Process"
+               data-popup-start="{{ request('start_date') }}"
+               data-popup-end="{{ request('end_date') }}"
+               data-popup-dept="{{ request('department_id') }}">
                 <div class="card-stat-vibrant bg-gradient-orange h-100 p-4">
                     <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Dinamika Proses</h6>
                     <h2 class="mb-0 fw-bold display-5 text-white">{{ number_format($arsipProcess) }}</h2>
@@ -355,9 +381,13 @@
             ];
         @endphp
         @foreach($proc as $p)
-            <div class="col-md-2">
-                <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['ket_process' => $p['db']])) }}"
-                    class="text-decoration-none h-100 d-block">
+            <div class="col-6 col-sm-4 col-md-2">
+                <a href="#" class="text-decoration-none h-100 d-block dashboard-stat-trigger"
+                   data-popup-title="Status: {{ $p['label'] }}"
+                   data-popup-status="{{ $p['db'] }}"
+                   data-popup-start="{{ request('start_date') }}"
+                   data-popup-end="{{ request('end_date') }}"
+                   data-popup-dept="{{ request('department_id') }}">
                     <div class="card-pipeline {{ $p['color'] }} h-100 p-3">
                         <div class="d-flex flex-column align-items-center text-center">
                             <div class="icon-pipeline {{ $p['color'] }} bg-opacity-10 mb-2" style="width: 40px; height: 40px;">
@@ -373,7 +403,8 @@
         @endforeach
     </div>
 
-    {{-- 2b. PENGAJUAN PRODUK BARU SUMMARY --}}
+    {{-- 2b. PENGAJUAN PRODUK BARU SUMMARY (hide bila fitur disabled) --}}
+    @if(!empty($produkBaruEnabled))
     <h6 class="fw-bold text-dark mb-3 ps-1"><i class="bi bi-box-seam-fill me-2 text-primary"></i>Pengajuan Produk Baru</h6>
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -416,6 +447,16 @@
             </a>
         </div>
     </div>
+    @else
+    <div class="alert border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center gap-3 py-3"
+         style="background: linear-gradient(135deg,#fef3c7,#fde68a); color:#92400e;">
+        <i class="bi bi-pause-circle-fill fs-3"></i>
+        <div class="flex-grow-1">
+            <div class="fw-bold">Fitur Pengajuan Produk Baru Dinonaktifkan Sementara</div>
+            <small>Aktifkan kembali di <a href="{{ route('superadmin.settings.index') }}" class="fw-bold text-decoration-underline">Pengaturan Aplikasi</a>. Data Produk Baru lama tetap aman.</small>
+        </div>
+    </div>
+    @endif
 
     {{-- 3. GLOBAL CHARTS: MONTHLY & STATUS --}}
     <div class="row g-4 mb-4">
@@ -464,16 +505,22 @@
                 ['label' => 'MUTASI PROD', 'code' => 'Mutasi_Produk', 'color' => '#34d399'],
                 ['label' => 'BUNDEL', 'code' => 'Bundel', 'color' => '#f87171'],
                 ['label' => 'MUTASI BIL', 'code' => 'Mutasi_Billet', 'color' => '#818cf8'],
-                ['label' => 'PRODUK BARU', 'code' => 'Produk_Baru', 'color' => '#a855f7'],
             ];
+            if (!empty($produkBaruEnabled)) {
+                $cats[] = ['label' => 'PRODUK BARU', 'code' => 'Produk_Baru', 'color' => '#a855f7'];
+            }
         @endphp
         @foreach($cats as $c)
             @php
                 $val = $trendByType->where('jenis_pengajuan', $c['code'])->sum('total');
             @endphp
-            <div class="col-md-2">
-                <a href="{{ route('superadmin.arsip.index', array_merge(request()->all(), ['jenis_pengajuan' => $c['code']])) }}"
-                    class="text-decoration-none h-100 d-block">
+            <div class="col-6 col-sm-4 col-md-2">
+                <a href="#" class="text-decoration-none h-100 d-block dashboard-stat-trigger"
+                   data-popup-title="Jenis: {{ $c['label'] }}"
+                   data-popup-jenis="{{ $c['code'] }}"
+                   data-popup-start="{{ request('start_date') }}"
+                   data-popup-end="{{ request('end_date') }}"
+                   data-popup-dept="{{ request('department_id') }}">
                     <div class="card-category h-100">
                         <div class="icon-category-circle" style="background: {{ $c['color'] }}">
                             <i class="bi bi-folder2-open"></i>
@@ -806,6 +853,9 @@
             </div>
         </div>
     </div>
+
+    {{-- Shared popup modal — render selalu, JS-driven --}}
+    @include('partials._dashboard_popup')
 
 @endsection
 

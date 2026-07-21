@@ -212,7 +212,11 @@
                 <label class="form-label small fw-bold text-secondary mb-1">📄 Jenis Pengajuan</label>
                 <select name="jenis_pengajuan" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
                     <option value="">Semua</option>
-                    @foreach(['Cancel','Adjust','Mutasi_Billet','Mutasi_Produk','Internal_Memo','Bundel','Produk_Baru'] as $jp)
+                    @php
+                        $jenisListSA = ['Cancel','Adjust','Mutasi_Billet','Mutasi_Produk','Internal_Memo','Bundel'];
+                        if (!empty($produkBaruEnabled)) $jenisListSA[] = 'Produk_Baru';
+                    @endphp
+                    @foreach($jenisListSA as $jp)
                         <option value="{{ $jp }}" {{ request('jenis_pengajuan')==$jp?'selected':'' }}>{{ str_replace('_', ' ', $jp) }}</option>
                     @endforeach
                 </select>
@@ -451,6 +455,7 @@
                 @foreach([10, 25, 50, 100, 250, 500, 1000] as $size)
                     <option value="{{ $size }}" {{ request('per_page') == $size ? 'selected' : '' }}>{{ $size }} Rows</option>
                 @endforeach
+                <option value="all" {{ request('per_page') === 'all' ? 'selected' : '' }}>Unlimited</option>
             </select>
         </div>
 
@@ -796,9 +801,59 @@
                                         <i class="bi bi-upc-scan"></i>
                                     </button>
                                 @else
-                                    <a href="{{ route('superadmin.arsip.print-draft', $a->id) }}" target="_blank" class="btn btn-sm btn-secondary text-white shadow-sm rounded-3 p-2 d-flex align-items-center" title="Print Draft">
-                                        <i class="bi bi-printer-fill"></i>
-                                    </a>
+                                    <div class="dropdown">
+                                        <button type="button" class="btn btn-sm btn-secondary text-white shadow-sm rounded-3 p-2 d-flex align-items-center"
+                                                data-bs-toggle="dropdown" aria-expanded="false" title="Aksi Dokumen">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2"
+                                            style="border-radius: 12px; min-width: 240px;">
+                                            <li>
+                                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
+                                                   href="{{ route('superadmin.arsip.show-document', $a->id) }}" target="_blank">
+                                                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                         style="width:32px;height:32px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#15803d;">
+                                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold small text-dark">Show Document</div>
+                                                        <div class="text-muted" style="font-size:0.65rem;">Draft + Lampiran (gabung jadi 1 PDF)</div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider my-1"></li>
+                                            <li>
+                                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
+                                                   href="{{ route('superadmin.arsip.print-draft', $a->id) }}" target="_blank">
+                                                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                         style="width:32px;height:32px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;">
+                                                        <i class="bi bi-printer-fill"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold small text-dark">Print Draft (saja)</div>
+                                                        <div class="text-muted" style="font-size:0.65rem;">Tanpa lampiran</div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider my-1"></li>
+                                            <li>
+                                                <button type="button"
+                                                    class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
+                                                    data-bs-toggle="modal" data-bs-target="#modalLampiran"
+                                                    data-arsip-id="{{ $a->id }}"
+                                                    data-arsip-noreg="{{ $a->no_registrasi }}">
+                                                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                         style="width:32px;height:32px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9;">
+                                                        <i class="bi bi-paperclip"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold small text-dark">Kelola Lampiran</div>
+                                                        <div class="text-muted" style="font-size:0.65rem;">Upload / hapus PDF (max 10MB / file)</div>
+                                                    </div>
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 @endif
 
                                 <button class="btn btn-sm btn-warning text-dark shadow-sm rounded-3 p-2 d-flex align-items-center"
@@ -806,12 +861,44 @@
                                     <i class="bi bi-pencil-fill"></i>
                                 </button>
 
-                                <form action="{{ route('superadmin.arsip.sign', $a->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tanda tangani dokumen ini secara digital sebagai Departemen IT?')">
+                                @php $itSig = $a->signatures->firstWhere('role_label', 'Departemen IT'); @endphp
+                                <form action="{{ route('superadmin.arsip.sign', $a->id) }}" method="POST" class="d-inline"
+                                    @if($itSig)
+                                        onsubmit="alert('⚠️ Dokumen ini sudah ditandatangani sebagai Departemen IT oleh {{ addslashes($itSig->signer_name) }} pada {{ optional($itSig->signed_at)->format('d/m/Y H:i') }} WIB.\n\nTidak bisa tanda tangan dua kali.'); return false;"
+                                    @else
+                                        onsubmit="return confirm('Tanda tangani dokumen ini secara digital sebagai Departemen IT?')"
+                                    @endif
+                                    >
                                     @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary text-white shadow-sm rounded-3 p-2 d-flex align-items-center" title="Tanda Tangan Digital (IT)">
-                                        <i class="bi bi-pen-fill"></i>
+                                    <button type="submit"
+                                        class="btn btn-sm {{ $itSig ? 'btn-success' : 'btn-primary' }} text-white shadow-sm rounded-3 p-2 d-flex align-items-center"
+                                        title="{{ $itSig ? 'Sudah ditandatangani IT' : 'Tanda Tangan Digital (IT)' }}">
+                                        <i class="bi {{ $itSig ? 'bi-check2-circle' : 'bi-pen-fill' }}"></i>
                                     </button>
                                 </form>
+
+                                {{-- BAGIKAN (Superadmin) — share ke user/role tertentu --}}
+                                <button type="button"
+                                        class="btn btn-sm btn-info text-white shadow-sm rounded-3 p-2 d-flex align-items-center btn-share"
+                                        data-arsip-id="{{ $a->id }}"
+                                        data-no-reg="{{ $a->no_registrasi }}"
+                                        title="Bagikan ke user / role">
+                                    <i class="bi bi-share-fill"></i>
+                                </button>
+
+                                {{-- CATATAN PERSONAL — superadmin selalu bisa --}}
+                                @php $noteCount = $a->personalNotes()->count(); @endphp
+                                <button type="button"
+                                        class="btn btn-sm btn-warning text-dark shadow-sm rounded-3 p-2 d-flex align-items-center btn-notes position-relative"
+                                        data-arsip-id="{{ $a->id }}"
+                                        data-no-reg="{{ $a->no_registrasi }}"
+                                        title="Catatan Personal{{ $noteCount > 0 ? ' ('.$noteCount.')' : '' }}">
+                                    <i class="bi bi-journal-text"></i>
+                                    @if($noteCount > 0)
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white"
+                                              style="font-size:0.55rem; padding:3px 5px;">{{ $noteCount }}</span>
+                                    @endif
+                                </button>
 
                                 <button class="btn btn-sm btn-success text-white shadow-sm rounded-3 p-2 d-flex align-items-center btn-arsip-sistem"
                                         data-id="{{ $a->id }}" data-bs-toggle="modal" data-bs-target="#modalArsipSistem" title="Arsip">
@@ -864,6 +951,12 @@
     });
 </script>
 
+@include('partials._adjust_row_template')
+@include('partials._lampiran_modal', [
+    'uploadRouteName' => 'superadmin.arsip.upload-lampiran',
+    'listRouteName' => 'superadmin.arsip.list-lampiran',
+    'deleteRouteName' => 'superadmin.arsip.delete-lampiran',
+])
 @include('superadmin.arsip._create')
 @include('superadmin.arsip._view')
 @include('superadmin.arsip._arsip_sistem')
@@ -902,6 +995,9 @@
         </div>
     </div>
 </div>
+
+@include('admin.arsip._share_modal')
+@include('admin.arsip._note_modal')
 
 @endsection
 
@@ -965,27 +1061,7 @@ $(document).ready(function() {
 
     $('#btnAddAdjust').on('click', function() {
         let idx = getIndex();
-        let adjustLocations = @json(\App\Models\ArsipAdjustItem::getLocations());
-        let adjustLocOptions = '<option value="">-- Lokasi --</option>';
-        adjustLocations.forEach(loc => { adjustLocOptions += `<option value="${loc}">${loc}</option>`; });
-
-        $('#wrapperAdjust').append(`
-            <tr>
-                <td><input type="text" name="detail_barang[adjust][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" placeholder="Kode" style="min-width: 70px;"></td>
-                <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" placeholder="Nama Barang" required style="min-width: 150px;"></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][odoo]" class="form-control form-control-sm border-0 bg-light text-secondary fw-bold px-1 text-center" placeholder="Odoo" style="min-width: 50px;"></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][fisik]" class="form-control form-control-sm border-0 bg-light text-secondary fw-bold px-1 text-center" placeholder="Fisik" style="min-width: 50px;"></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-success fw-bold px-1 text-center" value="0" style="min-width: 50px;"></td>
-                <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-danger fw-bold px-1 text-center" value="0" style="min-width: 50px;"></td>
-                <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" placeholder="Lot" style="min-width: 70px;"></td>
-                <td>
-                    <select name="detail_barang[adjust][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="min-width: 150px;">
-                        ${adjustLocOptions}
-                    </select>
-                </td>
-                <td><button type="button" class="btn btn-sm text-secondary btnRemove"><i class="bi bi-x-circle-fill fs-6 text-danger"></i></button></td>
-            </tr>
-        `);
+        $('#wrapperAdjust').append(window.buildAdjustRow('detail_barang[adjust]', idx));
         refreshAllItemCounts();
     });
 
@@ -1136,6 +1212,14 @@ $(document).ready(function() {
                 $('#editManager').val(data.manager_id);
                 $('#editNoTransaksi').val(data.no_transaksi);
                 $('#editPemohon').val(data.pemohon);
+                if (typeof window.refreshPemohonPicker === 'function') {
+                    let presets = (data.requesters || []).map(r => ({
+                        id: r.user_id,
+                        employee_id: r.employee_id || (r.user ? r.user.employee_id : ''),
+                        name: r.name_snapshot || (r.user ? r.user.name : '')
+                    }));
+                    window.refreshPemohonPicker('pemohonPickerEditSuper', presets);
+                }
                 $('#editKeterangan').val(data.keterangan);
                 $('#editTindakan').val(data.tindakan || '');
                 $('#editCatatanIt').val(data.catatan_it || '');
@@ -1377,30 +1461,10 @@ $(document).ready(function() {
 
 window.addAdjustRowEdit = function(code='', name='', qtyIn=0, qtyOut=0, lot='', odoo='', fisik='', keteranganIn='', keteranganOut='', location='') {
     let idx = Date.now() + Math.floor(Math.random() * 1000);
-    let adjustLocations = @json(\App\Models\ArsipAdjustItem::getLocations());
-    let adjustLocOptions = '<option value="">-- Pilih Lokasi --</option>';
-    adjustLocations.forEach(loc => {
-        let selected = (loc === location) ? 'selected' : '';
-        adjustLocOptions += `<option value="${loc}" ${selected}>${loc}</option>`;
-    });
-
-    $('#wrapperAdjustEdit').append(`
-        <tr>
-            <td><input type="text" name="detail_barang[adjust][${idx}][product_code]" class="form-control form-control-sm border-0 bg-light" value="${code ?? ''}" style="min-width: 70px;"></td>
-            <td><input type="text" name="detail_barang[adjust][${idx}][nama_produk]" class="form-control form-control-sm border-0 bg-light" value="${name ?? ''}" required style="min-width: 150px;"></td>
-            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][odoo]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${odoo !== null ? odoo : ''}" placeholder="Odoo" style="min-width: 50px;"></td>
-            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][fisik]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${fisik !== null ? fisik : ''}" placeholder="Fisik" style="min-width: 50px;"></td>
-            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_in]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${qtyIn}" style="min-width: 50px;"></td>
-            <td><input type="number" step="any" name="detail_barang[adjust][${idx}][qty_out]" class="form-control form-control-sm border-0 bg-light text-center px-1" value="${qtyOut}" style="min-width: 50px;"></td>
-            <td><input type="text" name="detail_barang[adjust][${idx}][lot]" class="form-control form-control-sm border-0 bg-light" value="${lot ?? ''}" style="min-width: 70px;"></td>
-            <td>
-                <select name="detail_barang[adjust][${idx}][location]" class="form-select form-select-sm border-0 bg-light" style="min-width: 150px;">
-                    ${adjustLocOptions}
-                </select>
-            </td>
-            <td><button type="button" class="btn btn-link text-danger p-0" onclick="this.closest('tr').remove()"><i class="bi bi-x-circle-fill"></i></button></td>
-        </tr>
-    `);
+    $('#wrapperAdjustEdit').append(window.buildAdjustRow('detail_barang[adjust]', idx, {
+        product_code: code, nama_produk: name, lot, location,
+        odoo, fisik, qty_in: qtyIn, qty_out: qtyOut
+    }));
 };
 
 window.addMutasiRowEdit = function(type, code='', name='', qty=0, lot='', panjang='', location='') {

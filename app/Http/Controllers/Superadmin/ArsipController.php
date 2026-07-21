@@ -25,6 +25,7 @@ class ArsipController extends Controller
 {
     use \App\Traits\SignsArsip;
     use \App\Traits\HandlesApproval;
+    use \App\Traits\SyncsRequesters;
 
     /**
      * ===============================
@@ -91,7 +92,8 @@ class ArsipController extends Controller
         $query->orderBy($sort, $dir);
 
         /* ================= DATA ================= */
-        $perPage = $request->input('per_page', 10);
+        $perPageRaw = $request->input('per_page', 10);
+        $perPage = ($perPageRaw === 'all') ? 99999 : (int) $perPageRaw;
         $arsips = $query->paginate($perPage)->withQueryString();
 
         /* ================= STATS (Dynamic) ================= */
@@ -154,6 +156,13 @@ class ArsipController extends Controller
      */
     public function store(Request $request)
     {
+        // GUARD: Produk_Baru dimatikan sementara via Settings
+        if ($request->jenis_pengajuan === 'Produk_Baru'
+            && \App\Models\Setting::get('produk_baru_enabled', '1') !== '1') {
+            return back()->withInput()->with('error',
+                'Fitur Pengajuan Produk Baru sedang dinonaktifkan sementara. Aktifkan kembali di Pengaturan Aplikasi.');
+        }
+
         $request->validate([
             'tgl_pengajuan' => 'required|date',
             'user_id' => 'required|exists:users,id',
@@ -252,6 +261,16 @@ class ArsipController extends Controller
             $this->syncProdukBaruItems($arsip, $rawItems['produk_baru'] ?? []);
             $this->syncTindakanItems($arsip, $request);
 
+            // SYNC MULTI-PEMOHON (pivot arsip_requesters)
+            $requesterIds = (array) $request->input('requesters', []);
+            if (!empty($requesterIds)) {
+                $joinedNames = $this->syncArsipRequesters($arsip, $requesterIds);
+                if ($joinedNames && empty($request->pemohon)) {
+                    $arsip->pemohon = $joinedNames;
+                    $arsip->save();
+                }
+            }
+
             // BANGUN RANTAI APPROVAL BERTINGKAT (approver dipilih per pengajuan)
             $pengaju = \App\Models\User::find($arsip->admin_id);
             if ($pengaju) {
@@ -289,7 +308,8 @@ class ArsipController extends Controller
                 'produkBaruItems',
                 'tindakanItems',
                 'approvals.approver',
-                'editor'
+                'editor',
+                'requesters.user:id,employee_id,name'
             ])->findOrFail($id);
 
             $tindakanRows = $arsip->tindakanItems
@@ -619,6 +639,15 @@ class ArsipController extends Controller
             $this->syncProdukBaruItems($arsip, $rawItems['produk_baru'] ?? []);
             $this->syncTindakanItems($arsip, $request);
 
+            // SYNC MULTI-PEMOHON (pivot arsip_requesters)
+            if ($request->has('requesters')) {
+                $joinedNames = $this->syncArsipRequesters($arsip, (array) $request->input('requesters', []));
+                if ($joinedNames) {
+                    $arsip->pemohon = $joinedNames;
+                    $arsip->save();
+                }
+            }
+
             // Bangun ulang rantai approval HANYA jika belum berjalan
             $arsip->load('approvals');
             if (!$arsip->approvalStarted() && $request->has('approvers')) {
@@ -855,7 +884,12 @@ ArsipAdjustItem::create([
      */
     public function printDraft($id)
     {
-        $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems', 'produkBaruItems', 'signatures.user'])->findOrFail($id);
+        $arsip = Arsip::with([
+            'department', 'unit', 'admin', 'manager',
+            'bundelItems', 'adjustItems', 'produkBaruItems',
+            'signatures.user',
+            'personalNotes.user:id,name,role',
+        ])->findOrFail($id);
         $arsip->ensureVerifyToken();
 
         // Produk Baru tidak punya draft dokumen — hanya form yang diproses superadmin.
@@ -869,5 +903,114 @@ ArsipAdjustItem::create([
         }
 
         return view('print.arsip_draft', compact('arsip'));
+    }
+
+    /**
+     * Upload multi-file lampiran PDF (superadmin scope, no per-row guard).
+     */
+    public function uploadLampiran(Request $request, $id)
+    {
+        $arsip = Arsip::findOrFail($id);
+
+        $request->validate([
+            'lampiran' => 'required|array|min:1',
+            'lampiran.*' => 'file|mimes:pdf|max:10240',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        $service = new \App\Services\ArsipLampiranService();
+        try {
+            $stored = $service->storeMany($arsip, $request->file('lampiran'), auth()->user(), $request->input('keterangan'));
+        } catch (\Throwable $e) {
+            if ($request->wantsJson()) return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            return back()->with('error', 'Gagal upload: ' . $e->getMessage());
+        }
+
+        if ($request->wantsJson()) return response()->json(['success' => true, 'uploaded' => count($stored)]);
+        return back()->with('success', count($stored) . ' lampiran berhasil di-upload.');
+    }
+
+    public function listLampiran($id)
+    {
+        $arsip = Arsip::findOrFail($id);
+        return response()->json([
+            'data' => $arsip->lampirans->map(fn($l) => [
+                'id' => $l->id,
+                'original_name' => $l->original_name,
+                'file_size' => $l->file_size,
+                'keterangan' => $l->keterangan,
+                'uploaded_at' => $l->created_at?->format('d/m/Y H:i'),
+                'url' => route('superadmin.arsip.view-lampiran', ['arsip' => $arsip->id, 'lampiran' => $l->id]),
+            ]),
+        ]);
+    }
+
+    public function viewLampiran($arsipId, $lampiranId)
+    {
+        $arsip = Arsip::findOrFail($arsipId);
+        $lamp = \App\Models\ArsipLampiran::where('arsip_id', $arsipId)->where('id', $lampiranId)->firstOrFail();
+
+        $absPath = \Illuminate\Support\Facades\Storage::disk('public')->path($lamp->file_path);
+        if (!is_file($absPath)) abort(404, 'Lampiran tidak ditemukan.');
+
+        return response()->file($absPath, [
+            'Content-Type' => $lamp->mime_type ?: 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $lamp->original_name . '"',
+            'Cache-Control' => 'private, max-age=300',
+        ]);
+    }
+
+    public function deleteLampiran($arsipId, $lampiranId)
+    {
+        $arsip = Arsip::findOrFail($arsipId);
+        $lamp = \App\Models\ArsipLampiran::where('arsip_id', $arsipId)->where('id', $lampiranId)->firstOrFail();
+        try { \Illuminate\Support\Facades\Storage::disk('public')->delete($lamp->file_path); } catch (\Throwable $e) {}
+        $lamp->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function showDocument($id)
+    {
+        $arsip = Arsip::with(['adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems',
+                              'department', 'unit', 'manager', 'admin', 'approvals.approver',
+                              'signatures', 'lampirans'])->findOrFail($id);
+        $service = new \App\Services\ArsipLampiranService();
+        return $service->streamMergedPdf($arsip);
+    }
+
+    /**
+     * Quick search arsip untuk fitur Edit No Registrasi (Backup).
+     * Cari by no_registrasi (partial), no_doc, no_transaksi, atau ID.
+     */
+    public function searchSimple(Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+        if ($q === '') return response()->json(null);
+
+        $arsip = Arsip::with(['admin:id,name'])
+            ->where(function ($w) use ($q) {
+                $w->where('no_registrasi', 'like', "%{$q}%")
+                  ->orWhere('no_doc', 'like', "%{$q}%")
+                  ->orWhere('no_transaksi', 'like', "%{$q}%");
+                if (ctype_digit($q)) {
+                    $w->orWhere('id', (int) $q);
+                }
+            })
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if (!$arsip) return response()->json(null);
+
+        return response()->json([
+            'id' => $arsip->id,
+            'no_registrasi' => $arsip->no_registrasi,
+            'no_doc' => $arsip->no_doc,
+            'no_transaksi' => $arsip->no_transaksi,
+            'jenis_pengajuan' => $arsip->jenis_pengajuan,
+            'status' => $arsip->status,
+            'ket_process' => $arsip->ket_process,
+            'admin_name' => $arsip->admin->name ?? null,
+            'tgl_pengajuan' => $arsip->tgl_pengajuan?->format('d/m/Y H:i'),
+        ]);
     }
 }

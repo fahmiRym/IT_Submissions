@@ -239,73 +239,102 @@
 </div>
 
 {{-- ── EDIT NO REGISTRASI SECTION ──────────────────────────────── --}}
-<div class="backup-card mt-4">
-    <div class="backup-card-header">
-        <div class="d-flex align-items-center gap-3">
-            <div class="icon-circle" style="background: linear-gradient(135deg, #f59e0b, #d97706); color:white;">
-                <i class="bi bi-pencil-square"></i>
-            </div>
-            <div>
-                <h5 class="fw-bold mb-0 text-dark">Edit No Registrasi</h5>
-                <p class="text-muted small mb-0">Perbaiki atau ubah nomor registrasi pengajuan secara manual</p>
+<div class="backup-card mt-4 overflow-hidden">
+    <div class="position-relative p-4" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:white;">
+        <div class="position-absolute top-0 end-0 opacity-10" style="font-size:7rem; right:-20px; top:-30px; transform:rotate(-12deg);">
+            <i class="bi bi-pencil-square"></i>
+        </div>
+        <div class="position-relative">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center bg-white bg-opacity-25" style="width:56px; height:56px; backdrop-filter: blur(8px);">
+                    <i class="bi bi-pencil-square fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Edit No Registrasi</h5>
+                    <p class="mb-0 opacity-75 small">Perbaiki atau ubah nomor registrasi pengajuan secara manual</p>
+                </div>
             </div>
         </div>
     </div>
     <div class="backup-card-body">
-        <div class="alert border-0 rounded-3 d-flex gap-3 align-items-start mb-4" style="background:#f0f9ff; border-left:4px solid #0ea5e9 !important;">
-            <i class="bi bi-info-circle-fill text-info fs-5 mt-1"></i>
-            <div class="small text-muted">
-                Cari pengajuan berdasarkan No Registrasi lama atau ID, lalu masukkan nomor registrasi baru. 
-                Pastikan nomor baru unik dan belum digunakan oleh pengajuan lain.
+        <div class="alert border-0 rounded-4 d-flex gap-3 align-items-start mb-4" style="background:linear-gradient(135deg,#eff6ff,#dbeafe); border-left:4px solid #3b82f6 !important;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px; height:36px; background:#3b82f6; color:white;">
+                <i class="bi bi-info-circle-fill"></i>
+            </div>
+            <div class="small text-secondary">
+                <b class="text-primary">Tips:</b> ketik <b>No Registrasi</b> (lengkap/sebagian) seperti <code class="text-primary">DIE-260604-U3A-001</code>, atau <b>No Doc</b>, atau <b>ID arsip</b> (angka). Sistem akan auto-search 350ms setelah Anda mengetik.
             </div>
         </div>
 
         <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label fw-bold small text-muted mb-1">Cari Pengajuan</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" id="searchNoReg" class="form-control border-0 bg-light"
-                           placeholder="No Registrasi atau ID..." oninput="searchArsip(this.value)">
+            <div class="col-md-5">
+                <label class="form-label fw-bold small text-muted text-uppercase mb-2" style="letter-spacing:0.05em;">
+                    <i class="bi bi-search me-1 text-primary"></i>Cari Pengajuan
+                </label>
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute" style="left:14px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
+                    <input type="text" id="searchNoReg" class="form-control form-control-lg border-0 shadow-sm ps-5 rounded-3"
+                           placeholder="No Registrasi, No Doc, atau ID..." oninput="searchArsip(this.value)"
+                           style="background:#f8fafc; font-size:0.95rem; font-weight:600;">
+                    <div id="searchSpinner" class="position-absolute d-none" style="right:14px; top:50%; transform:translateY(-50%);">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted mb-1">No Registrasi Baru</label>
-                <input type="text" id="newNoReg" class="form-control border-0 bg-light" 
-                       placeholder="Ketik nomor baru..." disabled>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted text-uppercase mb-2" style="letter-spacing:0.05em;">
+                    <i class="bi bi-pencil-fill me-1 text-warning"></i>No Registrasi Baru
+                </label>
+                <input type="text" id="newNoReg" class="form-control form-control-lg border-0 shadow-sm rounded-3"
+                       placeholder="Ketik nomor baru..." disabled
+                       style="background:#f8fafc; font-size:0.95rem; font-weight:700; font-family:monospace;">
             </div>
-            <div class="col-md-2">
-                <button class="btn w-100 fw-bold rounded-3 py-2" id="btnSaveNoReg"
-                        style="background: linear-gradient(135deg,#f59e0b,#d97706); color:white;" 
+            <div class="col-md-3">
+                <button class="btn btn-lg w-100 fw-bold rounded-3 py-2 shadow-sm text-white" id="btnSaveNoReg"
+                        style="background: linear-gradient(135deg,#f59e0b,#d97706); border:none;"
                         disabled onclick="saveNoRegistrasi()">
-                    <i class="bi bi-check-lg me-1"></i>Simpan
+                    <i class="bi bi-check-lg me-1"></i>Simpan Perubahan
                 </button>
             </div>
         </div>
 
-        {{-- Search Result --}}
+        {{-- Search Result Card --}}
         <div id="searchResult" class="mt-3 d-none">
-            <div class="p-3 rounded-3 border" style="background:#f8fafc;">
-                <div class="d-flex align-items-center gap-3">
-                    <div>
-                        <div class="small text-muted fw-bold text-uppercase">Pengajuan Ditemukan</div>
-                        <div class="fw-bold text-dark" id="resultName">-</div>
-                        <div class="d-flex gap-2 mt-1">
-                            <span class="badge bg-light text-dark border" id="resultJenis">-</span>
-                            <span class="badge bg-light text-dark border" id="resultStatus">-</span>
-                        </div>
+            <div class="p-3 rounded-4 d-flex align-items-center gap-3"
+                 style="background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #86efac;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:48px; height:48px; background:#16a34a; color:white; font-size:1.4rem;">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="small fw-bold text-success text-uppercase" style="font-size:0.65rem; letter-spacing:0.1em;">
+                        <i class="bi bi-shield-check me-1"></i>Pengajuan Ditemukan
                     </div>
-                    <div class="ms-auto text-end">
-                        <div class="small text-muted fw-bold text-uppercase">No Registrasi Saat Ini</div>
-                        <div class="fw-bold font-monospace text-info" id="resultNoReg">-</div>
+                    <div class="fw-bold text-dark mb-1" id="resultName" style="font-size:0.95rem;">-</div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-primary-subtle text-primary border border-primary border-opacity-25 px-2 py-1" id="resultJenis">-</span>
+                        <span class="badge bg-info-subtle text-info border border-info border-opacity-25 px-2 py-1" id="resultStatus">-</span>
                     </div>
+                </div>
+                <div class="text-end flex-shrink-0">
+                    <div class="small text-muted fw-bold text-uppercase" style="font-size:0.6rem; letter-spacing:0.1em;">No Reg. Sekarang</div>
+                    <div class="fw-bold font-monospace text-dark px-3 py-2 rounded-3 mt-1"
+                         id="resultNoReg" style="background:white; font-size:0.85rem; border:1px dashed #94a3b8;">-</div>
                 </div>
             </div>
         </div>
 
         <div id="searchNotFound" class="mt-3 d-none">
-            <div class="p-3 rounded-3" style="background:#fef2f2;">
-                <div class="text-danger small fw-bold"><i class="bi bi-x-circle me-1"></i>Pengajuan tidak ditemukan.</div>
+            <div class="p-3 rounded-4 d-flex align-items-center gap-3"
+                 style="background:linear-gradient(135deg,#fef2f2,#fee2e2); border:1px solid #fca5a5;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:42px; height:42px; background:#dc2626; color:white; font-size:1.2rem;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                    <div class="fw-bold text-danger">Pengajuan Tidak Ditemukan</div>
+                    <small class="text-muted">Coba ketik No Registrasi yang lebih spesifik atau ID arsip.</small>
+                </div>
             </div>
         </div>
     </div>
@@ -373,6 +402,8 @@ function searchArsip(val) {
 }
 
 function fetchArsip(q) {
+    const sp = document.getElementById('searchSpinner');
+    if (sp) sp.classList.remove('d-none');
     fetch(`/superadmin/arsip/search-simple?q=${encodeURIComponent(q)}`, {
         headers: { 'Accept': 'application/json' }
     })
@@ -384,7 +415,8 @@ function fetchArsip(q) {
             showNotFound();
         }
     })
-    .catch(() => showNotFound());
+    .catch(() => showNotFound())
+    .finally(() => { if (sp) sp.classList.add('d-none'); });
 }
 
 function showResult(data) {

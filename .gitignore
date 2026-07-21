@@ -22,6 +22,18 @@ npm-debug.log
 yarn-error.log
 
 # ===============================
+# LARAVEL RUNTIME CACHE (should not be committed)
+# ===============================
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/testing/.gitignore
+!storage/framework/views/.gitignore
+
+# ===============================
 # DOCKER
 # ===============================
 docker-compose.override.yml

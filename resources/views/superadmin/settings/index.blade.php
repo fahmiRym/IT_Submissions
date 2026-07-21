@@ -107,6 +107,36 @@
                                 </div>
                             </div>
 
+                            {{-- Feature Toggle: Pengajuan Produk Baru --}}
+                            <div class="col-12">
+                                <div class="p-3 border-0 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #faf5ff, #ede9fe);">
+                                    <label class="form-label small fw-bold text-uppercase d-flex align-items-center gap-2 mb-2">
+                                        <i class="bi bi-toggles2 text-primary"></i>
+                                        Fitur Pengajuan Produk Baru
+                                    </label>
+                                    <div class="form-check form-switch">
+                                        {{-- hidden 0 supaya unchecked-state tetap ter-submit sbg "off" --}}
+                                        <input type="hidden" name="produk_baru_enabled" value="0">
+                                        <input type="checkbox" name="produk_baru_enabled" value="1"
+                                            class="form-check-input" id="produkBaruEnabledToggle"
+                                            style="cursor:pointer; width: 2.6em; height: 1.4em;"
+                                            {{ ($produk_baru_enabled ?? '1') === '1' ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-semibold ms-1" for="produkBaruEnabledToggle">
+                                            <span class="text-success state-on" style="display: {{ ($produk_baru_enabled ?? '1') === '1' ? 'inline' : 'none' }};">
+                                                <i class="bi bi-check-circle-fill me-1"></i> AKTIF — user bisa mengajukan Produk Baru
+                                            </span>
+                                            <span class="text-danger state-off" style="display: {{ ($produk_baru_enabled ?? '1') === '1' ? 'none' : 'inline' }};">
+                                                <i class="bi bi-pause-circle-fill me-1"></i> DINONAKTIFKAN SEMENTARA
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">
+                                        * Mematikan fitur ini akan menyembunyikan menu, filter, dashboard card, dan opsi
+                                        "Pengajuan Produk Baru" di form pengajuan untuk semua role. Data lama tetap aman.
+                                    </small>
+                                </div>
+                            </div>
+
                             <div class="col-12 mt-4 pt-3 border-top d-flex justify-content-end gap-2">
                                 <a href="{{ route('superadmin.dashboard') }}"
                                     class="btn btn-light rounded-pill px-4">Batal</a>
@@ -120,4 +150,17 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tog = document.getElementById('produkBaruEnabledToggle');
+            if (!tog) return;
+            const sOn = document.querySelector('.state-on');
+            const sOff = document.querySelector('.state-off');
+            tog.addEventListener('change', function () {
+                if (this.checked) { sOn.style.display = 'inline'; sOff.style.display = 'none'; }
+                else { sOn.style.display = 'none'; sOff.style.display = 'inline'; }
+            });
+        });
+    </script>
 @endsection

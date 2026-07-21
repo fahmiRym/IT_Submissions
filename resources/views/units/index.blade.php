@@ -89,11 +89,22 @@
     <div class="card-header-section">
         <div>
             <p class="section-title">Daftar Unit Kerja</p>
-            <p class="section-sub">Manajemen data unit operasional sistem</p>
+            <p class="section-sub">Menampilkan {{ $units->count() }} dari {{ $units->total() }} unit</p>
         </div>
-        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#modalCreate">
-            <i class="bi bi-plus-lg"></i> Tambah Unit
-        </button>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <form method="GET" class="d-flex gap-2 align-items-center">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari nama / kode unit..."
+                       class="form-control form-control-sm" style="min-width:230px; border-radius:10px;">
+                <button class="btn btn-light border btn-sm" type="submit" style="border-radius:10px;"><i class="bi bi-search"></i></button>
+                @if(request('q'))
+                    <a href="{{ route('superadmin.units.index') }}" class="btn btn-link btn-sm text-muted p-0" title="Reset"><i class="bi bi-x-circle"></i></a>
+                @endif
+            </form>
+            @include('partials._per_page_select', ['id' => 'perPageUnits'])
+            <button class="btn-add" data-bs-toggle="modal" data-bs-target="#modalCreate">
+                <i class="bi bi-plus-lg"></i> Tambah Unit
+            </button>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -103,6 +114,9 @@
                         <th class="ps-4" width="60">#</th>
                         <th>Nama Unit</th>
                         <th>Status</th>
+                        <th class="text-center" width="110">Anggota</th>
+                        <th class="text-center" width="120">Pengajuan</th>
+                        <th class="text-center" width="160">Last Activity</th>
                         <th>Tgl. Registrasi</th>
                         <th class="text-center pe-4" width="150">Aksi</th>
                     </tr>
@@ -124,6 +138,29 @@
                                 <span class="badge badge-status bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="bi bi-check-circle-fill me-1"></i>Aktif</span>
                             @else
                                 <span class="badge badge-status bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"><i class="bi bi-x-circle-fill me-1"></i>Nonaktif</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill px-3 py-2 fw-bold"
+                                  style="background:{{ ($u->users_count ?? 0) > 0 ? 'linear-gradient(135deg,#fce7f3,#fbcfe8)' : '#f1f5f9' }}; color:{{ ($u->users_count ?? 0) > 0 ? '#be185d' : '#94a3b8' }}; font-size:0.78rem;">
+                                <i class="bi bi-people-fill me-1"></i>{{ $u->users_count ?? 0 }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill px-3 py-2 fw-bold"
+                                  style="background:{{ ($u->arsips_count ?? 0) > 0 ? 'linear-gradient(135deg,#dbeafe,#bfdbfe)' : '#f1f5f9' }}; color:{{ ($u->arsips_count ?? 0) > 0 ? '#1d4ed8' : '#94a3b8' }}; font-size:0.78rem;">
+                                <i class="bi bi-file-earmark-text me-1"></i>{{ $u->arsips_count ?? 0 }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            @if($u->last_activity)
+                                @php $lastAt = \Carbon\Carbon::parse($u->last_activity); $hours = $lastAt->diffInHours(now()); @endphp
+                                <small class="fw-bold" style="color:{{ $hours < 24 ? '#16a34a' : ($hours < 168 ? '#0891b2' : '#94a3b8') }};">
+                                    {{ $lastAt->diffForHumans(null, true) }} lalu
+                                </small>
+                                <div class="text-muted" style="font-size:0.65rem;">{{ $lastAt->format('d/m/Y H:i') }}</div>
+                            @else
+                                <small class="text-muted fst-italic">Belum ada</small>
                             @endif
                         </td>
                         <td class="text-muted" style="font-size:0.85rem;">
@@ -151,7 +188,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center py-5">
+                        <td colspan="8" class="text-center py-5">
                             <div class="opacity-20 mb-3"><i class="bi bi-box-seam display-1"></i></div>
                             <h6 class="fw-bold text-muted">Belum ada data unit</h6>
                         </td>
@@ -161,6 +198,12 @@
             </table>
         </div>
     </div>
+    @if($units->hasPages())
+        <div class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="text-muted small">Halaman {{ $units->currentPage() }} dari {{ $units->lastPage() }}</div>
+            {{ $units->links() }}
+        </div>
+    @endif
 </div>
 
 {{-- MODAL CREATE --}}

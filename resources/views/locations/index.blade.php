@@ -131,11 +131,22 @@
     <div class="card-header-section">
         <div>
             <p class="section-title">Daftar Lokasi Fisik</p>
-            <p class="section-sub">Manajemen titik lokasi / placement area</p>
+            <p class="section-sub">Menampilkan {{ $locations->count() }} dari {{ $locations->total() }} lokasi</p>
         </div>
-        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#modalCreate">
-            <i class="bi bi-plus-lg"></i> Tambah Lokasi
-        </button>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <form method="GET" class="d-flex gap-2 align-items-center">
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari nama lokasi..."
+                       class="form-control form-control-sm" style="min-width:230px; border-radius:10px;">
+                <button class="btn btn-light border btn-sm" type="submit" style="border-radius:10px;"><i class="bi bi-search"></i></button>
+                @if(request('q'))
+                    <a href="{{ route('superadmin.locations.index') }}" class="btn btn-link btn-sm text-muted p-0" title="Reset"><i class="bi bi-x-circle"></i></a>
+                @endif
+            </form>
+            @include('partials._per_page_select', ['id' => 'perPageLocations'])
+            <button class="btn-add" data-bs-toggle="modal" data-bs-target="#modalCreate">
+                <i class="bi bi-plus-lg"></i> Tambah Lokasi
+            </button>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -145,6 +156,9 @@
                         <th class="ps-4" width="60">#</th>
                         <th>Nama Lokasi</th>
                         <th>Status</th>
+                        <th class="text-center" width="100">Adjust</th>
+                        <th class="text-center" width="100">Mutasi</th>
+                        <th class="text-center" width="100">Total</th>
                         <th>Tgl. Registrasi</th>
                         <th class="text-center pe-4" width="150">Aksi</th>
                     </tr>
@@ -167,6 +181,24 @@
                             @else
                                 <span class="badge badge-status bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"><i class="bi bi-x-circle-fill me-1"></i>Nonaktif</span>
                             @endif
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill px-2 py-1 fw-bold"
+                                  style="background:{{ ($l->adjust_count ?? 0) > 0 ? '#ddd6fe' : '#f1f5f9' }}; color:{{ ($l->adjust_count ?? 0) > 0 ? '#6d28d9' : '#94a3b8' }}; font-size:0.75rem;">
+                                {{ $l->adjust_count ?? 0 }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill px-2 py-1 fw-bold"
+                                  style="background:{{ ($l->mutasi_count ?? 0) > 0 ? '#dbeafe' : '#f1f5f9' }}; color:{{ ($l->mutasi_count ?? 0) > 0 ? '#1d4ed8' : '#94a3b8' }}; font-size:0.75rem;">
+                                {{ $l->mutasi_count ?? 0 }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill px-3 py-2 fw-bold"
+                                  style="background:{{ ($l->total_usage ?? 0) > 0 ? 'linear-gradient(135deg,#dcfce7,#bbf7d0)' : '#f1f5f9' }}; color:{{ ($l->total_usage ?? 0) > 0 ? '#15803d' : '#94a3b8' }}; font-size:0.8rem;">
+                                <i class="bi bi-graph-up me-1"></i>{{ $l->total_usage ?? 0 }}
+                            </span>
                         </td>
                         <td class="text-muted" style="font-size:0.85rem;">
                             <i class="bi bi-calendar3 me-1 opacity-50"></i>{{ $l->created_at?->format('d M Y') ?? '-' }}
@@ -195,7 +227,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center py-5">
+                        <td colspan="8" class="text-center py-5">
                             <div class="opacity-20 mb-3"><i class="bi bi-pin-map border-0 display-1"></i></div>
                             <h6 class="fw-bold text-muted">Belum ada data lokasi</h6>
                         </td>
@@ -205,6 +237,12 @@
             </table>
         </div>
     </div>
+    @if($locations->hasPages())
+        <div class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="text-muted small">Halaman {{ $locations->currentPage() }} dari {{ $locations->lastPage() }}</div>
+            {{ $locations->links() }}
+        </div>
+    @endif
 </div>
 
 {{-- MODAL CREATE --}}

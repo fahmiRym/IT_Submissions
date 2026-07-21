@@ -118,7 +118,8 @@
                                 <span>Bundel</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        {{-- Daftar Produk Baru — DIBEKUKAN SEMENTARA --}}
+                        {{-- <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Produk_Baru']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Produk_Baru' ? 'text-primary fw-bold' : '' }}">
                                 <i class="bi bi-box-seam-fill text-primary"
@@ -126,7 +127,7 @@
                                 <span>Daftar Produk Baru</span>
                                 <span class="badge bg-primary ms-auto" style="font-size:0.5rem;"></span>
                             </a>
-                        </li>
+                        </li> --}}
                     </ul>
                 </div>
             </li>
@@ -173,33 +174,63 @@
 
                 <div class="collapse {{ $isMaster ? 'show' : '' }}" id="masterMenu">
                     <ul class="nav flex-column ms-4 mt-2 ps-2 border-start border-secondary border-opacity-25">
-                        <li class="nav-item"><a href="{{ route('superadmin.locations.index') }}"
-                                class="nav-link py-2 {{ request()->routeIs('superadmin.locations.*') ? 'text-primary fw-bold' : '' }}"><i
-                                    class="bi bi-geo-fill text-secondary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
-                                <span>Lokasi Fisik</span></a></li>
-                        <li class="nav-item"><a href="{{ route('superadmin.departments.index') }}"
-                                class="nav-link py-2 {{ request()->routeIs('superadmin.departments.*') ? 'text-primary fw-bold' : '' }}"><i
-                                    class="bi bi-building-fill text-secondary"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i> <span>Departemen</span></a></li>
-                        <li class="nav-item"><a href="{{ route('superadmin.units.index') }}"
-                                class="nav-link py-2 {{ request()->routeIs('superadmin.units.*') ? 'text-primary fw-bold' : '' }}"><i
-                                    class="bi bi-boxes text-secondary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
-                                <span>Unit</span></a></li>
-                        <li class="nav-item"><a href="{{ route('superadmin.managers.index') }}"
-                                class="nav-link py-2 {{ request()->routeIs('superadmin.managers.*') ? 'text-primary fw-bold' : '' }}"><i
-                                    class="bi bi-person-badge-fill text-secondary"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i> <span>Manager</span></a></li>
-                        <li class="nav-item"><a href="{{ route('superadmin.users.index') }}"
-                                class="nav-link py-2 {{ request()->routeIs('superadmin.users.*') ? 'text-primary fw-bold' : '' }}"><i
-                                    class="bi bi-people-fill text-secondary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
-                                <span>User</span></a></li>
-                        <li class="nav-item"><a href="{{ route('superadmin.products.index') }}"
-                                class="nav-link py-2 {{ request()->routeIs('superadmin.products.*') ? 'text-primary fw-bold' : '' }}"><i
-                                    class="bi bi-box-seam-fill text-secondary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
-                                <span>Master Produk</span> <span class="badge bg-primary ms-auto" style="font-size:0.5rem;">NEW</span></a></li>
-                        <li class="nav-item mt-2"><a href="{{ route('superadmin.settings.index') }}"
-                                class="nav-link py-2 text-warning fw-bold"><i class="bi bi-gear-fill text-warning"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i> <span>Pengaturan APP</span></a>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.locations.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.locations.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-geo-alt-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#10b981;"></i>
+                                <span>Lokasi Fisik</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.departments.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.departments.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-building-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#3b82f6;"></i>
+                                <span>Departemen</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.units.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.units.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-diagram-3-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#8b5cf6;"></i>
+                                <span>Unit</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.managers.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.managers.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-person-badge-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#f59e0b;"></i>
+                                <span>Manager</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.users.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.users.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-people-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#ec4899;"></i>
+                                <span>User</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.pengajuan-access.index') }}"
+                               class="nav-link py-2 d-flex align-items-center {{ request()->routeIs('superadmin.pengajuan-access.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-shield-lock-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#7c3aed;"></i>
+                                <span>Akses Pengajuan</span>
+                                <span class="badge text-white ms-auto" style="font-size:0.5rem; background:linear-gradient(135deg,#7c3aed,#5b21b6);">NEW</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.products.index') }}"
+                               class="nav-link py-2 d-flex align-items-center {{ request()->routeIs('superadmin.products.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-box-seam-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#06b6d4;"></i>
+                                <span>Master Produk</span>
+                                <span class="badge bg-gradient text-white ms-auto" style="font-size:0.5rem; background:linear-gradient(135deg,#06b6d4,#0891b2);"></span>
+                            </a>
+                        </li>
+                        <li class="nav-item mt-2">
+                            <a href="{{ route('superadmin.settings.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.settings.*') ? 'fw-bold text-primary' : 'text-warning fw-bold' }}">
+                                <i class="bi bi-gear-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#f97316;"></i>
+                                <span>Pengaturan APP</span>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -224,33 +255,21 @@
             </li>
 
             <li class="nav-item">
-                <a href="{{ route('superadmin.server-stats.index') }}" 
+                <a href="{{ route('superadmin.server-stats.index') }}"
                     class="nav-link {{ request()->routeIs('superadmin.server-stats.*') ? 'active' : '' }}">
                     <i class="bi bi-speedometer2 text-warning"></i>
                     <span>Statistik Server</span>
                 </a>
             </li>
+
+            <li class="nav-item">
+                <a href="{{ route('superadmin.app-versions.index') }}"
+                    class="nav-link {{ request()->routeIs('superadmin.app-versions.*') ? 'active' : '' }}">
+                    <i class="bi bi-android2 text-success"></i>
+                    <span>Kelola APK Android</span>
+                </a>
+            </li>
         </ul>
     </div>
 
-    {{-- BOTTOM PROFILE (Premium Sidebar Addition) --}}
-    <div class="sidebar-footer border-top border-light px-3 py-3" style="background: #ffffff;">
-        <a href="{{ route('superadmin.profile') }}" class="text-decoration-none">
-            <div class="bg-light rounded-4 p-2 d-flex align-items-center gap-3 border border-light shadow-sm transition-hover" style="cursor: pointer;">
-                @if(auth()->user()->photo)
-                    <img src="{{ asset('profile_photos/' . auth()->user()->photo) }}" alt="Profile" class="rounded-circle shadow-sm" style="width: 38px; height: 38px; min-width: 38px; object-fit: cover;">
-                @else
-                    <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center shadow-sm fw-bold" style="width: 38px; height: 38px; min-width: 38px; font-size: 1rem;">
-                        {{ substr(auth()->user()->name ?? 'S', 0, 1) }}
-                    </div>
-                @endif
-                <div class="sidebar-title overflow-hidden">
-                    <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 0.85rem;">{{ auth()->user()->name ?? 'Superadmin' }}</h6>
-                    <small class="text-truncate d-block fw-bold" style="font-size: 0.65rem; color: #dc2626;">
-                        <i class="bi bi-shield-lock-fill me-1"></i>SUPER ADMIN
-                    </small>
-                </div>
-            </div>
-        </a>
-    </div>
 </aside>

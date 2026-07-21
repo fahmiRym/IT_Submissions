@@ -93,8 +93,9 @@
         </div>
         
         <div class="mb-3">
-            <label class="form-label small fw-bold text-secondary">Nama Pemohon</label>
-            <textarea name="pemohon" id="editPemohon" class="form-control bg-light border-0" rows="2" placeholder="Nama-nama pemohon..."></textarea>
+            @include('partials._pemohon_picker', ['fieldId' => 'pemohonPickerEditSuper', 'name' => 'requesters', 'selected' => [], 'textName' => 'pemohon'])
+            {{-- legacy hidden field for backward-compat scripts referencing #editPemohon --}}
+            <input type="hidden" id="editPemohon">
         </div>
 
         {{-- STATUS CONTROLS (Superadmin Special) --}}
@@ -173,14 +174,17 @@
             <textarea name="no_transaksi" id="editNoTransaksi" class="form-control bg-light border-0" rows="3" style="min-height: 120px;"></textarea>
         </div>
 
-        {{-- EXTRA FIELDS untuk ADJUST: Deskripsi Masalah -> Catatan --}}
-        <div class="mb-4 d-none dynamic-section-edit" id="sectionAdjustExtraEdit" style="border:1px solid rgba(2,132,199,0.15); border-radius: 12px; padding: 12px 12px; background: rgba(14,165,233,0.03);">
-            <div class="mt-2">
-                <label class="form-label small fw-bold text-secondary">Deskripsi Masalah</label>
-                <textarea name="keterangan" id="editKeterangan" class="form-control bg-light border-0" rows="4" style="min-height: 140px;"></textarea>
+        {{-- EXTRA FIELDS untuk ADJUST: pointer ke kolom Keterangan utama (lihat bawah)
+             Sebelumnya section ini berisi <textarea id="editKeterangan"> kedua → bentrok ID dgn
+             textarea utama → jQuery hanya isi yg pertama (yg di-hide) → keterangan tampak kosong. --}}
+        <div class="mb-4 d-none dynamic-section-edit" id="sectionAdjustExtraEdit" style="border:1px solid rgba(2,132,199,0.15); border-radius: 12px; padding: 10px 12px; background: rgba(14,165,233,0.03);">
+            <div class="d-flex align-items-center gap-2 text-info">
+                <i class="bi bi-info-circle-fill"></i>
+                <small class="fw-semibold">
+                    Deskripsi Masalah Adjustment dapat diisi di kolom <b>Keterangan</b> di bawah —
+                    konten akan muncul sebagai <b>CATATAN</b> pada output draft.
+                </small>
             </div>
-
-            <small class="text-muted" style="font-size: 0.65rem;">Deskripsi masalah akan muncul sebagai CATATAN pada output draft.</small>
         </div>
 
          {{-- B. BUNDEL SECTION --}}
@@ -200,6 +204,7 @@
 
         {{-- C. ADJUST SECTION --}}
         <div class="mb-4 d-none dynamic-section-edit" id="sectionAdjustEdit">
+            @include('partials._adjust_header', ['scope' => 'edit'])
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <label class="form-label small fw-bold text-secondary mb-0">Adjust Items</label>
                 <button type="button" class="btn btn-sm btn-info text-white rounded-pill px-3" onclick="window.addAdjustRowEdit()">
@@ -207,23 +212,24 @@
                 </button>
             </div>
             <div class="table-responsive rounded-3 border border-light">
-                <table class="table table-sm table-borderless mb-0 align-middle">
-                    <thead class="bg-light text-secondary">
+                <table class="table table-sm table-borderless mb-0 align-middle adjust-table">
+                    <thead class="bg-light text-secondary text-uppercase">
                         <tr class="text-xs">
-                            <th class="ps-3">Kode</th>
-                            <th>Nama</th>
+                            <th class="ps-3" width="100">Kode Barang</th>
+                            <th>Nama Barang</th>
+                            <th width="90">Lot</th>
+                            <th width="150">Lokasi</th>
                             <th class="text-center" width="70">Odoo</th>
                             <th class="text-center" width="70">Fisik</th>
-                            <th class="text-center" width="80">Qty In</th>
-                            <th class="text-center" width="80">Qty Out</th>
-                            <th width="110">Lot</th>
-                            <th width="160">Lokasi</th>
-                            <th></th>
+                            <th class="text-center" width="80">Selisih</th>
+                            <th class="text-center" width="70">Adjus</th>
+                            <th width="40"></th>
                         </tr>
                     </thead>
                     <tbody id="wrapperAdjustEdit"></tbody>
                 </table>
             </div>
+            @include('partials._adjust_footer', ['scope' => 'edit', 'wrapper' => 'wrapperAdjustEdit'])
         </div>
 
         {{-- D. MUTASI SECTION --}}

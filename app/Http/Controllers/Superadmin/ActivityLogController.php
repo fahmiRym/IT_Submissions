@@ -24,7 +24,9 @@ class ActivityLogController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
-        $logs = $query->latest()->paginate(20);
+        $perPageRaw = $request->input('per_page', 20);
+        $perPage = ($perPageRaw === 'all') ? 99999 : max(1, (int) $perPageRaw);
+        $logs = $query->latest()->paginate($perPage)->withQueryString();
         
         // Ambil user yang pernah melakukan perubahan saja untuk filter
         $users = User::whereIn('id', AuditLog::distinct()->pluck('user_id'))->get();

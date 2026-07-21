@@ -12,13 +12,16 @@ use Illuminate\Support\Facades\DB;
 trait HandlesApproval
 {
     /**
-     * Halaman "Persetujuan Saya": pengajuan yang tahap aktifnya menunggu user ini.
+     * Query data pengajuan yang menunggu user (helper — dipakai web view + API).
      */
-    public function myApprovals(Request $request)
+    protected function myApprovalsData($user)
     {
-        $user = auth()->user();
-
-        $arsips = Arsip::with(['approvals.approver', 'admin', 'department', 'unit'])
+        return Arsip::with([
+                'approvals.approver',
+                'approvals.delegatedFrom',
+                'signatures.delegatedFrom',
+                'admin', 'department', 'unit',
+            ])
             ->whereHas('approvals', function ($q) use ($user) {
                 $q->where('status', 'pending');
                 if ($user->role === 'superadmin') {
@@ -44,8 +47,74 @@ trait HandlesApproval
                 return (int) $cur->approver_id === (int) $user->id;
             })
             ->values();
+    }
+
+    /**
+     * Halaman "Persetujuan Saya": pengajuan yang tahap aktifnya menunggu user ini.
+     * Web → return view. API (wantsJson) → return JSON list.
+     */
+    public function myApprovals(Request $request)
+    {
+        $user = auth()->user();
+        $arsips = $this->myApprovalsData($user);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status'  => 'success',
+                'count'   => $arsips->count(),
+                'data'    => $arsips->map(fn($a) => $this->transformArsipForApi($a, $user))->values(),
+            ]);
+        }
 
         return view('approvals.index', ['arsips' => $arsips]);
+    }
+
+    /**
+     * Compact transform 1 arsip untuk API inbox (info penting saja, hindari payload berat).
+     * Dipakai di /api/approvals (inbox list).
+     *
+     * Field shape ALIGNED dgn Android DTO ApprovalInboxItem + ApprovalStep:
+     *   - department, unit: object {id, name} (Android expect DepartmentInfo/UnitInfo)
+     *   - current_step.step: int alias step_order (Android expect field 'step')
+     *   - current_step.delegated_from: string nama (Android expect String?, bukan object)
+     */
+    protected function transformArsipForApi(Arsip $arsip, $user): array
+    {
+        $cur = $arsip->currentApproval();
+        return [
+            'id'              => $arsip->id,
+            'no_registrasi'   => $arsip->no_registrasi,
+            'no_doc'          => $arsip->no_doc,
+            'jenis'           => $arsip->jenis_pengajuan, // alias utk Android fallback
+            'jenis_pengajuan' => $arsip->jenis_pengajuan,
+            'jenis_label'     => str_replace('_', ' ', (string) $arsip->jenis_pengajuan),
+            'pemohon'         => $arsip->pemohon ?: optional($arsip->admin)->name,
+            'department'      => $arsip->department ? [
+                'id'   => $arsip->department->id,
+                'name' => $arsip->department->name,
+                'code' => $arsip->department->code ?? null,
+            ] : null,
+            'unit'            => $arsip->unit ? [
+                'id'   => $arsip->unit->id,
+                'name' => $arsip->unit->name,
+                'code' => $arsip->unit->code ?? null,
+            ] : null,
+            'tgl_pengajuan'   => optional($arsip->tgl_pengajuan)->toDateString(),
+            'status'          => $arsip->status,
+            'ket_process'     => $arsip->ket_process,
+            'current_step'    => $cur ? [
+                'step'       => $cur->step_order,  // Android field name
+                'step_order' => $cur->step_order,  // backward-compat web
+                'role_label' => $cur->role_label,
+                'role'       => $cur->role_label,  // Android fallback field
+                'is_mine'    => (int) $cur->approver_id === (int) $user->id
+                                 || ($user->role === 'superadmin' && $cur->role_label === ArsipApproval::FINAL_ROLE),
+                'delegated_from' => optional($cur->delegatedFrom)->name, // string nama (Android expect String?)
+            ] : null,
+            'approvals_count' => $arsip->approvals->count(),
+            'signatures_count' => $arsip->signatures?->count() ?? 0,
+        ];
     }
 
     /**
@@ -59,20 +128,32 @@ trait HandlesApproval
 
         $step = $arsip->currentApproval();
         if (!$step) {
-            return back()->with('error', 'Tidak ada tahap approval yang menunggu.');
+            $msg = 'Tidak ada tahap approval yang menunggu.';
+            if ($request->wantsJson()) return response()->json(['status' => 'error', 'message' => $msg], 422);
+            return back()->with('error', $msg);
         }
 
         if (!$this->canActOnStep($step, $user)) {
-            return back()->with('error', 'Tahap ini bukan giliran Anda.');
+            $msg = 'Tahap ini bukan giliran Anda.';
+            if ($request->wantsJson()) return response()->json(['status' => 'error', 'message' => $msg], 403);
+            return back()->with('error', $msg);
         }
 
-        if (!$user->hasSignature()) {
-            return back()->with('error', 'Anda belum mengatur specimen tanda tangan di Profil.');
-        }
+        // hasSignature() tidak lagi wajib — TTD digital = QR auto-generated.
 
         DB::transaction(function () use ($arsip, $step, $user, $request) {
-            // Stempel TTD sesuai peran tahap (Pemohon/SPV/Kabag/Manager/Accounting/Departemen IT)
-            $this->applySignature($arsip, $user, $step->role_label, $request->input('note'), $request->ip());
+            // Stempel TTD sesuai peran tahap (Pemohon/SPV/Kabag/Manager/Accounting/Departemen IT).
+            // Bila step ini merupakan hasil delegasi (delegated_from_id sudah di-set saat generate),
+            // ATAU kalau superadmin override tahap orang lain, propagate info delegasi ke signature.
+            $delegatedFromId = $step->delegated_from_id;
+            if (!$delegatedFromId
+                && $step->approver_id
+                && (int) $step->approver_id !== (int) $user->id
+                && $user->role === 'superadmin') {
+                // Superadmin override — anggap sebagai delegasi dari approver original.
+                $delegatedFromId = $step->approver_id;
+            }
+            $this->applySignature($arsip, $user, $step->role_label, $request->input('note'), $request->ip(), $delegatedFromId);
 
             $step->update([
                 'status'   => 'approved',
@@ -106,7 +187,17 @@ trait HandlesApproval
             }
         });
 
-        return back()->with('success', "Tahap {$step->role_label} berhasil disetujui & ditandatangani.");
+        $msg = "Tahap {$step->role_label} berhasil disetujui & ditandatangani.";
+        if ($request->wantsJson()) {
+            $arsip->refresh();
+            return response()->json([
+                'success' => true,
+                'status'  => 'success',
+                'message' => $msg,
+                'data'    => $arsip->toApiDetailArray($user),
+            ]);
+        }
+        return back()->with('success', $msg);
     }
 
     /**
@@ -121,10 +212,14 @@ trait HandlesApproval
 
         $step = $arsip->currentApproval();
         if (!$step) {
-            return back()->with('error', 'Tidak ada tahap approval yang menunggu.');
+            $msg = 'Tidak ada tahap approval yang menunggu.';
+            if ($request->wantsJson()) return response()->json(['status' => 'error', 'message' => $msg], 422);
+            return back()->with('error', $msg);
         }
         if (!$this->canActOnStep($step, $user)) {
-            return back()->with('error', 'Tahap ini bukan giliran Anda.');
+            $msg = 'Tahap ini bukan giliran Anda.';
+            if ($request->wantsJson()) return response()->json(['status' => 'error', 'message' => $msg], 403);
+            return back()->with('error', $msg);
         }
 
         DB::transaction(function () use ($arsip, $step, $user, $request) {
@@ -152,7 +247,17 @@ trait HandlesApproval
             ]);
         });
 
-        return back()->with('success', "Pengajuan ditolak pada tahap {$step->role_label}.");
+        $msg = "Pengajuan ditolak pada tahap {$step->role_label}.";
+        if ($request->wantsJson()) {
+            $arsip->refresh();
+            return response()->json([
+                'success' => true,
+                'status'  => 'success',
+                'message' => $msg,
+                'data'    => $arsip->toApiDetailArray($user),
+            ]);
+        }
+        return back()->with('success', $msg);
     }
 
     /**
@@ -182,9 +287,8 @@ trait HandlesApproval
 
         ArsipApproval::generateFor($arsip, $approverMap);
 
-        if ($pengaju->hasSignature()) {
-            $this->applySignature($arsip, $pengaju, 'Pemohon', null, request()->ip());
-        }
+        // TTD Pemohon auto saat submit — sekarang tidak perlu specimen image.
+        $this->applySignature($arsip, $pengaju, 'Pemohon', null, request()->ip());
 
         $arsip->load('approvals');
         if ($next = $arsip->currentApproval()) {

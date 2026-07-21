@@ -1,5 +1,8 @@
 {{-- Timeline status approval. Pakai: @include('partials._approval_timeline', ['arsip' => $arsip]) --}}
-@php $steps = $arsip->relationLoaded('approvals') ? $arsip->approvals : $arsip->approvals()->get(); @endphp
+@php
+    $arsip->loadMissing('approvals.delegatedFrom');
+    $steps = $arsip->approvals;
+@endphp
 @if($steps->isNotEmpty())
 <div class="d-flex flex-column gap-1">
     @foreach($steps as $s)
@@ -18,6 +21,14 @@
                     — {{ $s->approver->name ?? ($s->role_label === 'Departemen IT' ? 'Tim IT' : 'belum ditentukan') }}
                     @if($s->acted_at) · {{ $s->acted_at->format('d/m/Y H:i') }} @endif
                 </span>
+                @if($s->delegated_from_id && $s->delegatedFrom)
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle ms-1"
+                          style="font-size:0.55rem; padding:2px 6px;"
+                          title="Diwakilkan dari {{ $s->delegatedFrom->name }}">
+                        <i class="bi bi-arrow-return-left"></i>
+                        WAKIL DARI {{ $s->delegatedFrom->name }}
+                    </span>
+                @endif
                 @if($s->status === 'rejected' && $s->note)
                     <div class="text-danger" style="font-size:0.64rem;">Alasan: {{ $s->note }}</div>
                 @endif

@@ -13,6 +13,7 @@ class ArsipApproval extends Model
         'step_order',
         'role_label',
         'approver_id',
+        'delegated_from_id',
         'status',
         'note',
         'acted_by',
@@ -33,9 +34,19 @@ class ArsipApproval extends Model
         return $this->belongsTo(User::class, 'approver_id');
     }
 
+    public function delegatedFrom()
+    {
+        return $this->belongsTo(User::class, 'delegated_from_id');
+    }
+
     public function actor()
     {
         return $this->belongsTo(User::class, 'acted_by');
+    }
+
+    public function isDelegated(): bool
+    {
+        return !is_null($this->delegated_from_id);
     }
 
     public const FINAL_ROLE = 'Departemen IT';
@@ -105,17 +116,30 @@ class ArsipApproval extends Model
         ]);
 
         // 2) Approver antara sesuai jenis (hanya yg dipilih)
+        //    + auto-substitute bila approver punya delegasi aktif (Kabag cuti → SPV terima).
         foreach (self::rolesForJenis($arsip->jenis_pengajuan) as $role) {
             $uid = $approverMap[$role] ?? null;
             if (!$uid) {
-                continue; // lewati peran yg tidak diisi
+                continue;
             }
+
+            $delegatedFromId = null;
+            $original = User::find($uid);
+            if ($original) {
+                $delegate = $original->activeDelegate();
+                if ($delegate) {
+                    $delegatedFromId = $original->id;
+                    $uid = $delegate->id;
+                }
+            }
+
             self::create([
-                'arsip_id'    => $arsip->id,
-                'step_order'  => $order++,
-                'role_label'  => $role,
-                'approver_id' => $uid,
-                'status'      => 'pending',
+                'arsip_id'          => $arsip->id,
+                'step_order'        => $order++,
+                'role_label'        => $role,
+                'approver_id'       => $uid,
+                'delegated_from_id' => $delegatedFromId,
+                'status'            => 'pending',
             ]);
         }
 

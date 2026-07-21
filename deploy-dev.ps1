@@ -1,48 +1,53 @@
 # Deploy e_arsip ke Dev Server (192.168.11.199)
-# Jalankan: .\deploy-dev.ps1
-# Atau dari PowerShell: powershell -ExecutionPolicy Bypass -File .\deploy-dev.ps1
 
 $ErrorActionPreference = 'Continue'
 
 $DEV_HOST = '192.168.11.199'
 $DEV_USER = 'root'
 $DEV_PASS = 'bismillah@'
+$projectDir = '/root/it_submissions'
+$stamp = Get-Date -Format 'yyyyMMddHHmmss'
 
-# Trust host key sekali
-$null = & cmd /c "echo y | plink -ssh -pw `"$DEV_PASS`" $DEV_USER@$DEV_HOST `"echo OK`" 2>&1"
-
-Write-Host '==> 1) Lokasi project di server' -ForegroundColor Cyan
-$projectPath = & plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "find /var/www /home /opt -maxdepth 4 -name 'artisan' -type f 2>/dev/null | head -1"
-$projectPath = ($projectPath | Out-String).Trim()
-
-if (-not $projectPath) {
-    Write-Host 'GAGAL: artisan tidak ditemukan di server. Edit script ini dan set `$projectPath manual.' -ForegroundColor Red
-    exit 1
+function Run-Ssh($title, $cmd) {
+    Write-Host "==> $title" -ForegroundColor Cyan
+    & plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "bash -lc `"$cmd`""
+    Write-Host ''
 }
 
-$projectDir = Split-Path $projectPath -Parent
-Write-Host "    project dir: $projectDir" -ForegroundColor Green
-
-Write-Host '==> 2) Pre-deploy snapshot (git rev + migrate status)' -ForegroundColor Cyan
-& plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "cd $projectDir && git rev-parse --short HEAD && php artisan migrate:status 2>&1 | tail -8"
-
-Write-Host '==> 3) git pull' -ForegroundColor Cyan
-& plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "cd $projectDir && git pull --ff-only 2>&1"
-
-Write-Host '==> 4) composer install' -ForegroundColor Cyan
-& plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "cd $projectDir && composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -15"
-
-Write-Host '==> 5) migrate' -ForegroundColor Cyan
-& plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "cd $projectDir && php artisan migrate --force 2>&1"
-
-Write-Host '==> 6) clear + recache' -ForegroundColor Cyan
-& plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "cd $projectDir && php artisan view:clear && php artisan config:clear && php artisan route:clear && php artisan cache:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache 2>&1"
-
-Write-Host '==> 7) permission' -ForegroundColor Cyan
-& plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "cd $projectDir && (chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || chown -R apache:apache storage bootstrap/cache 2>/dev/null || true) && chmod -R 775 storage bootstrap/cache 2>&1"
-
-Write-Host '==> 8) verifikasi: migrate:status terakhir' -ForegroundColor Cyan
-& plink -ssh -batch -pw "$DEV_PASS" "$DEV_USER@$DEV_HOST" "cd $projectDir && php artisan migrate:status 2>&1 | tail -10"
-
+Write-Host "==> Target: $DEV_USER@$DEV_HOST  dir: $projectDir" -ForegroundColor Green
 Write-Host ''
-Write-Host 'DEPLOY DEV SELESAI.' -ForegroundColor Green
+
+Run-Ssh '1) Pre-deploy info' `
+    "cd $projectDir && git rev-parse --short HEAD && (which php || echo 'php NOT FOUND') && (which composer || echo 'composer NOT FOUND')"
+
+Run-Ssh '2) Backup .env' `
+    "cd $projectDir && cp .env .env.bak.$stamp && ls -la .env.bak.$stamp"
+
+Run-Ssh '3) Stash local server changes' `
+    "cd $projectDir && git stash push --include-untracked -m 'pre-deploy-$stamp' && git stash list | head -5"
+
+Run-Ssh '4) git pull --ff-only' `
+    "cd $projectDir && git fetch origin && git pull --ff-only origin main 2>&1"
+
+Run-Ssh '5) Re-apply server stash' `
+    "cd $projectDir && (git stash pop 2>&1 || echo 'STASH POP CONFLICTED')"
+
+Run-Ssh '6) Status setelah pop' `
+    "cd $projectDir && git status --short"
+
+Run-Ssh '7) composer install' `
+    "cd $projectDir && composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | tail -15"
+
+Run-Ssh '8) migrate --force' `
+    "cd $projectDir && php artisan migrate --force 2>&1"
+
+Run-Ssh '9) Clear + rebuild cache' `
+    "cd $projectDir && php artisan view:clear && php artisan config:clear && php artisan route:clear && php artisan cache:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache 2>&1"
+
+Run-Ssh '10) Permission' `
+    "cd $projectDir && (chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true) && chmod -R 775 storage bootstrap/cache"
+
+Run-Ssh '11) migrate:status' `
+    "cd $projectDir && php artisan migrate:status 2>&1 | tail -12"
+
+Write-Host '==================== DEPLOY DEV DONE ====================' -ForegroundColor Green

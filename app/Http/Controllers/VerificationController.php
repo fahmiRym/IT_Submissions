@@ -11,7 +11,13 @@ class VerificationController extends Controller
      */
     public function show($token)
     {
-        $arsip = Arsip::with(['department', 'unit', 'admin', 'signatures.user', 'approvals.approver'])
+        $arsip = Arsip::with([
+            'department', 'unit', 'admin',
+            'signatures.user',
+            'signatures.delegatedFrom',
+            'approvals.approver',
+            'approvals.delegatedFrom',
+        ])
             ->where('verify_token', $token)
             ->first();
 
@@ -19,7 +25,7 @@ class VerificationController extends Controller
             return response()->view('verify.invalid', [], 404);
         }
 
-        // Verifikasi ulang integritas tiap tanda tangan
+        // Verifikasi ulang integritas tiap tanda tangan (harus match dgn formula di SignsArsip::applySignature)
         $signatures = $arsip->signatures->map(function ($sig) use ($arsip) {
             $expected = hash('sha256', implode('|', [
                 $arsip->id,
@@ -27,6 +33,8 @@ class VerificationController extends Controller
                 $sig->role_label,
                 optional($sig->signed_at)->toIso8601String(),
                 $arsip->no_registrasi,
+                (string) ($sig->delegated_from_id ?? ''),
+                config('app.key'),
             ]));
             $sig->is_valid = hash_equals((string) $sig->hash, $expected);
             return $sig;

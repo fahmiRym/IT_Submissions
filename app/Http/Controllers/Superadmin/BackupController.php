@@ -381,19 +381,38 @@ class BackupController extends Controller
 
     public function updateNoRegistrasi(Request $request, $id)
     {
-        $request->validate([
-            'no_registrasi' => [
-                'required',
-                'string',
-                'max:100',
-                \Illuminate\Validation\Rule::unique('arsips', 'no_registrasi')->ignore($id),
-            ],
-        ]);
+        try {
+            $request->validate([
+                'no_registrasi' => [
+                    'required',
+                    'string',
+                    'max:100',
+                    \Illuminate\Validation\Rule::unique('arsips', 'no_registrasi')->ignore($id),
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => collect($e->errors())->flatten()->first() ?: 'Validasi gagal.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            throw $e;
+        }
 
         $arsip = Arsip::findOrFail($id);
         $old = $arsip->no_registrasi;
         $arsip->update(['no_registrasi' => $request->no_registrasi]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => "No Registrasi diubah: {$old} → {$arsip->no_registrasi}",
+                'old' => $old,
+                'new' => $arsip->no_registrasi,
+            ]);
+        }
         return back()->with('success', "No Registrasi diubah: {$old} -> {$arsip->no_registrasi}");
     }
 }

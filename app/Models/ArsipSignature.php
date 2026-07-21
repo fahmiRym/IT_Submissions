@@ -11,6 +11,7 @@ class ArsipSignature extends Model
     protected $fillable = [
         'arsip_id',
         'user_id',
+        'delegated_from_id',
         'role_label',
         'signer_name',
         'signature_path',
@@ -32,6 +33,16 @@ class ArsipSignature extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function delegatedFrom()
+    {
+        return $this->belongsTo(User::class, 'delegated_from_id');
+    }
+
+    public function isDelegated(): bool
+    {
+        return !is_null($this->delegated_from_id);
     }
 
     public function signatureUrl(): ?string

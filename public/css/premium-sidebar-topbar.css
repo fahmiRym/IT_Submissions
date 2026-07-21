@@ -1,0 +1,468 @@
+/* =====================================================================
+   PREMIUM-SIDEBAR-TOPBAR.CSS
+   Polish maksimal untuk sidebar + topbar. Loaded SETELAH modern-theme.
+   ===================================================================== */
+
+/* ==================================================
+   1) SIDEBAR — Premium overhaul
+   ================================================== */
+
+.sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #fafbff 60%, #f5f7ff 100%) !important;
+    border-right: 1px solid rgba(99, 102, 241, 0.08);
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* ── Sidebar Header — gradient banner ── */
+.sidebar-header {
+    background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%) !important;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.1) !important;
+    position: relative;
+    overflow: hidden;
+}
+.sidebar-header::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+.sidebar-header > div { position: relative; z-index: 2; }
+.sidebar-header .bg-white {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15) !important;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+}
+.sidebar-header h6 {
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.3px;
+}
+.sidebar-toggle-in {
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.15) !important;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.1) !important;
+    transition: all 0.25s ease;
+}
+.sidebar-toggle-in:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+    transform: rotate(-180deg);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
+}
+.sidebar-toggle-in:hover i { color: white !important; }
+
+/* ── Sidebar menu wrapper ── */
+.sidebar-menu {
+    padding: 1.5rem 0.75rem !important;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d2fe transparent;
+}
+.sidebar-menu::-webkit-scrollbar { width: 4px; }
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: #c7d2fe;
+    border-radius: 6px;
+}
+
+/* ── Section headers — gradient line ── */
+.sidebar .nav-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    margin: 1.5rem 1.25rem 0.75rem !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.18em !important;
+    font-weight: 800 !important;
+    color: #94a3b8 !important;
+}
+.sidebar .nav-header::before {
+    content: '';
+    width: 18px; height: 2px;
+    background: linear-gradient(90deg, #6366f1, transparent);
+    border-radius: 2px;
+}
+.sidebar .nav-header::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.25), transparent);
+}
+
+/* ── Nav link — premium hover & active states ── */
+.sidebar .nav-link {
+    position: relative;
+    padding: 0.7rem 1rem !important;
+    margin-bottom: 0.3rem !important;
+    border-radius: 12px !important;
+    font-size: 0.85rem;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden;
+}
+.sidebar .nav-link i {
+    font-size: 1.15rem !important;
+    min-width: 30px !important;
+    transition: all 0.25s ease;
+}
+.sidebar .nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    width: 3px; height: 0;
+    background: linear-gradient(180deg, #4f46e5, #7c3aed);
+    border-radius: 0 3px 3px 0;
+    transform: translateY(-50%);
+    transition: height 0.25s ease;
+}
+.sidebar .nav-link:hover {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.02) 100%) !important;
+    color: #4f46e5 !important;
+    transform: translateX(2px) !important;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.06);
+}
+.sidebar .nav-link:hover::before { height: 50%; }
+.sidebar .nav-link:hover i { transform: scale(1.1) rotate(-3deg); }
+
+.sidebar .nav-link.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.32), 0 2px 4px rgba(79, 70, 229, 0.15) !important;
+    transform: none !important;
+}
+.sidebar .nav-link.active::before { display: none; }
+.sidebar .nav-link.active i { color: #fff !important; }
+.sidebar .nav-link.active::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12));
+    pointer-events: none;
+}
+
+/* Sub-menu (collapse) styling */
+.sidebar .collapse .nav,
+.sidebar .collapse ul {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.04), transparent);
+    border-radius: 10px;
+    padding: 0.3rem !important;
+    margin-top: 0.3rem !important;
+    border-left: 2px solid rgba(99, 102, 241, 0.15) !important;
+}
+.sidebar .collapse .nav-link {
+    padding: 0.5rem 0.75rem !important;
+    margin-bottom: 0.15rem !important;
+    font-size: 0.78rem;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+.sidebar .collapse .nav-link:hover { transform: translateX(3px) !important; }
+.sidebar .collapse .nav-link.text-primary {
+    background: rgba(79, 70, 229, 0.08) !important;
+    color: #4f46e5 !important;
+}
+
+/* Badge polish in nav-link */
+.sidebar .nav-link .badge {
+    margin-left: auto !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+    animation: badge-pulse 2.2s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* Sidebar footer — premium profile card */
+.sidebar-footer {
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important;
+    border-top: 1px solid rgba(99, 102, 241, 0.08) !important;
+    padding: 1rem !important;
+}
+.sidebar-footer > a > div {
+    background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.12) !important;
+    border-radius: 14px !important;
+    padding: 0.65rem 0.85rem !important;
+    transition: all 0.28s ease;
+    position: relative;
+    overflow: hidden;
+}
+.sidebar-footer > a > div::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    transition: left 0.5s ease;
+}
+.sidebar-footer > a > div:hover::before { left: 100%; }
+.sidebar-footer > a > div:hover {
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.15) !important;
+    transform: translateY(-2px);
+}
+.sidebar-footer img,
+.sidebar-footer .rounded-circle {
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+    border: 2px solid #ffffff;
+}
+
+/* ── Sub-menu chevron animation ── */
+.sidebar .transition-icon { transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+.sidebar .rotate-90 { transform: rotate(90deg) !important; }
+
+/* ── Online indicator on footer avatar ── */
+.sidebar-footer > a > div::after {
+    content: '';
+    position: absolute;
+    bottom: 10px; left: 38px;
+    width: 11px; height: 11px;
+    background: #10b981;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+    animation: online-pulse 1.8s infinite;
+}
+@keyframes online-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ==================================================
+   2) TOPBAR — Premium glassmorphism
+   ================================================== */
+
+.topbar {
+    background: rgba(255, 255, 255, 0.78) !important;
+    backdrop-filter: blur(18px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04) !important;
+    padding: 0.85rem 1.5rem !important;
+}
+
+/* Mobile hamburger - gradient + animation */
+.topbar .btn.d-lg-none {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25) !important;
+    transition: all 0.25s ease;
+}
+.topbar .btn.d-lg-none i {
+    color: #fff !important;
+}
+.topbar .btn.d-lg-none:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 14px rgba(79, 70, 229, 0.4) !important;
+}
+
+/* Page title — gradient text */
+.topbar .page-title-text {
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800 !important;
+    letter-spacing: -0.3px !important;
+    font-size: 1.05rem !important;
+}
+
+/* ── Topbar live clock + breadcrumb ── */
+.topbar-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 600;
+}
+.topbar-meta .topbar-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: rgba(241, 245, 249, 0.7);
+    border-radius: 999px;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    transition: all 0.2s ease;
+}
+.topbar-meta .topbar-meta-item:hover {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.2);
+    color: #4f46e5;
+}
+.topbar-meta .topbar-meta-item i {
+    color: #6366f1;
+    font-size: 0.85rem;
+}
+
+/* Quick search bar */
+.topbar-search {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+}
+.topbar-search input {
+    width: 100%;
+    border: none !important;
+    background: rgba(241, 245, 249, 0.7) !important;
+    border-radius: 999px !important;
+    padding: 8px 16px 8px 38px !important;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.topbar-search input:focus {
+    background: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12), 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    outline: none !important;
+}
+.topbar-search-icon {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.9rem;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+.topbar-search input:focus + .topbar-search-icon { color: #6366f1; }
+.topbar-search-kbd {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #94a3b8;
+    padding: 2px 6px;
+    font-family: monospace;
+}
+
+/* Notification bell — premium glow */
+.topbar .dropdown > button.position-relative {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.1) !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06) !important;
+    transition: all 0.28s ease;
+}
+.topbar .dropdown > button.position-relative:hover {
+    background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%) !important;
+    border-color: rgba(99, 102, 241, 0.25) !important;
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18) !important;
+    transform: translateY(-1px);
+}
+.topbar .dropdown > button.position-relative i {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.2rem;
+}
+#notification-badge {
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4) !important;
+    animation: badge-pulse 2.2s ease-in-out infinite;
+}
+
+/* Notification dropdown — premium panel */
+.topbar .dropdown-menu.dropdown-menu-end {
+    border-radius: 16px !important;
+    border: 1px solid rgba(226, 232, 240, 0.6) !important;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12), 0 4px 8px rgba(15, 23, 42, 0.04) !important;
+    margin-top: 12px !important;
+    overflow: hidden;
+}
+.topbar .dropdown-menu .bg-primary {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    padding: 1rem 1.25rem !important;
+}
+
+/* Profile dropdown button — premium pill */
+.topbar .dropdown > button.rounded-pill {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.12) !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05) !important;
+    padding: 0.45rem 0.85rem 0.45rem 0.4rem !important;
+    transition: all 0.28s ease;
+}
+.topbar .dropdown > button.rounded-pill:hover {
+    background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%) !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18) !important;
+}
+.topbar .dropdown > button.rounded-pill img,
+.topbar .dropdown > button.rounded-pill > div.rounded-circle {
+    border: 2px solid #fff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.topbar .dropdown > button.rounded-pill > div.rounded-circle {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+}
+
+/* Online dot on profile button */
+.topbar-profile-online {
+    position: absolute;
+    bottom: 8px; right: 8px;
+    width: 10px; height: 10px;
+    background: #10b981;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+    animation: online-pulse 1.8s infinite;
+}
+
+/* Responsive: hide meta strip + search on small */
+@media (max-width: 991.98px) {
+    .topbar-search { max-width: 200px; }
+    .topbar-meta { gap: 8px; }
+    .topbar-meta .topbar-meta-item.hide-md { display: none !important; }
+}
+@media (max-width: 767.98px) {
+    .topbar-meta { display: none !important; }
+    .topbar-search { display: none !important; }
+}
+@media (max-width: 575.98px) {
+    .topbar { padding: 0.65rem 0.85rem !important; }
+}
+
+/* ==================================================
+   3) Mini sidebar polish (when collapsed on desktop)
+   ================================================== */
+@media (min-width: 992.02px) {
+    body.sidebar-mini .sidebar .nav-link {
+        border-radius: 14px !important;
+        background: transparent;
+    }
+    body.sidebar-mini .sidebar .nav-link:hover {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(124, 58, 237, 0.05)) !important;
+        transform: scale(1.06) !important;
+    }
+    body.sidebar-mini .sidebar .nav-link.active {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
+    }
+    body.sidebar-mini .sidebar-footer > a > div {
+        padding: 0.4rem !important;
+        justify-content: center;
+    }
+}
+
+/* ==================================================
+   4) Sidebar overlay (mobile) — premium fade
+   ================================================== */
+.sidebar-overlay {
+    background: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}

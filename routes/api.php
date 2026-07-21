@@ -5,11 +5,22 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BarcodeController;
 use App\Http\Controllers\Api\ArsipApiController;
+use App\Http\Controllers\Api\ApprovalApiController;
+use App\Http\Controllers\Api\ServerStatApiController;
+use App\Http\Controllers\Api\ActivityLogApiController;
+use App\Http\Controllers\Api\AppVersionController;
 use App\Http\Controllers\Api\FcmController;
 use App\Http\Controllers\Api\NotificationController;
 
 // Auth Routes (Login)
 Route::post('/login', [AuthController::class, 'login']);
+
+// ==========================================
+// PUBLIC — Version Check (untuk Android auto-update)
+// Tidak butuh auth karena dipanggil di splash sebelum login.
+// ==========================================
+Route::get('/mobile/version',  [AppVersionController::class, 'show']);
+Route::get('/mobile/versions', [AppVersionController::class, 'index']);
 
 // Protected Routes (Butuh Token)
 Route::middleware('auth:sanctum')->group(function () {
@@ -24,6 +35,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/arsip', [ArsipApiController::class, 'index']);
     Route::get('/arsip/outstanding-ba', [ArsipApiController::class, 'getOutstandingBA']);
     Route::get('/arsip/{id}', [ArsipApiController::class, 'show'])->whereNumber('id');
+
+    // ==========================================
+    // APPROVAL FLOW (P0 — Android Sprint 1)
+    // Trait-based (source of truth = trait HandlesApproval + SignsArsip)
+    // ==========================================
+    Route::get('/approvals',            [ApprovalApiController::class, 'myApprovals']);
+    Route::post('/arsip/{id}/approve',  [ApprovalApiController::class, 'approveArsip'])->whereNumber('id');
+    Route::post('/arsip/{id}/reject',   [ApprovalApiController::class, 'rejectArsip'])->whereNumber('id');
+    Route::post('/arsip/{id}/sign',     [ApprovalApiController::class, 'signArsip'])->whereNumber('id');
+
+    // ==========================================
+    // SUPERADMIN ADMIN TOOLS (guard: superadmin only, cek di controller)
+    // ==========================================
+    Route::prefix('superadmin')->group(function () {
+        // Server Stats
+        Route::get('/server-stats',          [ServerStatApiController::class, 'apiSnapshot']);
+        Route::get('/server-stats/metrics',  [ServerStatApiController::class, 'apiMetrics']);
+
+        // Activity Logs (audit trail)
+        Route::get('/activity-logs',         [ActivityLogApiController::class, 'index']);
+        Route::get('/activity-logs/users',   [ActivityLogApiController::class, 'users']);
+    });
 
     // ==========================================
     // Firebase Cloud Messaging (Push Notification)

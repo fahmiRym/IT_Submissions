@@ -7,7 +7,9 @@ use App\Models\Notification;
 use App\Models\Setting;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,13 +33,24 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // Force Bootstrap 5 pagination globally (kita pakai Bootstrap 5, bukan Tailwind)
+        Paginator::useBootstrapFive();
+
+        // ── Gate: siapa yang boleh melihat HARGA / NILAI RUPIAH ──
+        // Lihat aturan di App\Models\User::canViewPrice() — satu source of truth.
+        Gate::define('view-price', fn ($user) => $user->canViewPrice());
+
         View::composer('*', function ($view) {
             // Data pengaturan global
             $logo = Setting::get('app_logo');
+            // Feature flag: Produk Baru bisa di-disable sementara dari Settings.
+            // Default ON ('1'). Bila '0' → semua UI/menu/filter/form opsi Produk_Baru disembunyikan.
+            $produkBaruEnabled = Setting::get('produk_baru_enabled', '1') === '1';
             $view->with([
                 'app_logo' => $logo,
                 'app_logo_url' => $logo ? asset('storage/settings/' . $logo . '?v=' . filemtime(public_path('storage/settings/' . $logo))) : asset('img/logo.png'),
                 'app_name' => Setting::get('app_name', config('app.name')),
+                'produkBaruEnabled' => $produkBaruEnabled,
             ]);
 
             // Data notifikasi untuk user yang login

@@ -25,20 +25,57 @@ class ArsipController extends Controller
 {
     use \App\Traits\SignsArsip;
     use \App\Traits\HandlesApproval;
+    use \App\Traits\SyncsRequesters;
 
     public function index(Request $request)
     {
+        $jenisParam = $request->jenis_pengajuan ?? $request->jenis;
+
+        // ── ID arsip yg di-share ke user current (Layer 2 access) ──
+        $sharedIds = auth()->user()->sharedArsips()->pluck('arsips.id')->all();
+
+        // ── GUARD: kalau user pilih ?jenis=X tapi tidak punya akses jenis itu
+        // DAN tidak ada satupun arsip jenis X yg di-share ke dia → tolak ──
+        if ($jenisParam && !auth()->user()->canAccessJenis($jenisParam)) {
+            $hasSharedInJenis = !empty($sharedIds)
+                && Arsip::whereIn('id', $sharedIds)->where('jenis_pengajuan', $jenisParam)->exists();
+            if (!$hasSharedInJenis) {
+                return redirect()
+                    ->route('admin.arsip.index')
+                    ->with('info', "Anda tidak punya akses ke jenis pengajuan \"{$jenisParam}\". Hubungi Superadmin.");
+            }
+        }
+
         $query = Arsip::with(['department', 'manager', 'unit', 'adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems', 'approvals']);
 
-        // Jika Accounting, izinkan data milik sendiri ATAU semua data Adjustment.
-        // Jika bukan Accounting dan bukan Superadmin, batasi hanya data milik sendiri.
+        // ── FILTER: akses gabungan (jenis access ∪ shared arsip) ──
+        $accessibleJenis = auth()->user()->accessibleJenis();
+        if (auth()->user()->role !== 'superadmin') {
+            $query->where(function ($q) use ($accessibleJenis, $sharedIds) {
+                $q->whereIn('jenis_pengajuan', $accessibleJenis ?: ['__none__']);
+                if (!empty($sharedIds)) {
+                    $q->orWhereIn('id', $sharedIds);
+                }
+            });
+        }
+
+        // Jika Accounting, izinkan data milik sendiri ATAU semua data Adjustment ATAU yang di-share.
+        // Jika bukan Accounting dan bukan Superadmin, batasi hanya data milik sendiri ATAU yang di-share.
         if (auth()->user()->role === 'accounting') {
-            $query->where(function ($q) {
+            $query->where(function ($q) use ($sharedIds) {
                 $q->where('admin_id', auth()->id())
                   ->orWhere('jenis_pengajuan', 'Adjust');
+                if (!empty($sharedIds)) {
+                    $q->orWhereIn('id', $sharedIds);
+                }
             });
         } elseif (auth()->user()->role !== 'superadmin') {
-            $query->where('admin_id', auth()->id());
+            $query->where(function ($q) use ($sharedIds) {
+                $q->where('admin_id', auth()->id());
+                if (!empty($sharedIds)) {
+                    $q->orWhereIn('id', $sharedIds);
+                }
+            });
         }
 
         /* ================= FILTER LOGIC ================= */
@@ -89,18 +126,28 @@ class ArsipController extends Controller
         $query->orderBy($sort, $dir);
 
         /* ================= DATA ================= */
-        $perPage = $request->input('per_page', 10);
+        $perPageRaw = $request->input('per_page', 10);
+        // "all" → unlimited (capped 99999 supaya tetap pakai paginate untuk konsistensi UI)
+        $perPage = ($perPageRaw === 'all') ? 99999 : (int) $perPageRaw;
         $arsips = $query->paginate($perPage)->withQueryString();
 
         /* ================= STATS (Dynamic) ================= */
         $statsQuery = Arsip::query();
         if (auth()->user()->role === 'accounting') {
-            $statsQuery->where(function ($q) {
+            $statsQuery->where(function ($q) use ($sharedIds) {
                 $q->where('admin_id', auth()->id())
                   ->orWhere('jenis_pengajuan', 'Adjust');
+                if (!empty($sharedIds)) {
+                    $q->orWhereIn('id', $sharedIds);
+                }
             });
         } elseif (auth()->user()->role !== 'superadmin') {
-            $statsQuery->where('admin_id', auth()->id());
+            $statsQuery->where(function ($q) use ($sharedIds) {
+                $q->where('admin_id', auth()->id());
+                if (!empty($sharedIds)) {
+                    $q->orWhereIn('id', $sharedIds);
+                }
+            });
         }
         foreach ($filters as $key => $value) {
             if (empty($value))
@@ -172,20 +219,13 @@ class ArsipController extends Controller
             'approvals.approver',
             'department',
             'unit',
-            'manager'
+            'manager',
+            'requesters.user:id,employee_id,name'
         ])->findOrFail($id);
 
-        // Security check for non-superadmins
-        if (auth()->user()->role !== 'superadmin') {
-            if (auth()->user()->role === 'accounting') {
-                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
-                    abort(403, 'Unauthorized action.');
-                }
-            } else {
-                if ($arsip->admin_id !== auth()->id()) {
-                    abort(403, 'Unauthorized action.');
-                }
-            }
+        // Security check: pakai helper canBeEditedBy (owner/superadmin/accounting+Adjust/shared)
+        if (!$arsip->canBeEditedBy(auth()->user())) {
+            abort(403, 'Anda tidak punya akses untuk mengedit arsip ini.');
         }
 
         // 2. Kembalikan JSON agar bisa dibaca JavaScript
@@ -201,8 +241,12 @@ class ArsipController extends Controller
 
     public function store(Request $request)
     {
-        // ... (LOGIKA STORE ANDA SUDAH BAGUS, SAYA PERTAHANKAN) ...
-        // ... (Saya ringkas disini agar fokus ke perbaikan Edit/Update) ...
+        // GUARD: Produk_Baru dimatikan sementara via Settings
+        if ($request->jenis_pengajuan === 'Produk_Baru'
+            && \App\Models\Setting::get('produk_baru_enabled', '1') !== '1') {
+            return back()->withInput()->with('error',
+                'Fitur Pengajuan Produk Baru sedang dinonaktifkan sementara. Hubungi Superadmin.');
+        }
 
         $validator = Validator::make($request->all(), [
             'jenis_pengajuan' => 'required',
@@ -273,6 +317,16 @@ class ArsipController extends Controller
             $this->saveDetailItems($arsip, $request->all());
             $this->syncProdukBaruItems($arsip, $request->input('produk_baru', []));
 
+            // E1. SYNC MULTI-PEMOHON (pivot arsip_requesters) + update text fallback
+            $requesterIds = (array) $request->input('requesters', []);
+            if (!empty($requesterIds)) {
+                $joinedNames = $this->syncArsipRequesters($arsip, $requesterIds);
+                if ($joinedNames && empty($request->pemohon)) {
+                    $arsip->pemohon = $joinedNames;
+                    $arsip->save();
+                }
+            }
+
             // E2. BANGUN RANTAI APPROVAL BERTINGKAT (approver dipilih per pengajuan)
             $this->initApprovalChain($arsip, (array) $request->input('approvers', []), auth()->user());
 
@@ -306,17 +360,9 @@ class ArsipController extends Controller
     {
         $arsip = Arsip::findOrFail($id);
 
-        // Security check for non-superadmins
-        if (auth()->user()->role !== 'superadmin') {
-            if (auth()->user()->role === 'accounting') {
-                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
-                    abort(403, 'Unauthorized action.');
-                }
-            } else {
-                if ($arsip->admin_id !== auth()->id()) {
-                    abort(403, 'Unauthorized action.');
-                }
-            }
+        // Security check: pakai helper canBeEditedBy (owner/superadmin/accounting+Adjust/shared)
+        if (!$arsip->canBeEditedBy(auth()->user())) {
+            abort(403, 'Anda tidak punya akses untuk mengubah arsip ini.');
         }
 
         if (in_array($arsip->status, ['Done', 'Reject', 'Void']) || in_array($arsip->ket_process, ['Done', 'Void'])) {
@@ -391,6 +437,15 @@ class ArsipController extends Controller
             $this->saveDetailItems($arsip, $dataToProcess);
             // Produk Baru: upsert (jaga barcode & tanggal dibuat)
             $this->syncProdukBaruItems($arsip, $dataToProcess['produk_baru'] ?? []);
+
+            // 5b. SYNC MULTI-PEMOHON (pivot arsip_requesters)
+            if ($request->has('requesters')) {
+                $joinedNames = $this->syncArsipRequesters($arsip, (array) $request->input('requesters', []));
+                if ($joinedNames) {
+                    $arsip->pemohon = $joinedNames;
+                    $arsip->save();
+                }
+            }
 
             // Bangun ulang rantai approval HANYA jika belum berjalan
             $arsip->load('approvals');
@@ -612,19 +667,16 @@ class ArsipController extends Controller
     // ========================================================================
     public function printDraft($id)
     {
-        $arsip = Arsip::with(['department', 'unit', 'admin', 'manager', 'bundelItems', 'adjustItems', 'produkBaruItems', 'signatures.user'])->findOrFail($id);
+        $arsip = Arsip::with([
+            'department', 'unit', 'admin', 'manager',
+            'bundelItems', 'adjustItems', 'produkBaruItems',
+            'signatures.user',
+            'personalNotes.user:id,name,role',
+        ])->findOrFail($id);
 
-        // Security check for non-superadmins
-        if (auth()->user()->role !== 'superadmin') {
-            if (auth()->user()->role === 'accounting') {
-                if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
-                    abort(403, 'Unauthorized action.');
-                }
-            } else {
-                if ($arsip->admin_id !== auth()->id()) {
-                    abort(403, 'Unauthorized action.');
-                }
-            }
+        // Security check: pakai helper canBeEditedBy (owner/superadmin/accounting+Adjust/shared)
+        if (!$arsip->canBeEditedBy(auth()->user())) {
+            abort(403, 'Anda tidak punya akses untuk arsip ini.');
         }
 
         $arsip->ensureVerifyToken();
@@ -703,5 +755,124 @@ class ArsipController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal upload: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Authorization helper untuk lampiran (sama dgn reuploadBaScan).
+     */
+    private function authorizeLampiran(Arsip $arsip): void
+    {
+        if (auth()->user()->role === 'superadmin') return;
+        if (auth()->user()->role === 'accounting') {
+            if ($arsip->admin_id !== auth()->id() && $arsip->jenis_pengajuan !== 'Adjust') {
+                abort(403, 'Unauthorized action.');
+            }
+            return;
+        }
+        if ($arsip->admin_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
+    /**
+     * Upload multi-file lampiran PDF ke pengajuan. Disimpan ke tabel arsip_lampiran.
+     */
+    public function uploadLampiran(Request $request, $id)
+    {
+        $arsip = Arsip::findOrFail($id);
+        $this->authorizeLampiran($arsip);
+
+        $request->validate([
+            'lampiran' => 'required|array|min:1',
+            'lampiran.*' => 'file|mimes:pdf|max:10240',
+            'keterangan' => 'nullable|string|max:500',
+        ], [
+            'lampiran.required' => 'Pilih minimal 1 file PDF.',
+            'lampiran.*.mimes' => 'Hanya file PDF yang diizinkan.',
+            'lampiran.*.max' => 'Ukuran tiap file maksimal 10MB.',
+        ]);
+
+        $service = new \App\Services\ArsipLampiranService();
+        try {
+            $stored = $service->storeMany($arsip, $request->file('lampiran'), auth()->user(), $request->input('keterangan'));
+        } catch (\Throwable $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+            return back()->with('error', 'Gagal upload: ' . $e->getMessage());
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'uploaded' => count($stored)]);
+        }
+        return back()->with('success', count($stored) . ' lampiran berhasil di-upload.');
+    }
+
+    /**
+     * List lampiran (JSON, untuk refresh modal).
+     */
+    public function listLampiran($id)
+    {
+        $arsip = Arsip::findOrFail($id);
+        $this->authorizeLampiran($arsip);
+        return response()->json([
+            'data' => $arsip->lampirans->map(fn($l) => [
+                'id' => $l->id,
+                'original_name' => $l->original_name,
+                'file_size' => $l->file_size,
+                'keterangan' => $l->keterangan,
+                'uploaded_at' => $l->created_at?->format('d/m/Y H:i'),
+                'url' => route('admin.arsip.view-lampiran', ['arsip' => $arsip->id, 'lampiran' => $l->id]),
+            ]),
+        ]);
+    }
+
+    /**
+     * Hapus lampiran.
+     */
+    public function deleteLampiran($arsipId, $lampiranId)
+    {
+        $arsip = Arsip::findOrFail($arsipId);
+        $this->authorizeLampiran($arsip);
+        $lamp = \App\Models\ArsipLampiran::where('arsip_id', $arsipId)->where('id', $lampiranId)->firstOrFail();
+        try {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($lamp->file_path);
+        } catch (\Throwable $e) {}
+        $lamp->delete();
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Stream lampiran PDF lewat controller (auth-protected).
+     * Pakai ini, JANGAN public /storage/... — agar tidak redirect login bila
+     * storage symlink tidak ada di prod.
+     */
+    public function viewLampiran($arsipId, $lampiranId)
+    {
+        $arsip = Arsip::findOrFail($arsipId);
+        $this->authorizeLampiran($arsip);
+        $lamp = \App\Models\ArsipLampiran::where('arsip_id', $arsipId)->where('id', $lampiranId)->firstOrFail();
+
+        $absPath = \Illuminate\Support\Facades\Storage::disk('public')->path($lamp->file_path);
+        if (!is_file($absPath)) abort(404, 'Lampiran tidak ditemukan.');
+
+        return response()->file($absPath, [
+            'Content-Type' => $lamp->mime_type ?: 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $lamp->original_name . '"',
+            'Cache-Control' => 'private, max-age=300',
+        ]);
+    }
+
+    /**
+     * Show Document — Draft + semua lampiran digabung jadi 1 PDF.
+     */
+    public function showDocument($id)
+    {
+        $arsip = Arsip::with(['adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems',
+                              'department', 'unit', 'manager', 'admin', 'approvals.approver',
+                              'signatures', 'lampirans'])->findOrFail($id);
+        $this->authorizeLampiran($arsip);
+        $service = new \App\Services\ArsipLampiranService();
+        return $service->streamMergedPdf($arsip);
     }
 }

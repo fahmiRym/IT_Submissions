@@ -32,6 +32,12 @@
     {{-- Responsive Mobile Overrides (loaded AFTER modern-theme so it wins) --}}
     <link href="{{ asset('css/responsive-mobile.css') }}?v={{ filemtime(public_path('css/responsive-mobile.css')) }}" rel="stylesheet">
 
+    {{-- Adjust-section theme (banner + totals + row color-code) --}}
+    <link href="{{ asset('css/adjust-theme.css') }}?v={{ filemtime(public_path('css/adjust-theme.css')) }}" rel="stylesheet">
+
+    {{-- Premium sidebar + topbar polish --}}
+    <link href="{{ asset('css/premium-sidebar-topbar.css') }}?v={{ filemtime(public_path('css/premium-sidebar-topbar.css')) }}" rel="stylesheet">
+
     {{-- Chart --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -162,18 +168,34 @@
     {{-- ================= CONTENT ================= --}}
     <div class="content">
         <nav class="topbar d-flex justify-content-between align-items-center px-4 py-3">
-            <div class="d-flex align-items-center gap-2 gap-md-3">
+            <div class="d-flex align-items-center gap-2 gap-md-3 flex-shrink-0">
                 {{-- Mobile Toggle (Keep in Topbar) --}}
-                <button class="btn btn-light d-lg-none shadow-sm rounded-circle p-2"
+                <button class="btn d-lg-none shadow-sm rounded-circle p-2"
                     onclick="document.querySelector('.sidebar').classList.add('show'); document.querySelector('.sidebar-overlay').classList.add('show')"
                     style="width: 40px; height: 40px; border: none;">
-                    <i class="bi bi-list text-primary fs-5"></i>
+                    <i class="bi bi-list fs-5"></i>
                 </button>
                 <span class="fw-bold fs-5 text-dark page-title-text text-truncate ms-2">@yield('page-title')</span>
             </div>
 
             @auth
-                <div class="d-flex align-items-center gap-3">
+                {{-- ── CENTER: Quick search + meta strip (live clock, today's stats) ── --}}
+                <div class="d-none d-md-flex flex-grow-1 align-items-center gap-3 px-3" style="max-width: 600px;">
+                    <div class="topbar-search flex-grow-1">
+                        <input type="text" id="topbarQuickSearch" class="form-control"
+                               placeholder="Cari pengajuan, NIK, atau no doc..." autocomplete="off">
+                        <i class="bi bi-search topbar-search-icon"></i>
+                        <kbd class="topbar-search-kbd">Ctrl+K</kbd>
+                    </div>
+                    <div class="topbar-meta">
+                        <div class="topbar-meta-item hide-md" title="Jam server">
+                            <i class="bi bi-clock"></i>
+                            <span id="topbarLiveClock">{{ now()->format('H:i') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 flex-shrink-0">
                     {{-- Notification Bell --}}
                     <div class="dropdown">
                         <button
@@ -252,8 +274,8 @@
                     </div>
 
                     {{-- Profile Dropdown --}}
-                    <div class="dropdown">
-                        <button class="btn d-flex align-items-center gap-2 rounded-pill shadow-sm px-3 py-2"
+                    <div class="dropdown position-relative">
+                        <button class="btn d-flex align-items-center gap-2 rounded-pill shadow-sm px-3 py-2 position-relative"
                             style="background: white; border: 1px solid #e2e8f0;" data-bs-toggle="dropdown"
                             aria-expanded="false">
                             @if(auth()->user()->photo)
@@ -265,6 +287,7 @@
                                     {{ substr(auth()->user()->name ?? 'U', 0, 1) }}
                                 </div>
                             @endif
+                            <span class="topbar-profile-online" title="Online"></span>
                             <div class="text-start d-none d-sm-block">
                                 <div class="fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.2;">
                                     {{ auth()->user()->name ?? 'User' }}</div>
@@ -318,6 +341,7 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/adjust-enhancer.js') }}?v={{ filemtime(public_path('js/adjust-enhancer.js')) }}"></script>
     @stack('scripts')
 
     @auth
@@ -381,9 +405,46 @@
                 });
             }
 
+            // ── Topbar live clock ──
+            function updateTopbarClock() {
+                const el = document.getElementById('topbarLiveClock');
+                if (!el) return;
+                const d = new Date();
+                el.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            }
+
+            // ── Topbar quick-search: redirect to arsip index with ?q= ──
+            function bindTopbarSearch() {
+                const inp = document.getElementById('topbarQuickSearch');
+                if (!inp) return;
+                const role = "{{ auth()->check() ? auth()->user()->role : '' }}";
+                const target = role === 'superadmin'
+                    ? "{{ route('superadmin.arsip.index') }}"
+                    : "{{ route('admin.arsip.index') }}";
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && inp.value.trim() !== '') {
+                        e.preventDefault();
+                        window.location.href = target + '?q=' + encodeURIComponent(inp.value.trim());
+                    }
+                });
+                // Ctrl+K focuses search
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                        e.preventDefault();
+                        inp.focus();
+                        inp.select();
+                    }
+                });
+            }
+
             document.addEventListener("DOMContentLoaded", function () {
                 // Initialize tooltips
                 updateTooltips();
+
+                // Topbar widgets
+                updateTopbarClock();
+                setInterval(updateTopbarClock, 30000);
+                bindTopbarSearch();
 
                 let lastUnreadCount = {{ $unreadCount ?? 0 }};
 

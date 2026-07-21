@@ -78,6 +78,7 @@
                                 <span>Semua Data</span>
                             </a>
                         </li>
+                        @if(auth()->user()->canAccessJenis('Cancel'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Cancel']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Cancel' ? 'text-primary fw-bold' : '' }}">
@@ -86,6 +87,8 @@
                                 <span>Cancel</span>
                             </a>
                         </li>
+                        @endif
+                        @if(auth()->user()->canAccessJenis('Adjust'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Adjust']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Adjust' ? 'text-primary fw-bold' : '' }}">
@@ -94,6 +97,8 @@
                                 <span>Adjustment</span>
                             </a>
                         </li>
+                        @endif
+                        @if(auth()->user()->canAccessJenis('Mutasi_Billet'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Mutasi_Billet']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Mutasi_Billet' ? 'text-primary fw-bold' : '' }}">
@@ -102,6 +107,8 @@
                                 <span>Mutasi Billet</span>
                             </a>
                         </li>
+                        @endif
+                        @if(auth()->user()->canAccessJenis('Mutasi_Produk'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Mutasi_Produk']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Mutasi_Produk' ? 'text-primary fw-bold' : '' }}">
@@ -110,6 +117,8 @@
                                 <span>Mutasi Produk</span>
                             </a>
                         </li>
+                        @endif
+                        @if(auth()->user()->canAccessJenis('Internal_Memo'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Internal_Memo']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Internal_Memo' ? 'text-primary fw-bold' : '' }}">
@@ -118,6 +127,8 @@
                                 <span>Internal Memo</span>
                             </a>
                         </li>
+                        @endif
+                        @if(auth()->user()->canAccessJenis('Bundel'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Bundel']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Bundel' ? 'text-primary fw-bold' : '' }}">
@@ -126,7 +137,9 @@
                                 <span>Bundel</span>
                             </a>
                         </li>
-                        <li class="nav-item">
+                        @endif
+                        {{-- Daftar Produk Baru — DIBEKUKAN SEMENTARA --}}
+                        {{-- <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Produk_Baru']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Produk_Baru' ? 'text-primary fw-bold' : '' }}">
                                 <i class="bi bi-box-seam-fill text-primary"
@@ -134,7 +147,7 @@
                                 <span>Daftar Produk Baru</span>
                                 <span class="badge bg-primary ms-auto" style="font-size:0.5rem;"></span>
                             </a>
-                        </li>
+                        </li> --}}
                     </ul>
                 </div>
             </li>
@@ -150,6 +163,29 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a href="{{ route('admin.arsip.shared-inbox') }}"
+                    class="nav-link d-flex align-items-center {{ request()->routeIs('admin.arsip.shared-inbox') ? 'active' : '' }}">
+                    <i class="bi bi-inbox-fill text-info"></i>
+                    <span>Dibagikan ke Saya</span>
+                    @php $sharedCount = auth()->user()->sharedArsips()->count(); @endphp
+                    @if($sharedCount > 0)
+                        <span class="badge text-white ms-auto" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">{{ $sharedCount }}</span>
+                    @endif
+                </a>
+            </li>
+
+            @can('view-price')
+                <li class="nav-header">ACCOUNTING</li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.prices.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.prices.*') ? 'active' : '' }}">
+                        <i class="bi bi-cash-coin text-success"></i>
+                        <span>Master Harga</span>
+                    </a>
+                </li>
+            @endcan
+
             <li class="nav-header">SISTEM</li>
             <li class="nav-item">
                 <a href="{{ route('admin.profile') ?? '#' }}"
@@ -159,52 +195,7 @@
                 </a>
             </li>
 
-            {{-- Menu khusus Accounting --}}
-            @if(auth()->user()->role === 'accounting')
-                <li class="nav-header">ACCOUNTING</li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.arsip.index', ['jenis' => 'Adjust']) }}"
-                        class="nav-link {{ request('jenis') == 'Adjust' && request()->routeIs('admin.arsip.index') ? 'active' : '' }}">
-                        <i class="bi bi-upload text-warning"></i>
-                        <span>Upload Scan BA Adjust</span>
-                    </a>
-                </li>
-            @endif
         </ul>
     </div>
 
-    {{-- BOTTOM PROFILE (Premium Sidebar Addition) --}}
-    <div class="sidebar-footer border-top border-light px-3 py-3" style="background: #ffffff;">
-        <a href="{{ route('admin.profile') }}" class="text-decoration-none">
-            <div class="bg-light rounded-4 p-2 d-flex align-items-center gap-3 border border-light shadow-sm transition-hover"
-                style="cursor: pointer;">
-                @if(auth()->user()->photo)
-                    <img src="{{ asset('profile_photos/' . auth()->user()->photo) }}" alt="Profile"
-                        class="rounded-circle shadow-sm"
-                        style="width: 38px; height: 38px; min-width: 38px; object-fit: cover;">
-                @else
-                    <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center shadow-sm fw-bold"
-                        style="width: 38px; height: 38px; min-width: 38px; font-size: 1rem;">
-                        {{ substr(auth()->user()->name ?? 'A', 0, 1) }}
-                    </div>
-                @endif
-                <div class="sidebar-title overflow-hidden">
-                    <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 0.85rem;">
-                        {{ auth()->user()->name ?? 'Admin' }}
-                    </h6>
-                    @php
-                        $footerRole = match (auth()->user()->role) {
-                            'superadmin' => ['text' => 'SUPER ADMIN', 'color' => '#dc2626', 'icon' => 'bi-shield-lock-fill'],
-                            'accounting' => ['text' => 'ACCOUNTING', 'color' => '#f59e0b', 'icon' => 'bi-calculator-fill'],
-                            default => ['text' => 'ADMIN', 'color' => '#4f46e5', 'icon' => 'bi-person-check-fill'],
-                        };
-                    @endphp
-                    <small class="text-truncate d-block fw-bold"
-                        style="font-size: 0.65rem; color: {{ $footerRole['color'] }};">
-                        <i class="bi {{ $footerRole['icon'] }} me-1"></i>{{ $footerRole['text'] }}
-                    </small>
-                </div>
-            </div>
-        </a>
-    </div>
 </aside>

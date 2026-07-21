@@ -297,6 +297,16 @@ class Arsip extends Model
         return $this->hasMany(ArsipAdjustItem::class);
     }
 
+    public function requesters()
+    {
+        return $this->hasMany(ArsipRequester::class)->orderByDesc('is_primary');
+    }
+
+    public function lampirans()
+    {
+        return $this->hasMany(ArsipLampiran::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function mutasiItems()
     {
         return $this->hasMany(ArsipMutasiItem::class);
@@ -320,6 +330,51 @@ class Arsip extends Model
     public function approvals()
     {
         return $this->hasMany(ArsipApproval::class)->orderBy('step_order');
+    }
+
+    /** User-user yang di-share manual oleh pemohon/admin (Layer 2 access). */
+    public function shares()
+    {
+        return $this->hasMany(ArsipShare::class);
+    }
+
+    public function personalNotes()
+    {
+        return $this->hasMany(ArsipPersonalNote::class)->orderBy('created_at');
+    }
+
+    /**
+     * Cek apakah user current boleh mengedit arsip ini.
+     * Aturan:
+     *  - Superadmin → selalu boleh
+     *  - Owner (admin_id = u.id) → boleh
+     *  - Accounting + jenis Adjust → boleh (rule existing)
+     *  - User di arsip_shares (user_id atau role match) → boleh edit (Layer 2 share = read+edit)
+     */
+    public function canBeEditedBy(?User $u): bool
+    {
+        if (!$u) return false;
+        if ($u->role === 'superadmin') return true;
+        if ((int) $this->admin_id === (int) $u->id) return true;
+        if ($u->role === 'accounting' && $this->jenis_pengajuan === 'Adjust') return true;
+
+        // Layer 2: share by user_id atau role
+        return ArsipShare::where('arsip_id', $this->id)
+            ->where(function ($q) use ($u) {
+                $q->where(function ($x) use ($u) {
+                    $x->where('target_type', 'user')->where('user_id', $u->id);
+                })->orWhere(function ($x) use ($u) {
+                    $x->where('target_type', 'role')->where('role', $u->role);
+                });
+            })
+            ->exists();
+    }
+
+    public function sharedUsers()
+    {
+        return $this->belongsToMany(User::class, 'arsip_shares')
+            ->withPivot(['shared_by', 'note'])
+            ->withTimestamps();
     }
 
     /**
@@ -385,6 +440,75 @@ class Arsip extends Model
             return $this->signatures->firstWhere('role_label', $roleLabel);
         }
         return $this->signatures()->where('role_label', $roleLabel)->first();
+    }
+
+    /**
+     * Serialize arsip untuk response API detail (dipakai ArsipApiController::show,
+     * ApprovalApiController::approve/reject, SignsArsip::signArsip).
+     *
+     * Include: base toArray + relasi (approvals, signatures, items, lampirans)
+     * + enrichment fields (is_fully_approved, current_step, actions_available).
+     *
+     * $user (opsional): kalau ada, isi `actions_available` (can_approve/reject/sign_self)
+     * berdasarkan role user relatif ke arsip ini.
+     */
+    public function toApiDetailArray($user = null): array
+    {
+        // Eager-load semua relasi yg dipakai UI Android
+        $this->loadMissing([
+            'department', 'unit', 'manager', 'admin', 'superadmin',
+            'adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems',
+            'signatures.delegatedFrom',
+            'approvals.approver', 'approvals.delegatedFrom',
+            'lampirans',
+            'requesters.user:id,employee_id,name',
+        ]);
+
+        $cur = $this->currentApproval();
+
+        $extras = [
+            'is_fully_approved' => $this->isFullyApproved(),
+            'approval_started'  => $this->approvalStarted(),
+            'verify_url'        => $this->verify_token ? url("/verify/{$this->verify_token}") : null,
+            'current_step'      => $cur ? [
+                'id'              => $cur->id,
+                'step'            => $cur->step_order,
+                'step_order'      => $cur->step_order,
+                'role_label'      => $cur->role_label,
+                'role'            => $cur->role_label,
+                'approver_id'     => $cur->approver_id,
+                'approver'        => $cur->approver ? [
+                    'id'   => $cur->approver->id,
+                    'name' => $cur->approver->name,
+                ] : null,
+                'delegated_from'  => optional($cur->delegatedFrom)->name,
+                'is_mine'         => $user && (
+                    (int) $cur->approver_id === (int) $user->id
+                    || ($user->role === 'superadmin' && $cur->role_label === ArsipApproval::FINAL_ROLE)
+                ),
+            ] : null,
+        ];
+
+        if ($user) {
+            $canAct = $cur && (
+                (int) $cur->approver_id === (int) $user->id
+                || ($user->role === 'superadmin' && $cur->role_label === ArsipApproval::FINAL_ROLE)
+            );
+            $selfSignRole = match ($user->role) {
+                'superadmin' => 'Departemen IT',
+                'accounting' => $this->jenis_pengajuan === 'Adjust' ? 'Accounting' : null,
+                default      => (int) $this->admin_id === (int) $user->id ? 'Pemohon' : null,
+            };
+            $extras['actions_available'] = [
+                'can_approve'    => (bool) $canAct,
+                'can_reject'     => (bool) $canAct,
+                'can_sign_self'  => $selfSignRole !== null
+                    && !$this->signatures->contains('role_label', $selfSignRole),
+                'self_sign_role' => $selfSignRole,
+            ];
+        }
+
+        return array_merge($this->toArray(), $extras);
     }
 
     /* ===================== HELPERS ===================== */

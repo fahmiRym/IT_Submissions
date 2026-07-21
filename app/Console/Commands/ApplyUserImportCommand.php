@@ -108,11 +108,11 @@ class ApplyUserImportCommand extends Command
                         continue;
                     }
 
-                    // CREATE new user — pakai staging.id sebagai suffix bila collision
-                    $username = 'nik_' . $staging->employee_id;
+                    // CREATE new user — username = NIK langsung (tanpa prefix), suffix dipakai kalau collision
+                    $username = (string) $staging->employee_id;
                     $suffix = 1;
                     while (!$dry && User::where('username', $username)->exists()) {
-                        $username = 'nik_' . $staging->employee_id . '_' . $staging->id . ($suffix > 1 ? "_{$suffix}" : '');
+                        $username = $staging->employee_id . '_' . $staging->id . ($suffix > 1 ? "_{$suffix}" : '');
                         $suffix++;
                         if ($suffix > 5) break; // safety
                     }
@@ -123,12 +123,13 @@ class ApplyUserImportCommand extends Command
                     }
 
                     if (!$dry) {
+                        $defaultPwd = \App\Http\Controllers\Superadmin\UserController::defaultPasswordForRole('admin');
                         User::create([
                             'employee_id'          => $staging->employee_id,
                             'name'                 => $staging->name,
                             'username'             => $username,
                             'email'                => $email,
-                            'password'             => Hash::make($staging->employee_id),
+                            'password'             => Hash::make($defaultPwd),
                             'role'                 => 'admin',
                             'department_id'        => $deptId,
                             'work_unit_id'         => $unitId,

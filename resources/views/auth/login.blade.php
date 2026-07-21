@@ -432,7 +432,7 @@
                 </div>
 
                 <div class="input-box mt-4">
-                    <input type="text" name="username" class="form-control" placeholder="Username" required autocomplete="off">
+                    <input type="text" name="username" class="form-control" placeholder="Username atau NIK" required autocomplete="off" value="{{ old('username') }}">
                     <i class="bi bi-person-circle fs-5"></i>
                 </div>
 
@@ -467,7 +467,7 @@
                         <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ $message }}
                     </div>
                 @enderror
-
+            
                 <div class="text-center mt-5">
                     <small class="text-muted opacity-50">IT Submission | 2026 &copy; Rymutich</small>
                 </div>

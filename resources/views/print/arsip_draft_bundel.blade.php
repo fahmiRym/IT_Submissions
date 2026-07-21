@@ -4,184 +4,197 @@
 <head>
     <meta charset="utf-8">
     <title>Print Draft Bundel - {{ $arsip->no_registrasi }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 6mm 8mm;
-        }
-
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-
+        @page { size: A4 portrait; margin: 5mm 7mm; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
         body {
-            font-family: 'Inter', Arial, sans-serif;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 10px;
-            margin: 0;
-            padding: 0;
             color: #000;
         }
 
-        .print-container {
-            width: 100%;
-        }
+        .print-container { width: 100%; }
 
-        /* ── META BAR ── */
-        .meta-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            padding: 3px 10px;
-            margin-bottom: 6px;
-            font-size: 8.5px;
-            color: #444;
-        }
-
-        .meta-bar .meta-left {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .meta-bar .meta-item {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-        }
-
-        .meta-bar .meta-label {
-            color: #777;
-            font-weight: 500;
-        }
-
-        .meta-bar .meta-value {
-            font-weight: 700;
-            color: #111;
-        }
-
-        /* ── FORM BLOCK ── */
-        .form-block {
-            height: 90mm;
+        /* ─── PAGE WRAPPER (3 form per A4, forced page-break antar page) ── */
+        .bundle-page {
             position: relative;
-            margin-bottom: 2mm;
+        }
+        .bundle-page + .bundle-page {
+            page-break-before: always;
         }
 
+        /* ─── FORM BLOCK (3 per page) ───────────────────────────── */
+        .form-block {
+            position: relative;
+            margin-bottom: 1mm;
+        }
         .wrapper {
             border: 2px solid #000;
-            height: 88mm;
         }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
+        table { border-collapse: collapse; width: 100%; }
 
-        /* ── HEADER ── */
-        .header-table td {
-            border: 1.5px solid #000;
-        }
-
+        /* ─── HEADER (compact agar 3 form muat) ─────────────────── */
+        .header-table td { border: 1.5px solid #000; }
         .header-title {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 800;
             letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
+        .header-sub {
+            font-size: 7.5px;
+            color: #555;
+            margin-top: 1px;
+        }
+        .header-meta-label { font-size: 7px; color: #666; }
+        .header-meta-value { font-weight: 800; font-size: 9.5px; margin-top: 1px; }
 
-        /* ── INFO BOX ── */
+        /* ─── INFO BOX (kanan atas) ──────────────────────────────── */
         .info-table td {
             border: 1px solid #000;
-            font-size: 8.5px;
-            padding: 2px 4px;
+            font-size: 8px;
+            padding: 1.5px 4px;
         }
 
-        /* ── DATE ROW ── */
+        /* ─── DATE ROW ───────────────────────────────────────────── */
         .date-row {
             border-bottom: 1.5px solid #000;
             padding: 2px 8px;
-            margin-bottom: 2px;
             font-weight: 600;
+            font-size: 9.5px;
         }
 
-        /* ── MAIN TABLE ── */
+        /* ─── MAIN TABLE ─────────────────────────────────────────── */
         .main-table th,
         .main-table td {
             border: 1px solid #000;
-            padding: 3px;
+            padding: 2px 3px;
             text-align: center;
         }
-
         .main-table th {
-            font-size: 8.5px;
-            font-weight: 700;
-        }
-
-        .main-table td {
-            height: 16px;
-        }
-
-        /* ── SIGNATURE ── */
-        .signature {
-            display: flex;
-            height: 30mm;
-        }
-
-        .sig-box {
-            flex: 1;
-            text-align: center;
-            padding-top: 5mm;
-            border-right: 1px solid #000;
-        }
-
-        .sig-box:last-child {
-            border-right: none;
-        }
-
-        .sig-title {
-            font-size: 9px;
-            font-weight: 700;
-        }
-
-        .sig-name {
-            margin-top: 10mm;
-            font-weight: 800;
-            text-decoration: underline;
-        }
-
-        .sig-note {
             font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: #f5f5f5;
+        }
+        .main-table td { height: 12px; font-size: 9px; }
+        .main-table td.keterangan-cell {
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        /* ─── SIGNATURE (NAMA di atas, TTD/QR di bawah) ─────────── */
+        .signature-table {
+            border-top: 1.5px solid #000;
+            table-layout: fixed;
+        }
+        .signature-table td {
+            border-right: 1px solid #000;
+            text-align: center;
+            vertical-align: top;
+            padding: 3px 2px;
+            width: 33.33%;
+            height: 18mm;
+            overflow: hidden;
+        }
+        .signature-table td:last-child { border-right: none; }
+        .sig-title {
+            font-size: 8.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .sig-stamp {
+            min-height: 9mm;
+            text-align: center;
+            line-height: 1;
+            padding-top: 1mm;
+        }
+        .sig-stamp img {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+            display: inline-block;
+        }
+        .sig-name {
+            font-size: 10px;
+            font-weight: 800;
+            color: #000;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            letter-spacing: 0.3px;
+            margin: 1mm 0 0;
+        }
+        .sig-signer {
+            font-size: 7.5px;
+            color: #1e293b;
+            font-style: italic;
+            font-weight: 600;
+            margin-top: 0;
+        }
+        .sig-ts {
+            font-size: 6.5px;
+            color: #475569;
+            font-style: italic;
+            margin-top: 1px;
+        }
+        .sig-delegate {
+            display: inline-block;
+            font-size: 6.5px;
+            color: #92400e;
+            font-weight: 700;
+            font-style: italic;
+            background: #fef3c7;
+            border-radius: 2px;
+            padding: 0 3px;
+            margin-top: 1px;
+            letter-spacing: 0.2px;
+        }
+        .sig-note {
+            font-size: 7px;
             color: #555;
             font-style: italic;
+            margin-top: 1mm;
         }
 
-        /* ── CUT LINE ── */
+        /* ─── PER-FORM FOOTER (Dicetak pada... — IT Submissions) ─ */
+        .form-footer {
+            text-align: center;
+            font-size: 7.5px;
+            color: #475569;
+            font-style: italic;
+            padding: 1mm 0;
+            font-family: 'DejaVu Sans', sans-serif;
+            line-height: 1.2;
+        }
+        .form-footer b { font-weight: 700; color: #1e293b; font-style: normal; }
+        .form-footer .brand {
+            font-weight: 800;
+            color: #dc2626;
+            font-style: italic;
+            letter-spacing: 0.3px;
+        }
+
+        /* ─── CUT LINE ──────────────────────────────────────────── */
         .cut-line {
             border-bottom: 1px dashed #aaa;
-            position: absolute;
-            bottom: -1mm;
-            width: 100%;
+            margin: 0 0 1mm 0;
+            position: relative;
+            height: 1px;
         }
-
-        .cut-line::after {
-            content: "✄";
+        .cut-line .scissor {
             position: absolute;
             left: 0;
-            top: -8px;
-            font-size: 12px;
+            top: -7px;
+            font-size: 10px;
             color: #999;
         }
 
-        /* ── PRINT ── */
+        /* ─── PRINT ─────────────────────────────────────────────── */
         @media print {
-            .no-print {
-                display: none !important;
-            }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -189,73 +202,113 @@
 <body onload="window.print()">
 <div class="print-container">
 
-    {{-- ── PRINT BUTTON ── --}}
-    <div class="no-print" style="text-align: right; margin-bottom: 8px;">
-        <button onclick="window.print()"
-            style="padding: 7px 18px; background: #1a1a1a; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-weight: 700; font-size: 12px;">
-            🖨️ Cetak
-        </button>
-    </div>
-
-    {{-- ── META BAR: Printed date + User ── --}}
-    <div class="meta-bar">
-        <div class="meta-left">
-            <div class="meta-item">
-                <span class="meta-label">Printed date</span>
-                <span class="meta-value">{{ \Carbon\Carbon::now()->format('d/m/Y H.i.s') }}</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-label">User:</span>
-                <span class="meta-value">{{ auth()->user()->name ?? '-' }}</span>
-            </div>
+    {{-- ── PRINT BUTTON (screen only) ────────────────────────────── --}}
+    @if(empty($forPdf))
+        <div class="no-print" style="text-align: right; margin-bottom: 6px;">
+            <button onclick="window.print()"
+                style="padding: 6px 16px; background: #1a1a1a; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-weight: 700; font-size: 12px;">
+                Cetak
+            </button>
         </div>
-        <div style="font-size: 8px; color: #999; font-style: italic;">{{ $arsip->no_registrasi }}</div>
-    </div>
+    @endif
 
     @php
+        // Pre-render server-side QR (dompdf-friendly)
+        $qrDocVerify = \App\Services\QrSignatureService::renderDocumentQrDataUri($arsip, 120);
+
+        // TTD digital roles
+        $sigPemohon = $arsip->signatureFor('Pemohon');
+        $sigManager = $arsip->signatureFor('Manager');
+        $sigIT      = $arsip->signatureFor('Departemen IT');
+
+        // Layout:
+        //   [QR / wet-sign space]
+        //   [ROLE LABEL underlined]      ← selalu tampil
+        //   [signer name italic]          ← bila signed & beda dari role
+        //   [↩ Mewakili: ORIGINAL NAME]   ← bila TTD sebagai delegasi
+        //   [timestamp italic]            ← bila signed
+        $renderSig = function ($sig, $roleLabel) use ($arsip) {
+            $roleLabel = strtoupper(trim($roleLabel ?? ''));
+            $html = '<div class="sig-stamp">';
+            if ($sig) {
+                $qr = \App\Services\QrSignatureService::renderSignatureQrDataUri($arsip, $sig, 130);
+                if ($qr) $html .= '<img src="' . $qr . '" alt="TTD">';
+            }
+            $html .= '</div>';
+
+            $html .= '<div class="sig-name">' . e($roleLabel) . '</div>';
+
+            if ($sig) {
+                $signerName = strtoupper(trim($sig->signer_name));
+                if ($signerName !== '' && $signerName !== $roleLabel) {
+                    $html .= '<div class="sig-signer">' . e($sig->signer_name) . '</div>';
+                }
+                if ($sig->delegated_from_id) {
+                    $orig = $sig->delegatedFrom;
+                    $origName = $orig ? $orig->name : 'user asal';
+                    $html .= '<div class="sig-delegate">↩ Mewakili ' . e($origName) . '</div>';
+                }
+                $html .= '<div class="sig-ts">' . optional($sig->signed_at)->format('d/m/Y H:i') . ' WIB</div>';
+            }
+            return $html;
+        };
+
+        $arsip->loadMissing('signatures.delegatedFrom');
+
+        \Carbon\Carbon::setLocale('id');
+        $printedFooterUser = auth()->user()->name ?? 'System';
+        $printedFooterDate = \Carbon\Carbon::now()->translatedFormat('j F Y, H:i');
+
         $allBundels = collect($arsip->bundelItems ?? []);
         $chunks = $allBundels->chunk(5);
         $totalChunks = $chunks->count();
         $displayFormCount = max(3, (int)(ceil($totalChunks / 3) * 3));
+        $pageCount = (int) ceil($displayFormCount / 3);
     @endphp
 
-    @for ($k = 0; $k < $displayFormCount; $k++)
+    {{-- $displayFormCount selalu kelipatan 3, jadi tiap .bundle-page diisi tepat 3 form --}}
+    @for ($p = 0; $p < $pageCount; $p++)
+    <div class="bundle-page">
+    @for ($idx = 0; $idx < 3; $idx++)
         @php
+            $k = $p * 3 + $idx;
             $currentItems = $chunks->get($k) ?? collect([]);
         @endphp
 
         <div class="form-block">
             <div class="wrapper">
 
-                {{-- HEADER --}}
+                {{-- ── HEADER ───────────────────────────────────────── --}}
                 <table class="header-table">
                     <tr>
-                        {{-- Kiri: No Registrasi + QR Code --}}
-                        <td style="width: 25%; padding: 4px; vertical-align: top;">
-                            <div style="font-size: 7.5px; color: #666;">No. Registrasi:</div>
-                            <div style="font-weight: 800; font-size: 10px; margin-top: 1px;">
-                                {{ $arsip->no_registrasi }}
-                            </div>
+                        {{-- Kiri: No Reg + No Doc + QR Verifikasi --}}
+                        <td style="width: 26%; padding: 4px; vertical-align: top;">
+                            <div class="header-meta-label">No. Registrasi:</div>
+                            <div class="header-meta-value">{{ $arsip->no_registrasi }}</div>
                             @if ($arsip->no_doc)
-                                <div style="font-size: 7.5px; color: #666; margin-top: 4px;">No. Dokumen:</div>
-                                <div style="font-weight: 800; font-size: 9px; margin-top: 1px;">
-                                    {{ $arsip->no_doc }}
+                                <div class="header-meta-label" style="margin-top: 3px;">No. Dokumen:</div>
+                                <div class="header-meta-value" style="font-size: 9px;">{{ $arsip->no_doc }}</div>
+                            @endif
+                            @if($qrDocVerify)
+                                <div style="margin-top: 3px;">
+                                    <img src="{{ $qrDocVerify }}" alt="QR" style="width: 36px; height: 36px;">
                                 </div>
                             @endif
-                            {{-- Mini QR code --}}
-                            <div id="qrcode-{{ $k }}" style="margin-top: 3px;"></div>
                         </td>
 
                         {{-- Tengah: Judul --}}
-                        <td style="width: 50%; text-align: center; vertical-align: middle; padding: 4px;">
+                        <td style="width: 48%; text-align: center; vertical-align: middle; padding: 4px;">
                             <div class="header-title">FORM PENGAJUAN ISI BUNDLE</div>
-                            <div style="font-size: 8px; color: #555; margin-top: 2px;">
-                                Form {{ $k + 1 }} dari {{ $displayFormCount }}
-                            </div>
+                            <div class="header-sub">Form {{ $k + 1 }} dari {{ $displayFormCount }}</div>
+                            @if($arsip->verify_token)
+                                <div style="font-size: 7px; color: #1d4ed8; margin-top: 2px; font-weight: 700; letter-spacing: 0.5px;">
+                                    SCAN QR UNTUK VERIFIKASI
+                                </div>
+                            @endif
                         </td>
 
-                        {{-- Kanan: Info Table --}}
-                        <td style="width: 25%; padding: 0;">
+                        {{-- Kanan: Info form --}}
+                        <td style="width: 26%; padding: 0;">
                             <table class="info-table" style="border: none;">
                                 <tr>
                                     <td style="width: 40%; border-top: none; border-left: none;">NO.FORM</td>
@@ -274,28 +327,28 @@
                     </tr>
                 </table>
 
-                {{-- DATE ROW --}}
+                {{-- ── DATE ROW ──────────────────────────────────── --}}
                 <div class="date-row">
                     Tanggal : <b>{{ \Carbon\Carbon::parse($arsip->tgl_pengajuan)->format('d-m-Y') }}</b>
                     &nbsp;&nbsp;&nbsp;
                     Pemohon : <b>{{ strtoupper($arsip->pemohon ?? $arsip->admin->name ?? '-') }}</b>
                 </div>
 
-                {{-- MAIN TABLE --}}
+                {{-- ── MAIN TABLE ───────────────────────────────── --}}
                 <table class="main-table">
                     <thead>
                         <tr>
                             <th rowspan="2" style="width: 5%;">NO</th>
                             <th rowspan="2" style="width: 16%;">SECTION</th>
-                            <th rowspan="2" style="width: 16%;">BERAT STD</th>
-                            <th colspan="2" style="width: 16%;">ISI</th>
-                            <th rowspan="2" style="width: 15%;">BERAT TOTAL</th>
+                            <th rowspan="2" style="width: 14%;">BERAT STD</th>
+                            <th colspan="2" style="width: 14%;">ISI</th>
+                            <th rowspan="2" style="width: 14%;">BERAT TOTAL</th>
                             <th rowspan="2" style="width: 12%;">DIMENSI BUNDLE</th>
-                            <th rowspan="2" style="width: 20%;">KETERANGAN</th>
+                            <th rowspan="2" style="width: 25%;">KETERANGAN</th>
                         </tr>
                         <tr>
-                            <th>LAMA</th>
-                            <th>BARU</th>
+                            <th style="width: 7%;">LAMA</th>
+                            <th style="width: 7%;">BARU</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -309,60 +362,50 @@
                                 <td>{{ $item->qty ?? '' }}</td>
                                 <td></td>
                                 <td></td>
-                                <td style="text-align: left; padding-left: 5px;">
-                                    {{ $item->keterangan ?? '' }}
-                                </td>
+                                <td class="keterangan-cell">{{ $item->keterangan ?? '' }}</td>
                             </tr>
                         @endfor
                     </tbody>
                 </table>
 
-                {{-- SIGNATURE --}}
-                <div class="signature">
-                    <div class="sig-box">
-                        <div class="sig-title">YANG MEMBUAT</div>
-                        <div class="sig-name">{{ ucwords(mb_strtolower($arsip->admin->name ?? '')) }}</div>
-                        <div class="sig-note">( TTD & Nama Jelas )</div>
-                    </div>
-                    <div class="sig-box">
-                        <div class="sig-title">YANG MENYETUJUI</div>
-                        <div class="sig-name">MANAGER PRODUCTION</div>
-                        <div class="sig-note">( TTD & Nama Jelas )</div>
-                    </div>
-                    <div class="sig-box">
-                        <div class="sig-title">YANG MENGETAHUI</div>
-                        <div class="sig-name">EDP</div>
-                        <div class="sig-note">( TTD & Nama Jelas )</div>
-                    </div>
-                </div>
+                {{-- ── SIGNATURE (table = dompdf reliable) ──────── --}}
+                <table class="signature-table">
+                    <tr>
+                        <td>
+                            <div class="sig-title">YANG MEMBUAT</div>
+                            {!! $renderSig($sigPemohon, $arsip->pemohon ?? ($arsip->admin->name ?? '')) !!}
+                            <div class="sig-note">( TTD &amp; Nama Jelas )</div>
+                        </td>
+                        <td>
+                            <div class="sig-title">YANG MENYETUJUI</div>
+                            {!! $renderSig($sigManager, 'Manager Production') !!}
+                            <div class="sig-note">( TTD &amp; Nama Jelas )</div>
+                        </td>
+                        <td>
+                            <div class="sig-title">YANG MENGETAHUI</div>
+                            {!! $renderSig($sigIT, 'Departemen IT') !!}
+                            <div class="sig-note">( TTD &amp; Nama Jelas )</div>
+                        </td>
+                    </tr>
+                </table>
 
-            </div>{{-- .wrapper --}}
+            </div>{{-- /.wrapper --}}
 
-            @if (($k + 1) % 3 !== 0)
-                <div class="cut-line"></div>
+            {{-- Footer per-form (Dicetak pada... — IT Submissions) muncul di bawah TIAP form --}}
+            <div class="form-footer">
+                Dicetak pada <b>{{ $printedFooterDate }}</b> oleh <b>{{ $printedFooterUser }}</b>
+                <span class="brand"> ~ IT Submissions ~</span>
+            </div>
+
+            @if ($idx < 2 && ($k + 1) < $displayFormCount)
+                <div class="cut-line"><span class="scissor">✄</span></div>
             @endif
-        </div>{{-- .form-block --}}
-
+        </div>{{-- /.form-block --}}
+    @endfor
+    </div>{{-- /.bundle-page --}}
     @endfor
 
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        @for ($k = 0; $k < 9; $k++)
-        if (document.getElementById('qrcode-{{ $k }}')) {
-            new QRCode(document.getElementById('qrcode-{{ $k }}'), {
-                text: "{{ $arsip->no_registrasi }}",
-                width: 36,
-                height: 36,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.L
-            });
-        }
-        @endfor
-    });
-</script>
+</div>{{-- /.print-container --}}
 </body>
 
 </html>

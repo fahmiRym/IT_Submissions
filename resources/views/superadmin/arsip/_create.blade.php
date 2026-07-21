@@ -82,7 +82,9 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                             <option value="Mutasi_Produk">Mutasi Produk</option>
                                             <option value="Bundel">Bundel Dokumen</option>
                                             <option value="Internal_Memo">Internal Memo</option>
-                                            <option value="Produk_Baru">Pengajuan Produk Baru</option>
+                                            @if(!empty($produkBaruEnabled))
+                                                <option value="Produk_Baru">Pengajuan Produk Baru</option>
+                                            @endif
                                         </select>
                                     </div>
 
@@ -126,8 +128,7 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold text-secondary">Nama Pemohon</label>
-                                        <textarea name="pemohon" class="form-control bg-light border-0" rows="2" placeholder="Nama-nama pemohon...">{{ old('pemohon') }}</textarea>
+                                        @include('partials._pemohon_picker', ['fieldId' => 'pemohonPickerSuperCreate', 'name' => 'requesters', 'selected' => []])
                                     </div>
 
                                     {{-- STATUS FINAL (Superadmin Only) --}}
@@ -213,6 +214,7 @@ Bundel   : DO/PL/{{ date('Y') }}/001
 
                                     {{-- C. ADJUST SECTION --}}
                                     <div class="mb-4 d-none dynamic-section" id="sectionAdjust">
+                                        @include('partials._adjust_header', ['scope' => 'create'])
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <div>
                                                 <label class="form-label small fw-bold text-secondary mb-0">Item Adjustment</label>
@@ -222,19 +224,18 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                                 <i class="bi bi-plus-lg me-1"></i> Tambah Item
                                             </button>
                                         </div>
-                                        <div class="alert alert-info py-2 small border-0"><i class="bi bi-info-circle me-1"></i> Masukkan Qty In atau Out sesuai kebutuhan penyesuaian.</div>
                                         <div class="table-responsive rounded-3 border border-light">
-                                            <table class="table table-sm table-borderless mb-0 align-middle">
-                                                <thead class="bg-light text-secondary">
+                                            <table class="table table-sm table-borderless mb-0 align-middle adjust-table">
+                                                <thead class="bg-light text-secondary text-uppercase">
                                                     <tr class="text-xs">
-                                                        <th class="ps-3" width="13%">Kode</th>
+                                                        <th class="ps-3" width="12%">Kode Barang</th>
                                                         <th>Nama Barang</th>
+                                                        <th width="10%">Lot</th>
+                                                        <th width="14%">Lokasi</th>
                                                         <th width="8%" class="text-center">Odoo</th>
                                                         <th width="8%" class="text-center">Fisik</th>
-                                                        <th width="70" class="text-center">QTY In</th>
-                                                        <th width="70" class="text-center">QTY Out</th>
-                                                        <th width="12%">Lot</th>
-                                                        <th width="14%">Lokasi</th>
+                                                        <th width="9%" class="text-center">Selisih</th>
+                                                        <th width="7%" class="text-center">Adjus</th>
                                                         <th width="5%"></th>
                                                     </tr>
                                                 </thead>
@@ -243,6 +244,7 @@ Bundel   : DO/PL/{{ date('Y') }}/001
                                                 </tbody>
                                             </table>
                                         </div>
+                                        @include('partials._adjust_footer', ['scope' => 'create', 'wrapper' => 'wrapperAdjust'])
                                     </div>
 
                                     {{-- D. MUTASI SECTION --}}

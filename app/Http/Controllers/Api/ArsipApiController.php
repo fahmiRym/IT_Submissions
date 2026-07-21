@@ -34,8 +34,11 @@ class ArsipApiController extends Controller
         'mutasiItems',
         'bundelItems',
         'produkBaruItems',
-        'signatures',
+        'signatures.delegatedFrom',
         'approvals.approver',
+        'approvals.delegatedFrom',
+        'lampirans',
+        'requesters.user:id,employee_id,name',
     ];
 
     /**
@@ -135,7 +138,9 @@ class ArsipApiController extends Controller
      */
     public function getMasterData()
     {
-        $departments = Department::where('is_active', true)->get(['id', 'name', 'code']);
+        // `departments` table TIDAK punya kolom `code` (cuma `units` yg punya).
+        // Kalau `code` dimasukkan → SQL error → 502 di mobile setelah login.
+        $departments = Department::where('is_active', true)->get(['id', 'name']);
         $units = Unit::where('is_active', true)->get(['id', 'name', 'code']);
         $managers = Manager::where('is_active', true)->get(['id', 'name']);
 
@@ -208,6 +213,15 @@ class ArsipApiController extends Controller
 
         try {
             $jenisDb = $this->normalizeJenis($request->jenis_pengajuan);
+
+            // GUARD: Produk_Baru dimatikan sementara via Settings
+            if ($jenisDb === 'Produk_Baru'
+                && \App\Models\Setting::get('produk_baru_enabled', '1') !== '1') {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Fitur Pengajuan Produk Baru sedang dinonaktifkan sementara. Hubungi Superadmin / Departemen IT.',
+                ], 403);
+            }
 
             // No Registrasi (pakai request asli agar unit_id ikut terbaca)
             $noRegistrasi = Arsip::generateNoRegistrasi($request);
@@ -389,7 +403,9 @@ class ArsipApiController extends Controller
     }
 
     /**
-     * API detail satu pengajuan (lengkap dengan item & URL file).
+     * API detail satu pengajuan (lengkap dengan item, URL file, approvals, TTD, delegation).
+     * Payload dibangun via helper Arsip::toApiDetailArray() — dipakai juga oleh
+     * approveArsip / rejectArsip / signArsip supaya response konsisten.
      */
     public function show($id)
     {
@@ -407,7 +423,7 @@ class ArsipApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Detail Pengajuan Berhasil Diambil',
-            'data' => $arsip
+            'data'    => $arsip->toApiDetailArray(auth()->user()),
         ], 200);
     }
 

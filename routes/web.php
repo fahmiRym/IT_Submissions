@@ -40,6 +40,14 @@ Route::get('/login', [LoginController::class,'showLogin'])->name('login');
 Route::post('/login', [LoginController::class,'loginProcess'])->name('login.process');
 Route::post('/logout', [LoginController::class,'logout'])->name('logout');
 
+/* AUTH SETUP — link NIK + ganti password (wajib untuk user lama) */
+Route::middleware('auth')->group(function () {
+    Route::get('/link-nik', [\App\Http\Controllers\Auth\AccountSetupController::class, 'showLinkNik'])->name('auth.link-nik');
+    Route::post('/link-nik', [\App\Http\Controllers\Auth\AccountSetupController::class, 'linkNik'])->name('auth.link-nik.submit');
+    Route::get('/change-password', [\App\Http\Controllers\Auth\AccountSetupController::class, 'showChangePassword'])->name('auth.change-password');
+    Route::post('/change-password', [\App\Http\Controllers\Auth\AccountSetupController::class, 'changePassword'])->name('auth.change-password.submit');
+});
+
 /*
 |--------------------------------------------------------------------------
 | ROOT & DEBUG
@@ -113,6 +121,35 @@ Route::get('/pdf-viewer/{filename}', function ($filename) {
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
+    // User search untuk multi-pemohon picker (Tom-Select autocomplete)
+    Route::get('/users/search', function (\Illuminate\Http\Request $request) {
+        $q = trim((string) $request->get('q', ''));
+        $query = \App\Models\User::query()
+            ->where('is_active', true)
+            ->whereNotNull('employee_id');
+        if ($q !== '') {
+            $query->where(function ($w) use ($q) {
+                $w->where('employee_id', 'like', "%{$q}%")
+                  ->orWhere('name', 'like', "%{$q}%")
+                  ->orWhere('username', 'like', "%{$q}%");
+            });
+        }
+        $users = $query->with(['department:id,name', 'workUnit:id,name'])
+            ->orderByRaw("CASE WHEN employee_id LIKE ? THEN 0 ELSE 1 END", ["{$q}%"])
+            ->orderBy('name')
+            ->limit(30)
+            ->get(['id', 'employee_id', 'name', 'username', 'department_id', 'work_unit_id']);
+        return response()->json([
+            'data' => $users->map(fn($u) => [
+                'id' => $u->id,
+                'employee_id' => $u->employee_id,
+                'name' => $u->name,
+                'department' => $u->department?->name,
+                'work_unit' => $u->workUnit?->name,
+            ]),
+        ]);
+    })->name('users.search');
+
     Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
     Route::get('/notifications/check', [NotificationController::class, 'checkUnread'])
@@ -127,6 +164,23 @@ Route::middleware('auth')->group(function () {
             'count'       => \App\Models\Arsip::count(),
         ]);
     })->name('arsip.check-updates');
+
+    // ── ARSIP SHARES (common endpoint untuk admin + superadmin) ──
+    // Controller meng-enforce permission: hanya superadmin yang boleh store/destroy.
+    // Name di-namespace 'arsip.shares.*' (tetap supaya modal JS lama tidak putus).
+    Route::get('arsip/{arsip}/shares', [\App\Http\Controllers\Admin\ArsipShareController::class, 'index'])->name('arsip.shares.index');
+    Route::post('arsip/{arsip}/shares', [\App\Http\Controllers\Admin\ArsipShareController::class, 'store'])->name('arsip.shares.store');
+    Route::delete('arsip/{arsip}/shares/{share}', [\App\Http\Controllers\Admin\ArsipShareController::class, 'destroy'])->name('arsip.shares.destroy');
+    Route::get('share-user-search', [\App\Http\Controllers\Admin\ArsipShareController::class, 'searchUsers'])->name('arsip.shares.user-search');
+
+    // ── PERSONAL NOTES per arsip — siapapun yang punya edit-access bisa add/edit/hapus catatan ──
+    Route::get('arsip/{arsip}/notes', [\App\Http\Controllers\Admin\ArsipNoteController::class, 'index'])->name('arsip.notes.index');
+    Route::post('arsip/{arsip}/notes', [\App\Http\Controllers\Admin\ArsipNoteController::class, 'store'])->name('arsip.notes.store');
+    Route::put('arsip/{arsip}/notes/{note}', [\App\Http\Controllers\Admin\ArsipNoteController::class, 'update'])->name('arsip.notes.update');
+    Route::delete('arsip/{arsip}/notes/{note}', [\App\Http\Controllers\Admin\ArsipNoteController::class, 'destroy'])->name('arsip.notes.destroy');
+
+    // ── DASHBOARD POPUP: shared endpoint untuk popup tabel pengajuan dari card stat ──
+    Route::get('dashboard/popup', [\App\Http\Controllers\DashboardStatController::class, 'popup'])->name('dashboard.popup');
 });
 
 /*
@@ -135,7 +189,7 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')
-    ->middleware(['auth','role:admin,accounting'])
+    ->middleware(['auth','role:admin,accounting,spv,kabag,manager','ensure.nik','force.password'])
     ->name('admin.')
     ->group(function () {
 
@@ -153,6 +207,13 @@ Route::prefix('admin')
         // ✅ RE-UPLOAD BA SCAN (Khusus Accounting setelah Approve)
         Route::post('arsip/{id}/reupload-ba', [AdminArsip::class, 'reuploadBaScan'])->name('arsip.reupload-ba');
 
+        // ✅ LAMPIRAN PDF (multi-file) + show document (draft + lampiran merged)
+        Route::post('arsip/{id}/upload-lampiran', [AdminArsip::class, 'uploadLampiran'])->name('arsip.upload-lampiran');
+        Route::get('arsip/{id}/lampiran', [AdminArsip::class, 'listLampiran'])->name('arsip.list-lampiran');
+        Route::get('arsip/{arsip}/lampiran/{lampiran}/view', [AdminArsip::class, 'viewLampiran'])->name('arsip.view-lampiran');
+        Route::delete('arsip/{arsip}/lampiran/{lampiran}', [AdminArsip::class, 'deleteLampiran'])->name('arsip.delete-lampiran');
+        Route::get('arsip/{id}/show-document', [AdminArsip::class, 'showDocument'])->name('arsip.show-document');
+
         // ✅ PROFILE ADMIN
         Route::get('profile', [AdminProfile::class,'index'])->name('profile');
         Route::put('profile', [AdminProfile::class,'update'])->name('profile.update');
@@ -160,6 +221,15 @@ Route::prefix('admin')
 
         // ✅ TANDA TANGAN DIGITAL pada pengajuan
         Route::post('arsip/{id}/sign', [AdminArsip::class, 'signArsip'])->name('arsip.sign');
+
+        // ✅ MASTER HARGA (akses dijaga Gate 'view-price' di controller)
+        Route::get('prices', [\App\Http\Controllers\Admin\PriceController::class, 'index'])->name('prices.index');
+        Route::post('prices', [\App\Http\Controllers\Admin\PriceController::class, 'store'])->name('prices.store');
+        Route::put('prices/{price}', [\App\Http\Controllers\Admin\PriceController::class, 'update'])->name('prices.update');
+        Route::delete('prices/{price}', [\App\Http\Controllers\Admin\PriceController::class, 'destroy'])->name('prices.destroy');
+
+        // ✅ ARSIP SHARED INBOX (di group admin agar middleware ensure.nik & force.password aktif)
+        Route::get('shared-inbox', [\App\Http\Controllers\Admin\ArsipShareController::class, 'inbox'])->name('arsip.shared-inbox');
 
         // ✅ APPROVAL BERTINGKAT
         Route::get('approvals', [AdminArsip::class, 'myApprovals'])->name('approvals.index');
@@ -183,6 +253,10 @@ Route::prefix('superadmin')
     ->group(function () {
 
         Route::get('dashboard', [SuperDashboard::class, 'index'])->name('dashboard');
+
+        // ⚠️ HARUS sebelum Route::resource karena `arsip/{arsip}` show route bisa
+        //    menelan path string seperti `arsip/search-simple`.
+        Route::get('arsip/search-simple', [SuperArsip::class, 'searchSimple'])->name('arsip.search-simple');
 
         Route::resource('arsip', SuperArsip::class);
 
@@ -209,22 +283,39 @@ Route::prefix('superadmin')
         
         // Custom Arsip Action
         Route::get('arsip/{id}/print-draft', [SuperArsip::class, 'printDraft'])->name('arsip.print-draft');
+        Route::post('arsip/{id}/upload-lampiran', [SuperArsip::class, 'uploadLampiran'])->name('arsip.upload-lampiran');
+        Route::get('arsip/{id}/lampiran', [SuperArsip::class, 'listLampiran'])->name('arsip.list-lampiran');
+        Route::get('arsip/{arsip}/lampiran/{lampiran}/view', [SuperArsip::class, 'viewLampiran'])->name('arsip.view-lampiran');
+        Route::delete('arsip/{arsip}/lampiran/{lampiran}', [SuperArsip::class, 'deleteLampiran'])->name('arsip.delete-lampiran');
+        Route::get('arsip/{id}/show-document', [SuperArsip::class, 'showDocument'])->name('arsip.show-document');
         Route::get('arsip/{id}/produk-detail', [SuperArsip::class, 'produkDetail'])->name('arsip.produk-detail');
         Route::put('arsip/{id}/arsip-sistem',[SuperArsip::class, 'arsipSistem'])->name('arsip.arsip-sistem');
         Route::post('arsip/cleanup-storage', [SuperArsip::class, 'cleanupStorage'])->name('arsip.cleanup-storage');
         Route::patch('arsip/{id}/no-registrasi', [SuperBackup::class, 'updateNoRegistrasi'])->name('arsip.update-no-registrasi');
-        Route::get('arsip/search-simple', [SuperArsip::class, 'searchSimple'])->name('arsip.search-simple');
 
         // Backup & Restore
         Route::get('backup/export', [SuperBackup::class, 'export'])->name('backup.export');
         Route::post('backup/import', [SuperBackup::class, 'import'])->name('backup.import');
         Route::get('backup', fn() => view('superadmin.backup.index'))->name('backup.index');
 
+        // AKSES PENGAJUAN — per ROLE (baseline). Exception per-arsip via share.
+        Route::get('pengajuan-access', [\App\Http\Controllers\Superadmin\PengajuanAccessController::class, 'index'])->name('pengajuan-access.index');
+        Route::put('pengajuan-access', [\App\Http\Controllers\Superadmin\PengajuanAccessController::class, 'updateBulk'])->name('pengajuan-access.update-bulk');
+        Route::post('pengajuan-access/{role}/grant-all', [\App\Http\Controllers\Superadmin\PengajuanAccessController::class, 'grantAll'])->name('pengajuan-access.grant-all');
+        Route::post('pengajuan-access/{role}/revoke-all', [\App\Http\Controllers\Superadmin\PengajuanAccessController::class, 'revokeAll'])->name('pengajuan-access.revoke-all');
+
         // LOG AKTIVITAS
         Route::get('activity-logs', [SuperActivity::class, 'index'])->name('activity-logs.index');
 
         // STATISTIK SERVER
         Route::get('server-stats', [SuperServer::class, 'index'])->name('server-stats.index');
+        Route::get('server-stats/metrics', [SuperServer::class, 'metrics'])->name('server-stats.metrics');
+
+        // KELOLA APK ANDROID (auto-update mechanism)
+        Route::get('app-versions',                    [\App\Http\Controllers\Superadmin\AppVersionController::class, 'index'])->name('app-versions.index');
+        Route::post('app-versions',                   [\App\Http\Controllers\Superadmin\AppVersionController::class, 'upsert'])->name('app-versions.upsert');
+        Route::post('app-versions/{id}/upload-apk',   [\App\Http\Controllers\Superadmin\AppVersionController::class, 'uploadApk'])->name('app-versions.upload-apk');
+        Route::delete('app-versions/{id}',            [\App\Http\Controllers\Superadmin\AppVersionController::class, 'destroy'])->name('app-versions.destroy');
 
         // MASTER DATA
         Route::patch('departments/{department}/toggle', [SuperDepartment::class, 'toggleIsActive'])->name('departments.toggle');
@@ -240,6 +331,8 @@ Route::prefix('superadmin')
         Route::resource('managers', SuperManager::class);
 
         Route::patch('users/{user}/toggle', [SuperUser::class, 'toggleIsActive'])->name('users.toggle');
+        Route::post('users/{user}/delegate', [SuperUser::class, 'setDelegate'])->name('users.set-delegate');
+        Route::delete('users/{user}/delegate', [SuperUser::class, 'clearDelegate'])->name('users.clear-delegate');
         Route::resource('users', SuperUser::class);
 
         // ✅ MASTER PRODUK

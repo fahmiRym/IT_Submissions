@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'ensure.nik' => \App\Http\Middleware\EnsureLinkedToNik::class,
+            'force.password' => \App\Http\Middleware\ForceChangePassword::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -18,6 +18,7 @@ class SettingController extends Controller
             'wm_done' => Setting::get('wm_done', 'DONE'),
             'wm_void' => Setting::get('wm_void', 'VOID'),
             'wm_reject' => Setting::get('wm_reject', 'REJECT'),
+            'produk_baru_enabled' => Setting::get('produk_baru_enabled', '1'),
         ]);
     }
 
@@ -30,6 +31,7 @@ class SettingController extends Controller
             'wm_done' => 'nullable|string|max:50',
             'wm_void' => 'nullable|string|max:50',
             'wm_reject' => 'nullable|string|max:50',
+            'produk_baru_enabled' => 'nullable|in:0,1',
         ]);
 
         // Log data yang masuk untuk debugging
@@ -46,6 +48,10 @@ class SettingController extends Controller
         foreach ($wms as $wm) {
             \DB::table('settings')->updateOrInsert(['key' => $wm], ['value' => strtoupper($request->$wm ?? ''), 'updated_at' => now()]);
         }
+
+        // 4. Update feature flag Produk Baru (unchecked checkbox tidak terkirim → set '0')
+        $produkBaruVal = $request->input('produk_baru_enabled') === '1' ? '1' : '0';
+        \DB::table('settings')->updateOrInsert(['key' => 'produk_baru_enabled'], ['value' => $produkBaruVal, 'updated_at' => now()]);
 
         // 2. Update Logo Jika Ada
         if ($request->hasFile('app_logo')) {

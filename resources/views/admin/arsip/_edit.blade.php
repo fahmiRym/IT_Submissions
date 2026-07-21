@@ -78,8 +78,9 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label small fw-bold text-secondary text-uppercase">Penyusun / Pemohon</label>
-                                <textarea name="pemohon" id="editPemohon" class="form-control border-0 shadow-sm bg-white" rows="2" placeholder="Nama-nama..."></textarea>
+                                @include('partials._pemohon_picker', ['fieldId' => 'pemohonPickerEditAdmin', 'name' => 'requesters', 'selected' => [], 'textName' => 'pemohon'])
+                                {{-- legacy hidden field for backward-compat scripts referencing #editPemohon --}}
+                                <input type="hidden" id="editPemohon">
                             </div>
 
                             {{-- Kategori (Cancel Only) --}}
@@ -111,6 +112,7 @@
 
                             {{-- ADJUST --}}
                             <div id="sectionAdjustEdit" class="d-none dynamic-section-edit mb-4">
+                                @include('partials._adjust_header', ['scope' => 'edit'])
                                 <div class="card border-0 shadow-sm overflow-hidden border-start border-4 border-primary">
                                     <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
                                         <span class="fw-bold text-primary small">ITEM ADJUSTMENT</span>
@@ -119,17 +121,17 @@
                                         </button>
                                     </div>
                                     <div class="card-body p-0 table-responsive">
-                                        <table class="table table-sm table-striped mb-0 align-middle">
-                                             <thead class="bg-light text-muted small">
+                                        <table class="table table-sm table-striped mb-0 align-middle adjust-table">
+                                             <thead class="bg-light text-muted small text-uppercase">
                                                  <tr>
-                                                     <th class="ps-3" width="90">Kode</th>
-                                                     <th>Item Produk</th>
+                                                     <th class="ps-3" width="100">Kode Barang</th>
+                                                     <th>Nama Barang</th>
+                                                     <th width="90">Lot</th>
+                                                     <th width="150">Lokasi</th>
                                                      <th width="70" class="text-center">Odoo</th>
                                                      <th width="70" class="text-center">Fisik</th>
-                                                     <th width="80" class="text-center">QTY IN</th>
-                                                     <th width="80" class="text-center">QTY OUT</th>
-                                                     <th width="110">Lot/Ket</th>
-                                                     <th width="160">Lokasi</th>
+                                                     <th width="80" class="text-center">Selisih</th>
+                                                     <th width="70" class="text-center">Adjus</th>
                                                      <th width="40"></th>
                                                  </tr>
                                              </thead>
@@ -137,6 +139,7 @@
                                         </table>
                                     </div>
                                 </div>
+                                @include('partials._adjust_footer', ['scope' => 'edit', 'wrapper' => 'wrapperAdjustEdit'])
                             </div>
 
                             {{-- MUTASI --}}

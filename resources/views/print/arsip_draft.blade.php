@@ -9,103 +9,68 @@
     @else
         <link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
     @endif
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 16mm 10mm 10mm 10mm;
-        }
+        @page { size: A4 portrait; margin: 0; }
 
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            height: 100%;
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body {
             margin: 0;
             padding: 0;
+            height: 297mm;
+            max-height: 297mm;
+            overflow: hidden;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 11px;
             color: #000;
+            line-height: 1.35;
         }
 
+        /* ─── PAGE CONTAINER ──────────────────────────────────────────── */
         .print-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 96vh;
-            padding: 15px 8px 6px 8px;
+            position: relative;
+            height: 277mm;
+            max-height: 277mm;
+            padding: 13mm 12mm 5mm 12mm;
+            overflow: hidden;
+            page-break-after: avoid;
+            page-break-inside: avoid;
         }
 
-        /* ── META BAR (Printed date / User) ── */
-        .meta-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #ffffffff;
-            border: 1px solid #ffffffff;
-            border-radius: 3px;
-            padding: 3px 10px;
-            margin-bottom: 8px;
-            font-size: 9px;
-            color: #444;
-        }
-
-        .meta-bar .meta-left {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .meta-bar .meta-item {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .meta-bar .meta-label {
-            color: #777;
-            font-weight: 500;
-        }
-
-        .meta-bar .meta-value {
-            font-weight: 700;
-            color: #111;
-        }
-
-        /* ── DOCUMENT HEADER ── */
+        /* ─── DOCUMENT HEADER ─────────────────────────────────────────── */
         .doc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 4px;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
         }
-
+        .doc-header td {
+            vertical-align: middle;
+            padding: 0;
+        }
         .doc-header-center {
-            flex: 1;
             text-align: center;
+            padding: 0 4mm;
         }
-
         .header-title {
             font-size: 15px;
             font-weight: 800;
             text-transform: uppercase;
             margin-bottom: 4px;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.4px;
         }
-
         .header-doc {
             font-weight: 700;
             font-size: 11px;
             margin-bottom: 2px;
         }
-
+        .header-doc .no-doc-line {
+            display: inline-block;
+            border-bottom: 1.5px solid #000;
+            min-width: 220px;
+            padding-bottom: 1px;
+        }
         .header-doc-note {
             font-size: 9px;
             font-style: italic;
@@ -114,57 +79,67 @@
         }
 
         .qr-wrapper {
-            width: 110px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0;
+            width: 80px;
+            text-align: center;
         }
-
+        .qr-wrapper img {
+            width: 58px;
+            height: 58px;
+            display: inline-block;
+            object-fit: contain;
+        }
         .qr-label {
             font-size: 7px;
             font-weight: 700;
             color: #555;
             margin-top: 2px;
-            text-align: center;
             letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
+        .qr-label.verify { color: #1d4ed8; }
+        .qr-label.reg    { font-family: monospace; color: #111; letter-spacing: 0; text-transform: none; }
 
-        /* ── SEPARATOR ── */
-        .separator {
-            border: none;
-            border-top: 2px solid #000;
-            margin: 6px 0;
-        }
-
-        /* ── INFO TABLE ── */
+        /* ─── INFO TABLE ──────────────────────────────────────────────── */
         .info-table {
-            border: none;
-            margin-bottom: 4px;
             width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
         }
-
         .info-table td {
-            border: none;
             padding: 3px 2px;
-            text-align: left;
             vertical-align: top;
             font-weight: 700;
+            text-align: left;
         }
+        .info-table td.label { width: 200px; }
+        .info-table td.colon { width: 10px; }
+        .info-table td.value { border-bottom: 1.5px solid #000; }
+        .info-table tr.desc-row td { padding-top: 10px; }
 
-        /* ── RULED LINES ── */
-        .ruled {
-            background-image: repeating-linear-gradient(to bottom,
-                    transparent 0,
-                    transparent 22px,
-                    #000 22px,
-                    #000 23.5px);
-            line-height: 23.5px;
+        /* ─── RULED LINES ─────────────────────────────────────────────── */
+        .ruled-line {
+            border-bottom: 1px solid #000;
+            height: 22px;
+            line-height: 22px;
             font-size: 11px;
-            padding-top: 2px;
+            padding: 0 2px;
+        }
+        .ruled-content {
+            border-bottom: 1px solid #000;
+            min-height: 22px;
+            line-height: 22px;
+            padding: 0 2px;
+            font-weight: 700;
+            white-space: pre-wrap;
+        }
+        .ruled-content .trx-label { font-weight: 800; }
+        .ruled-content .trx-line {
+            border-bottom: 1px solid #000;
+            line-height: 22px;
+            padding: 0 2px;
         }
 
-        /* ── TABLES ── */
+        /* ─── MAIN ITEM TABLE ─────────────────────────────────────────── */
         .main-table {
             width: 100%;
             border-collapse: collapse;
@@ -172,289 +147,375 @@
             margin-bottom: 5px;
             table-layout: fixed;
         }
-
         .main-table th,
         .main-table td {
             border: 1px solid #000;
             padding: 4px;
             text-align: center;
             font-size: 10px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
         }
-
         .main-table th {
             font-weight: 800;
             text-transform: uppercase;
+            line-height: 1.2;
+            background: #f7f7f7;
+        }
+        .main-table td.cell-left { text-align: left; }
+
+        /* ─── SECTION HEADINGS ────────────────────────────────────────── */
+        .section-title {
+            font-weight: 800;
+            margin: 5px 0 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .section-note {
+            font-size: 9px;
+            font-style: italic;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 2px;
+        }
+        .section-catatan {
+            font-weight: 800;
+            margin-top: 5px;
+            height: 18.5px;
         }
 
-        /* ── SIGNATURE TABLE ── */
+        /* ─── SIGNATURE BLOCK (anchored bottom, kasih breathing room utk _print_footer) ─ */
+        .footer-section-wrap {
+            position: absolute;
+            left: 12mm;
+            right: 12mm;
+            bottom: 10mm;             /* was 5mm — naik 5mm utk gap dgn _print_footer */
+            background: #fff;
+            z-index: 100;
+            padding-top: 4mm;
+            page-break-inside: avoid;
+            page-break-before: avoid;
+            page-break-after: avoid;
+        }
+        .footer-place-date {
+            margin: 0 0 5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: #fff;
+            padding-top: 1mm;
+        }
+
         .signature-table {
             width: 100%;
             border: 1.5px solid #000;
             table-layout: fixed;
             border-collapse: collapse;
         }
-
         .signature-table th,
         .signature-table td {
             border: 1px solid #000;
-            padding: 5px;
             text-align: center;
         }
-
         .signature-table th {
             font-size: 10px;
             font-weight: 800;
+            padding: 5px 3px;
+            background: #f7f7f7;
         }
-
         .signature-table td {
-            height: 95px;
+            height: 72px;
             vertical-align: bottom;
+            padding: 3px;
         }
 
-        /* ── FOOTER ── */
-        .footer-section {
-            margin-top: auto;
-            width: 100%;
+        .sig-stamp { min-height: 52px; line-height: 1; text-align: center; }
+        .sig-stamp img {
+            width: 48px;
+            height: 48px;
+            display: inline-block;
+            object-fit: contain;
+        }
+        .sig-stamp .sig-name {
+            font-size: 7.5px;
+            font-weight: 800;
+            margin-top: 1px;
+            color: #0f172a;
+        }
+        .sig-stamp .sig-ts {
+            font-size: 6.5px;
+            color: #475569;
+            font-style: italic;
+        }
+        .sig-stamp .sig-pending {
+            color: #cbd5e1;
+            font-size: 7px;
+            font-style: italic;
+            padding-top: 18px;
+        }
+        .sig-stamp .sig-delegate {
+            font-size: 6.5px;
+            color: #92400e;
+            font-weight: 700;
+            font-style: italic;
+            background: #fef3c7;
+            border-radius: 2px;
+            padding: 1px 3px;
+            margin-top: 1px;
+            display: inline-block;
+        }
+        .sig-role {
+            font-weight: 800;
+            font-size: 10px;
+            margin-top: 1px;
+        }
+        .sig-hint {
+            font-size: 8px;
+            font-style: italic;
+            color: #444;
         }
 
+        /* ─── DOC FOOTER NOTES ────────────────────────────────────────── */
         .doc-footer-note {
             text-align: right;
-            font-size: 8.5px;
+            font-size: 7.5px;
             font-weight: 700;
             color: #444;
             margin-top: 4px;
         }
+        .ttd-validation {
+            margin-top: 3px;
+            padding: 4px 8px;
+            border: 1px dashed #1d4ed8;
+            border-radius: 4px;
+            font-size: 7.5px;
+            font-weight: 700;
+            color: #1e293b;
+            display: table;
+            width: 100%;
+        }
+        .ttd-validation .ttd-text { display: table-cell; vertical-align: middle; }
+        .ttd-validation .ttd-token {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: right;
+            font-family: monospace;
+            color: #1d4ed8;
+            white-space: nowrap;
+            width: 110px;
+        }
+        .ttd-validation .ttd-check { color: #1d4ed8; font-style: normal; margin-right: 3px; }
 
-        /* ── PRINT ── */
+        /* ─── WATERMARK (VOID/REJECT only) ────────────────────────── */
+        .watermark {
+            position: fixed;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 90px;
+            font-weight: 900;
+            letter-spacing: 8px;
+            color: rgba(220, 38, 38, 0.08);
+            pointer-events: none;
+            z-index: 0;
+            white-space: nowrap;
+            user-select: none;
+            font-family: 'DejaVu Sans', sans-serif;
+            text-transform: uppercase;
+        }
+        .watermark-void   { color: rgba(220, 38, 38, 0.10); }
+        .watermark-reject { color: rgba(124, 58, 237, 0.10); }
+
+        /* ─── PRINT MEDIA ─────────────────────────────────────────── */
         @media print {
             body {
-                margin: 0;
-                padding: 0;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-
-            .print-container {
-                min-height: 96vh;
-                padding: 20px 0 0 0;
-            }
-
-            .footer-section {
-                page-break-inside: avoid;
-            }
-
-            .no-print {
-                display: none !important;
-            }
+            .no-print { display: none !important; }
         }
-        /* ── WATERMARK (Rubber Stamp Design) ── */
-        .watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 85px;
-            font-weight: 900;
-            letter-spacing: 8px;
-            opacity: 0.07;
-            pointer-events: none;
-            z-index: 9999;
-            white-space: nowrap;
-            user-select: none;
-            font-family: 'Inter', sans-serif;
-            text-transform: uppercase;
-            border: 12px double currentColor;
-            padding: 15px 40px;
-            border-radius: 15px;
-            display: inline-block;
-        }
-        .watermark-lengkap  { color: #059669; border-color: #059669; }
-        .watermark-void     { color: #dc2626; border-color: #dc2626; }
-        .watermark-reject   { color: #7c3aed; border-color: #7c3aed; }
-        .watermark-digital  { color: #1d4ed8; border-color: #1d4ed8; font-size: 58px; letter-spacing: 4px; padding: 12px 28px; }
     </style>
 </head>
 
 <body onload="window.print()">
-    {{-- ── WATERMARK BASED ON STATUS / APPROVAL ── --}}
+    {{-- ─── WATERMARK (VOID / REJECT) ───────────────────────────────── --}}
     @php
         $status = strtolower($arsip->status ?? 'pending');
-        $fullySigned = $arsip->signatures->count() > 0 && $arsip->isFullyApproved();
-
-        if ($status === 'done' && $fullySigned) {
-            $wmClass = 'watermark-digital';
-            $wmText  = 'TERTANDATANGANI DIGITAL';
-        } elseif ($status === 'done') {
-            $wmClass = 'watermark-lengkap';
-            $wmText  = \App\Models\Setting::get('wm_done', 'DONE');
-        } elseif ($status === 'void') {
+        $wmClass = '';
+        $wmText  = '';
+        if ($status === 'void') {
             $wmClass = 'watermark-void';
             $wmText  = \App\Models\Setting::get('wm_void', 'VOID');
         } elseif ($status === 'reject') {
             $wmClass = 'watermark-reject';
             $wmText  = \App\Models\Setting::get('wm_reject', 'REJECT');
-        } else {
-            $wmClass = '';
-            $wmText  = '';
         }
     @endphp
-    
     @if(!empty($wmText))
         <div class="watermark {{ $wmClass }}">{{ $wmText }}</div>
     @endif
 
     <div class="print-container">
 
-        {{-- ── PRINT BUTTON (hidden on print) ── --}}
-        <div class="no-print" style="text-align: right; margin-bottom: 8px;">
-            <button onclick="window.print()"
-                style="padding: 7px 18px; background: #1a1a1a; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-weight: 700; font-size: 12px;">
-                🖨️ Cetak
-            </button>
-        </div>
+        {{-- ─── PRINT BUTTON (screen only) ──────────────────────────── --}}
+        @if(empty($forPdf))
+            <div class="no-print" style="text-align: right; margin-bottom: 8px;">
+                <button onclick="window.print()"
+                    style="padding: 7px 18px; background: #1a1a1a; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-weight: 700; font-size: 12px;">
+                    Cetak
+                </button>
+            </div>
+        @endif
 
         @php
             $isAdjust = $arsip->jenis_pengajuan === 'Adjust';
             $isProdukBaru = $arsip->jenis_pengajuan === 'Produk_Baru';
-            $title = $isAdjust ? 'BERITA ACARA PENGAJUAN ADJUSTMENT'
-                    : ($isProdukBaru ? 'BERITA ACARA PENGAJUAN PRODUK BARU' : 'BERITA ACARA PENGAJUAN SYSTEM ODOO');
-            $adjustItemsCount = isset($arsip->adjustItems) ? count($arsip->adjustItems) : 0;
+            $title = $isAdjust
+                ? 'BERITA ACARA PENGAJUAN ADJUSTMENT'
+                : ($isProdukBaru ? 'BERITA ACARA PENGAJUAN PRODUK BARU' : 'BERITA ACARA PENGAJUAN SYSTEM ODOO');
+
+            $adjustItemsCount     = isset($arsip->adjustItems)     ? count($arsip->adjustItems)     : 0;
             $produkBaruItemsCount = isset($arsip->produkBaruItems) ? count($arsip->produkBaruItems) : 0;
-            $isCompact = ($isAdjust && $adjustItemsCount > 9) || ($isProdukBaru && $produkBaruItemsCount > 9);
+            $totalItems = max(
+                $adjustItemsCount, $produkBaruItemsCount,
+                isset($arsip->mutasiItems) ? count($arsip->mutasiItems) : 0,
+                isset($arsip->bundelItems) ? count($arsip->bundelItems) : 0
+            );
+            $compactLevel = 0;
+            if ($totalItems > 6 && $totalItems <= 10)       $compactLevel = 1;
+            elseif ($totalItems > 10 && $totalItems <= 16)  $compactLevel = 2;
+            elseif ($totalItems > 16)                       $compactLevel = 3;
         @endphp
 
-        @if($isCompact)
+        {{-- ─── AUTO-COMPACT STYLES (kicks in only when items are many) ── --}}
+        @if($compactLevel === 1)
             <style>
-                .main-table th,
-                .main-table td {
-                    padding: 2px;
-                }
-
-                .main-table td {
-                    height: 14px !important;
-                }
-
-                .info-table {
-                    margin-bottom: 2px;
-                }
-
-                .signature-table td {
-                    height: 70px !important;
-                }
+                body { font-size: 10.5px; }
+                .main-table th, .main-table td { padding: 3px; font-size: 9.5px; }
+                .info-table { margin-bottom: 3px; }
+                .signature-table td { height: 70px; padding: 3px; }
+                .header-title { font-size: 14px; }
+            </style>
+        @elseif($compactLevel === 2)
+            <style>
+                body { font-size: 9.5px; }
+                .main-table th, .main-table td { padding: 2.5px; font-size: 8.5px; }
+                .main-table td { height: 14px; }
+                .info-table { margin-bottom: 2px; }
+                .info-table td { padding: 2px; font-size: 10px; }
+                .signature-table td { height: 64px; padding: 2px; }
+                .header-title { font-size: 13px; }
+                .ruled-line, .ruled-content { line-height: 18px; height: 18px; font-size: 9.5px; }
+                .ruled-content { min-height: 18px; }
+            </style>
+        @elseif($compactLevel === 3)
+            <style>
+                body { font-size: 8.5px; }
+                .main-table th, .main-table td { padding: 1.5px; font-size: 7.5px; }
+                .main-table td { height: 12px; }
+                .info-table { margin-bottom: 2px; }
+                .info-table td { padding: 1.5px; font-size: 9px; }
+                .signature-table td { height: 58px; padding: 2px; }
+                .header-title { font-size: 12px; }
+                .ruled-line, .ruled-content { line-height: 16px; height: 16px; font-size: 8.5px; }
+                .ruled-content { min-height: 16px; }
             </style>
         @endif
 
-        {{-- ── META BAR: Printed date + User ── --}}
-        <!-- <div class="meta-bar">
-            <div class="meta-left">
-                <div class="meta-item">
-                    <span class="meta-label">Printed date</span>
-                    <span class="meta-value">{{ \Carbon\Carbon::now()->format('d/m/Y H.i.s') }}</span>
-                </div>
-                <div class="meta-item">
-                    <span class="meta-label">User:</span>
-                    <span class="meta-value">{{ auth()->user()->name ?? '-' }}</span>
-                </div>
-            </div>
-            <div style="font-size: 8px; color: #999; font-style: italic;">{{ $arsip->no_registrasi }}</div>
-        </div> -->
+        {{-- ─── DOCUMENT HEADER (QR | Title | QR) ─────────────────── --}}
+        @php
+            $qrDocVerify = \App\Services\QrSignatureService::renderDocumentQrDataUri($arsip, 160);
+            $qrDocReg    = \App\Services\QrSignatureService::renderTextQrDataUri($arsip->no_registrasi ?: 'NO-REG', 120);
+        @endphp
+        <table class="doc-header">
+            <tr>
+                <td class="qr-wrapper">
+                    @if($qrDocVerify)
+                        <img src="{{ $qrDocVerify }}" alt="QR Verify">
+                    @endif
+                    @if($arsip->verify_token)
+                        <div class="qr-label verify">SCAN VERIFIKASI</div>
+                    @endif
+                </td>
 
-        {{-- ── DOCUMENT HEADER ── --}}
-        <div class="doc-header">
-            {{-- Kiri atas: QR Verifikasi --}}
-            <div class="qr-wrapper" style="width: 70px;">
-                <div id="qrcode"></div>
-                @if($arsip->verify_token)
-                    <div class="qr-label" style="color:#1d4ed8;">SCAN VERIFIKASI</div>
-                @endif
-            </div>
+                <td class="doc-header-center">
+                    <div class="header-title">{{ $title }}</div>
+                    <div class="header-doc">
+                        No. Dokumen :
+                        <span class="no-doc-line">{{ $arsip->no_doc ?? '' }}</span>
+                    </div>
+                    <div class="header-doc-note">(DIISI OLEH DEPARTEMEN IT)*</div>
+                </td>
 
-            <div class="doc-header-center">
-                <div class="header-title">{{ $title }}</div>
-                <div class="header-doc">
-                    No. Dokumen :
-                    <span
-                        style="display:inline-block; border-bottom: 1.5px solid #000; min-width: 220px; padding-bottom: 1px;">
-                        {{ $arsip->no_doc ?? '' }}
-                    </span>
-                </div>
-                <div class="header-doc-note">(DIISI OLEH DEPARTEMEN IT)*</div>
-            </div>
+                <td class="qr-wrapper">
+                    @if($qrDocReg)
+                        <img src="{{ $qrDocReg }}" alt="QR No Registrasi">
+                    @endif
+                    <div class="qr-label reg">{{ $arsip->no_registrasi }}</div>
+                </td>
+            </tr>
+        </table>
 
-            {{-- Kanan atas: QR No Registrasi --}}
-            <div class="qr-wrapper" style="width: 70px;">
-                <div id="regQrcode"></div>
-                <div class="qr-label" style="font-family:monospace; color:#111;">{{ $arsip->no_registrasi }}</div>
-            </div>
-        </div>
-
-        <!-- <hr class="separator"> -->
-
-        {{-- ── INFO TABLE ── --}}
+        {{-- ─── INFO TABLE ──────────────────────────────────────────── --}}
         <table class="info-table">
             <tr>
-                <td style="width: 200px;">PERIHAL</td>
-                <td style="width: 10px;">:</td>
-                <td style="border-bottom: 1.5px solid #000;">
-                    {{ strtoupper(str_replace('_', ' ', $arsip->jenis_pengajuan)) }}
-                </td>
+                <td class="label">PERIHAL</td>
+                <td class="colon">:</td>
+                <td class="value">{{ strtoupper(str_replace('_', ' ', $arsip->jenis_pengajuan)) }}</td>
             </tr>
             <tr>
-                <td>PEMOHON</td>
-                <td>:</td>
-                <td style="border-bottom: 1.5px solid #000;">
-                    {{ strtoupper($arsip->pemohon ?? $arsip->admin->name) }}
-                </td>
+                <td class="label">PEMOHON</td>
+                <td class="colon">:</td>
+                <td class="value">{{ strtoupper($arsip->pemohon ?? $arsip->admin->name ?? '') }}</td>
             </tr>
             <tr>
-                <td>DEPARTEMEN / UNIT KERJA</td>
-                <td>:</td>
-                <td style="border-bottom: 1.5px solid #000;">
+                <td class="label">DEPARTEMEN / UNIT KERJA</td>
+                <td class="colon">:</td>
+                <td class="value">
                     {{ strtoupper($arsip->department->name ?? '') }} / {{ strtoupper($arsip->unit->name ?? '') }}
                 </td>
             </tr>
-            <tr>
-                <td style="padding-top: 10px;">DESKRIPSI PERMASALAHAN</td>
-                <td style="padding-top: 10px;">:</td>
+            <tr class="desc-row">
+                <td class="label">DESKRIPSI PERMASALAHAN</td>
+                <td class="colon">:</td>
                 <td></td>
             </tr>
         </table>
 
-        {{-- ── CONTENT AREA ── --}}
-        <div style="margin-top: -3px; position: relative;">
+        {{-- ─── CONTENT AREA ────────────────────────────────────────── --}}
+        <div style="position: relative;">
             @if($isAdjust)
                 <table class="main-table">
                     <thead>
                         <tr>
-                            <th style="width: 18%;">KODE BARANG</th>
-                            <th style="width: 28%;">NAMA BARANG</th>
-                            <th style="width: 14%;">LOT</th>
-                            <th style="width: 14%;">LOKASI</th>
-                            <th style="width: 8%;">ODOO</th>
-                            <th style="width: 8%;">FISIK</th>
-                            <th style="width: 5%;">SELISIH</th>
-                            <th style="width: 5%;">ADJUST</th>
+                            <th style="width: 14%;">KODE<br>BARANG</th>
+                            <th style="width: 24%;">NAMA BARANG</th>
+                            <th style="width: 13%;">LOT</th>
+                            <th style="width: 17%;">LOKASI</th>
+                            <th style="width: 9%;">ODOO</th>
+                            <th style="width: 9%;">FISIK</th>
+                            <th style="width: 8%;">SELISIH</th>
+                            <th style="width: 6%;">ADJ</th>
                         </tr>
                     </thead>
                     <tbody>
                         @php $adjustItems = $arsip->adjustItems ?? []; @endphp
                         @for($i = 0; $i < max(4, count($adjustItems)); $i++)
+                            @php $row = $adjustItems[$i] ?? null; @endphp
                             <tr>
-                                <td style="height: 18px;">{{ $adjustItems[$i]->product_code ?? '' }}</td>
-                                <td style="text-align: left;">{{ $adjustItems[$i]->product_name ?? '' }}</td>
-                                <td>{{ $adjustItems[$i]->lot ?? '' }}</td>
-                                <td>{{ $adjustItems[$i]->location ?? '' }}</td>
-                                <td>{{ $adjustItems[$i]->odoo ?? '' }}</td>
-                                <td>{{ $adjustItems[$i]->fisik ?? '' }}</td>
-                                <td>{{ isset($adjustItems[$i]) ? (($adjustItems[$i]->qty_in ?? 0) - ($adjustItems[$i]->qty_out ?? 0)) : '' }}
-                                </td>
-                                <td>{{ isset($adjustItems[$i]) ? ((($adjustItems[$i]->qty_in ?? 0) > 0) ? 'IN' : 'OUT') : '' }}
-                                </td>
+                                <td style="height: 18px;">{{ $row->product_code ?? '' }}</td>
+                                <td class="cell-left">{{ $row->product_name ?? '' }}</td>
+                                <td>{{ $row->lot ?? '' }}</td>
+                                <td>{{ $row->location ?? '' }}</td>
+                                <td>{{ $row->odoo ?? '' }}</td>
+                                <td>{{ $row->fisik ?? '' }}</td>
+                                <td>{{ $row ? (($row->qty_in ?? 0) - ($row->qty_out ?? 0)) : '' }}</td>
+                                <td>{{ $row ? ((($row->qty_in ?? 0) > 0) ? 'IN' : 'OUT') : '' }}</td>
                             </tr>
                         @endfor
                     </tbody>
                 </table>
-                <div style="font-weight: 800; margin-top: 5px; height: 18.5px;">CATATAN:</div>
+                <div class="section-catatan">CATATAN:</div>
             @endif
 
             @if($isProdukBaru)
@@ -472,89 +533,139 @@
                     <tbody>
                         @php $produkBaruItems = $arsip->produkBaruItems ?? []; @endphp
                         @for($i = 0; $i < max(4, count($produkBaruItems)); $i++)
+                            @php $row = $produkBaruItems[$i] ?? null; @endphp
                             <tr>
-                                <td style="height: 18px;">{{ $produkBaruItems[$i]->product_code ?? '' }}</td>
-                                <td style="text-align: left;">{{ $produkBaruItems[$i]->product_name ?? '' }}</td>
-                                <td>{{ $produkBaruItems[$i]->tipe_produk ?? '' }}</td>
-                                <td style="text-align: left;">{{ $produkBaruItems[$i]->kategori ?? '' }}</td>
-                                <td>{{ $produkBaruItems[$i]->satuan ?? '' }}</td>
-                                <td>{{ $produkBaruItems[$i]->status_approval ?? '' }}</td>
+                                <td style="height: 18px;">{{ $row->product_code ?? '' }}</td>
+                                <td class="cell-left">{{ $row->product_name ?? '' }}</td>
+                                <td>{{ $row->tipe_produk ?? '' }}</td>
+                                <td class="cell-left">{{ $row->kategori ?? '' }}</td>
+                                <td>{{ $row->satuan ?? '' }}</td>
+                                <td>{{ $row->status_approval ?? '' }}</td>
                             </tr>
                         @endfor
                     </tbody>
                 </table>
-                <div style="font-weight: 800; margin-top: 5px; height: 18.5px;">CATATAN:</div>
+                <div class="section-catatan">CATATAN:</div>
             @endif
 
             @php
-                $keteranganLines = 6;
-                $tindakanLines = 6;
+                // Ruled-lines budget — sisa area antara content & signature anchored di bottom.
                 if ($isAdjust) {
-                    $excessItems = max(0, $adjustItemsCount - 4);
-                    $linesToRemove = (int) ceil($excessItems * 1.2);
-                    if ($linesToRemove > 0) {
-                        $keteranganLines = max(1, $keteranganLines - ceil($linesToRemove / 2));
-                        $tindakanLines = max(1, $tindakanLines - floor($linesToRemove / 2));
+                    // Rebalance: keterangan filler diperbanyak supaya TINDAKAN section turun ke bawah.
+                    // Total turun -2 lines (sinkron dgn wrap naik 5mm utk breathing room footer).
+                    $keteranganLines = 5;
+                    $tindakanLines   = 9;
+                    if ($adjustItemsCount >= 3)  { $keteranganLines = 4; $tindakanLines = 8; }
+                    if ($adjustItemsCount >= 5)  { $keteranganLines = 4; $tindakanLines = 7; }
+                    if ($adjustItemsCount >= 7)  { $keteranganLines = 3; $tindakanLines = 7; }
+                    if ($adjustItemsCount >= 9)  { $keteranganLines = 2; $tindakanLines = 6; }
+                    if ($adjustItemsCount >= 12) { $keteranganLines = 2; $tindakanLines = 5; }
+                    if ($adjustItemsCount >= 15) { $keteranganLines = 1; $tindakanLines = 4; }
+                } else {
+                    $BUDGET_RULED   = 24;
+                    $usedRuledLines = 0;
+
+                    if (!empty(trim((string) $arsip->no_transaksi))) {
+                        $nrm = preg_replace('/\|+/', "\n\n", trim((string) $arsip->no_transaksi));
+                        $nrm = str_replace("\r\n", "\n", $nrm);
+                        $grps = array_values(array_filter(array_map('trim', preg_split('/\n{2,}/', $nrm))));
+                        // Label "No. Transaksi :" + tiap baris di tiap group + 1 spacer-line antar group
+                        $usedRuledLines += 1; // label row
+                        foreach ($grps as $i => $g) {
+                            $usedRuledLines += count(array_filter(array_map('trim', explode("\n", $g))));
+                            if ($i < count($grps) - 1) $usedRuledLines += 1; // separator
+                        }
                     }
-                    if ($excessItems >= 8) {
-                        $keteranganLines = 1;
-                        $tindakanLines = 1;
+                    if (str_contains($arsip->jenis_pengajuan, 'Mutasi')) {
+                        $usedRuledLines += $arsip->mutasiItems?->count() ?? 0;
+                    } elseif ($arsip->jenis_pengajuan === 'Bundel') {
+                        $usedRuledLines += $arsip->bundelItems?->count() ?? 0;
                     }
+                    if (!empty(trim((string) $arsip->keterangan))) {
+                        $ketLines = preg_split('/\r\n|\r|\n/', (string) $arsip->keterangan);
+                        foreach ($ketLines as $kl) {
+                            $usedRuledLines += max(1, (int) ceil(mb_strlen($kl) / 90));
+                        }
+                    }
+
+                    $remainingBudget = max(12, $BUDGET_RULED - $usedRuledLines);
+                    $tindakanLines   = min(15, max(5, (int) floor($remainingBudget * 0.60)));
+                    $keteranganLines = max(3, $remainingBudget - $tindakanLines);
                 }
             @endphp
 
-            <div class="ruled"
-                style="min-height: {{ $keteranganLines * 23.5 }}px; margin-top: 2px; text-align: justify;">
-                @if(!empty(trim($arsip->keterangan)))
-                    <div style="white-space: pre-wrap;">{{ trim($arsip->keterangan) }}</div>
-                @endif
-                @if(!empty(trim($arsip->no_transaksi)))
+            <div style="margin-top: 2px; text-align: justify;">
+                @if(!empty(trim((string) $arsip->keterangan)))
                     @php
-                        $normalized = preg_replace('/\|+/', "\n\n", trim($arsip->no_transaksi));
-                        $normalized = str_replace("\r\n", "\n", $normalized);
-                        $trxGroups = preg_split('/\n{2,}/', $normalized);
-                        $trxGroups = array_filter(array_map('trim', $trxGroups));
+                        $ketLines = preg_split('/\r\n|\r|\n/', trim((string) $arsip->keterangan));
                     @endphp
-                    <div>
-                        <div style="font-weight: 800;">No. Transaksi :</div>
-                        <div style="column-count: 3; column-gap: 15px; font-weight: 700;">
-                            @foreach($trxGroups as $group)
-                                <div style="break-inside: avoid; page-break-inside: avoid;">
-                                    @php
-                                        $lines = array_filter(array_map('trim', explode("\n", $group)));
-                                    @endphp
-                                    @foreach($lines as $line)
-                                        <div>{{ $line }}</div>
-                                    @endforeach
-                                    <div>&nbsp;</div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
+                    @foreach($ketLines as $kline)
+                        @php $kt = trim($kline); @endphp
+                        <div class="ruled-line" style="font-weight: 700;">{!! $kt === '' ? '&nbsp;' : e($kt) !!}</div>
+                    @endforeach
                 @endif
+
+                @if(!empty(trim((string) $arsip->no_transaksi)))
+                    @php
+                        $normalized = preg_replace('/\|+/', "\n\n", trim((string) $arsip->no_transaksi));
+                        $normalized = str_replace("\r\n", "\n", $normalized);
+                        $trxGroups  = array_values(array_filter(array_map('trim', preg_split('/\n{2,}/', $normalized))));
+                    @endphp
+                    <div class="ruled-line" style="font-weight: 800; color: #000;">No. Transaksi :</div>
+                    @foreach($trxGroups as $gIdx => $group)
+                        @php $lines = array_values(array_filter(array_map('trim', explode("\n", $group)))); @endphp
+                        @foreach($lines as $line)
+                            <div class="ruled-line" style="color: #000;">{{ $line }}</div>
+                        @endforeach
+                        @if($gIdx < count($trxGroups) - 1)
+                            {{-- separator antar group (jaga baseline ruled tetap konsisten) --}}
+                            <div class="ruled-line" style="color: #000;">&nbsp;</div>
+                        @endif
+                    @endforeach
+                @endif
+
                 @if(!$isAdjust && !$isProdukBaru)
                     @if(str_contains($arsip->jenis_pengajuan, 'Mutasi'))
                         @foreach($arsip->mutasiItems as $m)
-                            <div>{{ strtoupper($m->type) }}: {{ $m->product_code }} - {{ $m->product_name }} ({{ $m->qty }})</div>
+                            <div class="ruled-line">{{ strtoupper($m->type) }}: {{ $m->product_code }} - {{ $m->product_name }} ({{ $m->qty }})</div>
                         @endforeach
                     @elseif($arsip->jenis_pengajuan === 'Bundel')
                         @foreach($arsip->bundelItems as $b)
-                            <div>DOKUMEN: {{ $b->no_doc }} (Qty: {{ $b->qty }})</div>
+                            <div class="ruled-line">DOKUMEN: {{ $b->no_doc }} (Qty: {{ $b->qty }})</div>
                         @endforeach
                     @endif
                 @endif
+
+                @for($i = 0; $i < $keteranganLines; $i++)
+                    <div class="ruled-line">&nbsp;</div>
+                @endfor
             </div>
         </div>
 
-        {{-- ── TINDAKAN ── --}}
-        <div style="margin-top: 14px; display: flex; flex-direction: column; flex-grow: 1;">
-            <div>
-                <div style="font-weight: 800;">TINDAKAN</div>
-                <div style="font-size: 9px; font-style: italic; font-weight: 700; color: #555;">(DIISI OLEH DEPARTEMEN
-                    IT)*</div>
-            </div>
+        {{-- ─── TINDAKAN ────────────────────────────────────────────── --}}
+        <div style="margin-top: 6px;">
+            <div class="section-title">TINDAKAN</div>
+            <div class="section-note">(DIISI OLEH DEPARTEMEN IT)*</div>
 
             @if($isAdjust)
+                @php
+                    $tindakanRows = $arsip->relationLoaded('tindakanItems')
+                        ? $arsip->tindakanItems
+                        : $arsip->tindakanItems()->get();
+
+                    if ($tindakanRows->isEmpty() && (
+                        !empty($arsip->tindakan_in) || !empty($arsip->ket_tindakan_in) ||
+                        !empty($arsip->tindakan_out) || !empty($arsip->ket_tindakan_out)
+                    )) {
+                        $tindakanRows = collect([(object)[
+                            'tindakan_in'      => $arsip->tindakan_in,
+                            'ket_tindakan_in'  => $arsip->ket_tindakan_in,
+                            'tindakan_out'     => $arsip->tindakan_out,
+                            'ket_tindakan_out' => $arsip->ket_tindakan_out,
+                        ]]);
+                    }
+                    $tindakanRowCount = max(2, $tindakanRows->count());
+                @endphp
                 <table class="main-table" style="margin-top: 5px;">
                     <thead>
                         <tr>
@@ -565,36 +676,79 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td style="height: 22px; font-weight: 700;">{{ $arsip->tindakan_in ?? '' }}</td>
-                            <td style="text-align: left;">{{ $arsip->ket_tindakan_in ?? '' }}</td>
-                            <td style="font-weight: 700;">{{ $arsip->tindakan_out ?? '' }}</td>
-                            <td style="text-align: left;">{{ $arsip->ket_tindakan_out ?? '' }}</td>
-                        </tr>
-                        <tr><td style="height: 22px;"></td><td></td><td></td><td></td></tr>
-                        <tr><td style="height: 22px;"></td><td></td><td></td><td></td></tr>
+                        @for($i = 0; $i < $tindakanRowCount; $i++)
+                            @php $row = $tindakanRows[$i] ?? null; @endphp
+                            <tr>
+                                <td style="height: 22px; font-weight: 700;">{{ $row->tindakan_in ?? '' }}</td>
+                                <td class="cell-left">{{ $row->ket_tindakan_in ?? '' }}</td>
+                                <td style="font-weight: 700;">{{ $row->tindakan_out ?? '' }}</td>
+                                <td class="cell-left">{{ $row->ket_tindakan_out ?? '' }}</td>
+                            </tr>
+                        @endfor
                     </tbody>
                 </table>
             @endif
 
-            <div class="ruled"
-                style="flex-grow: 1; min-height: {{ $tindakanLines * 23.5 }}px; margin-top: 5px; margin-bottom: 18px;">
-                @if(!empty(trim($arsip->tindakan)))
-                    <div style="font-weight: bold; white-space: pre-wrap;">TINDAKAN: {{ trim($arsip->tindakan) }}</div>
+            <div style="margin-top: 4px; margin-bottom: 8px;">
+                @if(!empty(trim((string) $arsip->tindakan)))
+                    @php $tindLines = preg_split('/\r\n|\r|\n/', trim((string) $arsip->tindakan)); @endphp
+                    @foreach($tindLines as $idx => $tl)
+                        @php $t = trim($tl); @endphp
+                        <div class="ruled-line" style="font-weight: 700;">{!! $idx === 0 ? 'TINDAKAN: ' : '' !!}{!! $t === '' ? '&nbsp;' : e($t) !!}</div>
+                    @endforeach
                 @endif
-                @if(!empty(trim($arsip->catatan_it)))
-                    <div style="font-weight: bold; white-space: pre-wrap; margin-top: 5px;">CATATAN IT: {{ trim($arsip->catatan_it) }}</div>
+                @if(!empty(trim((string) $arsip->catatan_it)))
+                    @php $catLines = preg_split('/\r\n|\r|\n/', trim((string) $arsip->catatan_it)); @endphp
+                    @foreach($catLines as $idx => $cl)
+                        @php $c = trim($cl); @endphp
+                        <div class="ruled-line" style="font-weight: 700;">{!! $idx === 0 ? 'CATATAN IT: ' : '' !!}{!! $c === '' ? '&nbsp;' : e($c) !!}</div>
+                    @endforeach
                 @endif
+                @for($i = 0; $i < $tindakanLines; $i++)
+                    <div class="ruled-line">&nbsp;</div>
+                @endfor
             </div>
         </div>
 
-        {{-- ── FOOTER: Date + Signature ── --}}
-        <div class="footer-section" style="page-break-inside: avoid; break-inside: avoid;">
-            <div style="margin-bottom: 5px; font-weight: 800;">
-                @php $kotaBa = \App\Models\Setting::get('kota_ba', 'PASURUAN'); @endphp
-                {{ $kotaBa }},
-                {{ $isAdjust ? '____________________' : \Carbon\Carbon::parse($arsip->created_at)->translatedFormat('d F Y') }}
-            </div>
+        {{-- ─── FOOTER: Place/Date + Signature (anchored bottom) ──── --}}
+        <div class="footer-section-wrap">
+            @php
+                $kotaBa = \App\Models\Setting::get('kota_ba', 'PASURUAN');
+                \Carbon\Carbon::setLocale('id');
+                $tglSign = \Carbon\Carbon::parse($arsip->tgl_pengajuan ?: $arsip->created_at)->translatedFormat('d F Y');
+            @endphp
+            <div class="footer-place-date">{{ strtoupper($kotaBa) }}, {{ $tglSign }}</div>
+
+            @php
+                $renderSig = function ($sig) use ($arsip) {
+                    if (!$sig) {
+                        return '<div class="sig-stamp"><div class="sig-pending">[ Menunggu TTD ]</div></div>';
+                    }
+                    $qr = \App\Services\QrSignatureService::renderSignatureQrDataUri($arsip, $sig, 150);
+                    $html = '<div class="sig-stamp">';
+                    if ($qr) {
+                        $html .= '<img src="' . $qr . '" alt="TTD">';
+                    }
+                    $html .= '<div class="sig-name">' . e($sig->signer_name) . '</div>';
+                    $html .= '<div class="sig-ts">' . optional($sig->signed_at)->format('d/m/Y H:i') . ' WIB</div>';
+                    // Delegasi: kalau signer TTD sebagai wakil dari user lain, tunjukkan siapa aslinya.
+                    if ($sig->delegated_from_id) {
+                        $orig = $sig->delegatedFrom;
+                        $origName = $orig ? $orig->name : 'user asal';
+                        $html .= '<div class="sig-delegate">↩ Mewakili: ' . e($origName) . '</div>';
+                    }
+                    $html .= '</div>';
+                    return $html;
+                };
+                // Eager-load delegatedFrom untuk semua signature supaya render efficient.
+                $arsip->loadMissing('signatures.delegatedFrom');
+                $sigPemohon    = $arsip->signatureFor('Pemohon');
+                $sigAccounting = $arsip->signatureFor('Accounting');
+                $sigIT         = $arsip->signatureFor('Departemen IT');
+                $sigSPV        = $arsip->signatureFor('SPV');
+                $sigKabag      = $arsip->signatureFor('Kabag');
+                $sigManager    = $arsip->signatureFor('Manager');
+            @endphp
 
             <table class="signature-table">
                 <tr>
@@ -607,123 +761,73 @@
                     @endif
                     <th style="width: 20%;">Dikerjakan Oleh,</th>
                 </tr>
-                @php
-                    // Helper: render specimen TTD digital di dalam kotak tanda tangan
-                    $renderSig = function ($sig) {
-                        if (!$sig) return '';
-                        $html = '';
-                        if ($sig->signatureUrl()) {
-                            $html .= '<img src="' . $sig->signatureUrl() . '" style="max-height:45px; max-width:120px; object-fit:contain;">';
-                        }
-                        $html .= '<div style="font-size:8px; font-weight:700; margin-top:2px;">' . e($sig->signer_name) . '</div>';
-                        $html .= '<div style="font-size:7px; color:#555; font-style:italic;">' . optional($sig->signed_at)->format('d/m/Y H:i') . ' WIB</div>';                         return $html;
-                    };
-                    $sigPemohon = $arsip->signatureFor('Pemohon');
-                    $sigAccounting = $arsip->signatureFor('Accounting');
-                    $sigIT = $arsip->signatureFor('Departemen IT');
-                    $sigSPV = $arsip->signatureFor('SPV');
-                    $sigKabag = $arsip->signatureFor('Kabag');
-                    $sigManager = $arsip->signatureFor('Manager');
-                @endphp
                 <tr>
-                    <td style="vertical-align: bottom;">
-                        <div style="min-height:48px;">{!! $renderSig($sigPemohon) !!}</div>
-                        <div style="font-weight: 800; font-size: 10px;">Pemohon</div>
-                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    <td>
+                        {!! $renderSig($sigPemohon) !!}
+                        <div class="sig-role">Pemohon</div>
+                        <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                     </td>
                     @if($isAdjust)
-                        <td style="width: 20%; vertical-align: bottom;">
-                            <div style="min-height:48px;">{!! $renderSig($sigSPV ?: $sigKabag) !!}</div>
-                            <div style="font-weight: 800; font-size: 10px;">SPV / Kabag</div>
-                            <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                        <td>
+                            {!! $renderSig($sigSPV ?: $sigKabag) !!}
+                            <div class="sig-role">SPV / Kabag</div>
+                            <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%; vertical-align: bottom;">
-                            <div style="min-height:48px;">{!! $renderSig($sigManager) !!}</div>
-                            <div style="font-weight: 800; font-size: 10px;">Manager</div>
-                            <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                        <td>
+                            {!! $renderSig($sigManager) !!}
+                            <div class="sig-role">Manager</div>
+                            <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%; vertical-align: bottom;">
-                            <div style="min-height:48px;">{!! $renderSig($sigAccounting) !!}</div>
-                            <div style="font-weight: 800; font-size: 10px;">Accounting</div>
-                            <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                        <td>
+                            {!! $renderSig($sigAccounting) !!}
+                            <div class="sig-role">Accounting</div>
+                            <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
                     @else
-                        <td style="width: 20%; vertical-align: bottom;">
-                            <div style="min-height:48px;">{!! $renderSig($sigSPV) !!}</div>
-                            <div style="font-weight: 800; font-size: 10px;">SPV</div>
-                            <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                        <td>
+                            {!! $renderSig($sigSPV) !!}
+                            <div class="sig-role">SPV</div>
+                            <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%; vertical-align: bottom;">
-                            <div style="min-height:48px;">{!! $renderSig($sigKabag) !!}</div>
-                            <div style="font-weight: 800; font-size: 10px;">Kabag</div>
-                            <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                        <td>
+                            {!! $renderSig($sigKabag) !!}
+                            <div class="sig-role">Kabag</div>
+                            <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
-                        <td style="width: 20%; vertical-align: bottom;">
-                            <div style="min-height:48px;">{!! $renderSig($sigManager) !!}</div>
-                            <div style="font-weight: 800; font-size: 10px;">Manager</div>
-                            <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                        <td>
+                            {!! $renderSig($sigManager) !!}
+                            <div class="sig-role">Manager</div>
+                            <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                         </td>
                     @endif
-                    <td style="vertical-align: bottom;">
-                        <div style="min-height:48px;">{!! $renderSig($sigIT) !!}</div>
-                        <div style="font-weight: 800; font-size: 10px;">Departemen IT</div>
-                        <div style="font-size: 8px; font-style: italic;">(Tanda Tangan dan Nama Jelas)</div>
+                    <td>
+                        {!! $renderSig($sigIT) !!}
+                        <div class="sig-role">Departemen IT</div>
+                        <div class="sig-hint">(Tanda Tangan dan Nama Jelas)</div>
                     </td>
                 </tr>
             </table>
 
             <div class="doc-footer-note">
-                {{ $isAdjust ? 'Adjustment' : 'System Odoo' }} / 01 / 15 Januari 2025
+                {{ $isAdjust ? 'Adjustment' : ($isProdukBaru ? 'Produk Baru' : 'System Odoo') }} / 01 / 15 Januari 2025
             </div>
 
-            {{-- Catatan validasi TTD digital --}}
             @if($arsip->signatures->count() > 0)
                 @php $signedNames = $arsip->signatures->pluck('role_label')->all(); @endphp
-                <div style="margin-top:4px; padding:4px 8px; border:1px dashed #1d4ed8; border-radius:4px; font-size:8.5px; font-weight:700; color:#1e293b; display:flex; justify-content:space-between; align-items:center;">
-                    <span><i style="color:#1d4ed8;">✓</i> Dokumen ini ditandatangani secara digital ({{ implode(', ', $signedNames) }}). Scan QR di pojok kanan atas untuk verifikasi.</span>
+                <div class="ttd-validation">
+                    <span class="ttd-text">
+                        <span class="ttd-check">✓</span>
+                        Dokumen ditandatangani secara digital ({{ implode(', ', $signedNames) }}). Scan QR di pojok kiri atas untuk verifikasi.
+                    </span>
                     @if($arsip->verify_token)
-                        <span style="font-family:monospace; color:#1d4ed8;">#{{ \Illuminate\Support\Str::limit($arsip->verify_token, 12, '') }}</span>
+                        <span class="ttd-token">#{{ \Illuminate\Support\Str::limit($arsip->verify_token, 10, '') }}</span>
                     @endif
                 </div>
             @endif
-        </div>
-        <div class="meta-bar">
-            <div class="meta-left">
-                <div class="meta-item">
-                    <span class="meta-label">Printed date</span>
-                    <span class="meta-value">{{ \Carbon\Carbon::now()->format('d/m/Y H.i.s') }}</span>
-                </div>
-                <div class="meta-item">
-                    <span class="meta-label">User:</span>
-                    <span class="meta-value">{{ auth()->user()->name ?? '-' }}</span>
-                </div>
-            </div>
-            <div style="font-size: 8px; color: #999; font-style: italic;">{{ $arsip->no_registrasi }}</div>
-        </div>
-    </div>
+        </div>{{-- /.footer-section-wrap --}}
+    </div>{{-- /.print-container --}}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            new QRCode(document.getElementById("qrcode"), {
-                text: "{{ $arsip->verify_token ? route('verify.show', $arsip->verify_token) : $arsip->no_registrasi }}",
-                width: 62,
-                height: 62,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
-
-            // QR No Registrasi — sama seperti sebelumnya, untuk identifikasi cepat dokumen
-            new QRCode(document.getElementById("regQrcode"), {
-                text: "{{ $arsip->no_registrasi }}",
-                width: 56,
-                height: 56,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
-        });
-    </script>
+    @include('partials._print_footer')
 </body>
 
 </html>

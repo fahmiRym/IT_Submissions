@@ -39,7 +39,9 @@
                                         <option value="Bundel">Bundel</option>
                                         <option value="Cancel">Cancel</option>
                                         <option value="Internal_Memo">Internal Memo</option>
-                                        <option value="Produk_Baru">Pengajuan Produk Baru</option>
+                                        @if(!empty($produkBaruEnabled))
+                                            <option value="Produk_Baru">Pengajuan Produk Baru</option>
+                                        @endif
                                     </select>
                                 </div>
                             </div>
@@ -101,8 +103,7 @@ BPB-25/12/0327
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label small fw-bold text-secondary text-uppercase">Nama Pemohon</label>
-                                <textarea name="pemohon" class="form-control bg-white border-0 shadow-sm" placeholder="Nama-nama Pemohon..." rows="2"></textarea>
+                                @include('partials._pemohon_picker', ['fieldId' => 'pemohonPickerCreate', 'name' => 'requesters', 'selected' => []])
                             </div>
 
                              {{-- Kategori Error (Muncul jika Cancel) --}}
@@ -137,6 +138,7 @@ BPB-25/12/0327
 
                              {{-- SECTION ADJUST --}}
                             <div id="sectionAdjust" class="d-none dynamic-section mb-4">
+                                @include('partials._adjust_header', ['scope' => 'create'])
                                 <div class="card border-0 shadow-sm overflow-hidden border-start border-4 border-info">
                                     <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
                                         <div>
@@ -149,17 +151,17 @@ BPB-25/12/0327
                                     </div>
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
-                                            <table class="table table-sm table-striped mb-0 align-middle">
+                                            <table class="table table-sm table-striped mb-0 align-middle adjust-table">
                                                 <thead class="bg-light text-muted small text-uppercase">
                                                     <tr>
-                                                        <th class="ps-3" width="110">Kode</th>
-                                                        <th>Item Produk</th>
+                                                        <th class="ps-3" width="100">Kode Barang</th>
+                                                        <th>Nama Barang</th>
+                                                        <th width="90">Lot</th>
+                                                        <th width="150">Lokasi</th>
                                                         <th width="70" class="text-center">Odoo</th>
                                                         <th width="70" class="text-center">Fisik</th>
-                                                        <th width="80" class="text-center">QTY IN</th>
-                                                        <th width="80" class="text-center">QTY OUT</th>
-                                                        <th width="110">Lot/Ket</th>
-                                                        <th width="160">Lokasi</th>
+                                                        <th width="80" class="text-center">Selisih</th>
+                                                        <th width="70" class="text-center">Adjus</th>
                                                         <th width="40"></th>
                                                     </tr>
                                                 </thead>
@@ -168,6 +170,7 @@ BPB-25/12/0327
                                         </div>
                                     </div>
                                 </div>
+                                @include('partials._adjust_footer', ['scope' => 'create', 'wrapper' => 'wrapperAdjust'])
                             </div>
 
                             {{-- SECTION MUTASI --}}

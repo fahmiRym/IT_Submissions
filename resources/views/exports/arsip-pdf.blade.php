@@ -65,9 +65,7 @@ User terbanyak: <strong>{{ $topUser->user->name ?? '-' }}</strong>
 </tbody>
 </table>
 
-<div class="footer">
-Laporan ini dihasilkan otomatis oleh Sistem E-Arsip
-</div>
+@include('partials._print_footer')
 
 </body>
 </html>

@@ -4,42 +4,110 @@
 @section('page-title', 'Detailed Audit Logs')
 
 @section('content')
+
+    {{-- ── STATS BAR ─────────────────────────────────────────────── --}}
+    @php
+        $totalLogs = $logs->total();
+        $totalCreated = method_exists($logs, 'where') ? null : null;
+    @endphp
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 rounded-4 p-3 shadow-sm h-100"
+                 style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small opacity-75 fw-bold text-uppercase" style="font-size:0.65rem; letter-spacing:0.1em;">Total Logs</div>
+                        <h3 class="fw-extrabold mb-0 mt-1">{{ number_format($totalLogs) }}</h3>
+                    </div>
+                    <i class="bi bi-journal-text" style="font-size:2rem; opacity:0.4;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 rounded-4 p-3 shadow-sm h-100"
+                 style="background:linear-gradient(135deg,#10b981,#059669); color:white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small opacity-75 fw-bold text-uppercase" style="font-size:0.65rem; letter-spacing:0.1em;">Total Editor</div>
+                        <h3 class="fw-extrabold mb-0 mt-1">{{ count($users) }}</h3>
+                    </div>
+                    <i class="bi bi-people-fill" style="font-size:2rem; opacity:0.4;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 rounded-4 p-3 shadow-sm h-100"
+                 style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small opacity-75 fw-bold text-uppercase" style="font-size:0.65rem; letter-spacing:0.1em;">Showing</div>
+                        <h3 class="fw-extrabold mb-0 mt-1">{{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }}</h3>
+                    </div>
+                    <i class="bi bi-eye-fill" style="font-size:2rem; opacity:0.4;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 rounded-4 p-3 shadow-sm h-100"
+                 style="background:linear-gradient(135deg,#ec4899,#db2777); color:white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small opacity-75 fw-bold text-uppercase" style="font-size:0.65rem; letter-spacing:0.1em;">Page</div>
+                        <h3 class="fw-extrabold mb-0 mt-1">{{ $logs->currentPage() }}/{{ $logs->lastPage() }}</h3>
+                    </div>
+                    <i class="bi bi-bookmark-fill" style="font-size:2rem; opacity:0.4;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-funnel-fill text-primary me-2"></i>Filter Logs</h6>
             <form action="{{ route('superadmin.activity-logs.index') }}" method="GET" class="row g-3">
                 <div class="col-md-5">
-                    <label class="form-label small fw-bold text-secondary">CARI DOKUMEN</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control bg-light border-0"
-                            placeholder="No. Registrasi atau No. Transaksi...">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-2" style="letter-spacing:0.05em;">
+                        <i class="bi bi-search me-1 text-primary"></i>Cari Dokumen
+                    </label>
+                    <div class="position-relative">
+                        <i class="bi bi-search position-absolute" style="left:14px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
+                        <input type="text" name="q" value="{{ request('q') }}"
+                               class="form-control form-control-lg border-0 shadow-sm ps-5 rounded-3"
+                               placeholder="No. Registrasi atau No. Transaksi..."
+                               style="background:#f8fafc; font-size:0.92rem;">
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label small fw-bold text-secondary">FILTER USER (EDITOR)</label>
-                    <select name="user_id" class="form-select bg-light border-0 shadow-none">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-2" style="letter-spacing:0.05em;">
+                        <i class="bi bi-person-circle me-1 text-success"></i>Filter Editor
+                    </label>
+                    <select name="user_id" class="form-select form-select-lg border-0 shadow-sm rounded-3"
+                            style="background:#f8fafc; font-size:0.92rem;">
                         <option value="">-- Semua Editor --</option>
                         @foreach($users as $u)
-                            <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}
-                            </option>
+                            <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-primary flex-grow-1 fw-bold shadow-sm rounded-3"><i
-                            class="bi bi-funnel-fill me-2"></i>FILTER</button>
+                    <button type="submit" class="btn btn-lg flex-grow-1 fw-bold shadow-sm rounded-3 text-white"
+                            style="background:linear-gradient(135deg,#4f46e5,#6366f1); border:none;">
+                        <i class="bi bi-funnel-fill me-1"></i>FILTER
+                    </button>
                     <a href="{{ route('superadmin.activity-logs.index') }}"
-                        class="btn btn-light border shadow-sm px-3 rounded-3"><i
-                            class="bi bi-arrow-counterclockwise"></i></a>
+                        class="btn btn-lg btn-light border shadow-sm px-3 rounded-3" title="Reset">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
                 </div>
             </form>
         </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h6 class="mb-0 fw-bold text-primary-dark"><i class="bi bi-shield-lock-fill text-success me-2"></i>Riwayat Log
                 Aktivitas</h6>
+            @include('partials._per_page_select', ['id' => 'perPageLogs', 'default' => 20])
             <span class="badge bg-light text-dark border rounded-pill px-3 py-2 fw-bold" style="font-size: 0.7rem;">Total:
                 {{ $logs->total() }} Aktivitas</span>
         </div>
@@ -136,21 +204,48 @@
             </table>
         </div>
         @if($logs->hasPages())
-            <div class="card-footer bg-white border-0 py-3">
-                <div class="d-flex justify-content-center mt-2">
+            <div class="card-footer bg-white border-top py-3 px-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                    <small class="text-muted">
+                        Showing <b>{{ $logs->firstItem() ?? 0 }}–{{ $logs->lastItem() ?? 0 }}</b>
+                        of <b>{{ $logs->total() }}</b> entries
+                    </small>
                     {{ $logs->links() }}
                 </div>
             </div>
-
-
-
-           @endif
-
-
-           </div>
+        @endif
+    </div>
 
     <style>
         .text-primary-dark { color: #0f172a; }
         .table-responsive { scrollbar-width: thin; }
+        /* Pagination polish (Bootstrap 5) */
+        .pagination { margin: 0; gap: 2px; }
+        .pagination .page-link {
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+            border-radius: 8px !important;
+            padding: 0.4rem 0.7rem;
+            font-size: 0.85rem;
+            min-width: 36px;
+            text-align: center;
+        }
+        .pagination .page-link:hover {
+            background: #eef2ff;
+            color: #4f46e5;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-color: #4f46e5;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+        }
+        .pagination .page-item.disabled .page-link {
+            background: #f8fafc;
+            color: #cbd5e1;
+            border-color: #e2e8f0;
+        }
     </style>
 @endsection

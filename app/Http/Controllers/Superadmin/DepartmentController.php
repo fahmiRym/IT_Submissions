@@ -8,14 +8,47 @@ use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $departments = Department::orderBy('name')->get();
+        $userCounts = \DB::table('users')
+            ->select('department_id', \DB::raw('COUNT(*) as cnt'))
+            ->whereNotNull('department_id')
+            ->groupBy('department_id')
+            ->pluck('cnt', 'department_id');
+
+        $arsipCounts = \DB::table('arsips')
+            ->select('department_id', \DB::raw('COUNT(*) as cnt'))
+            ->whereNotNull('department_id')
+            ->groupBy('department_id')
+            ->pluck('cnt', 'department_id');
+
+        $lastActivities = \DB::table('arsips')
+            ->select('department_id', \DB::raw('MAX(updated_at) as last_at'))
+            ->whereNotNull('department_id')
+            ->groupBy('department_id')
+            ->pluck('last_at', 'department_id');
+
+        $q = trim((string) $request->get('q', ''));
+        $perPageRaw = $request->input('per_page', 15);
+        $perPage = ($perPageRaw === 'all') ? 99999 : max(1, (int) $perPageRaw);
+        $departments = Department::query()
+            ->when($q !== '', fn ($w) => $w->where('name', 'like', "%{$q}%"))
+            ->orderBy('name')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $departments->getCollection()->each(function ($d) use ($userCounts, $arsipCounts, $lastActivities) {
+            $d->users_count = (int) ($userCounts[$d->id] ?? 0);
+            $d->arsips_count = (int) ($arsipCounts[$d->id] ?? 0);
+            $d->last_activity = $lastActivities[$d->id] ?? null;
+        });
+
         $totalDept = Department::count();
         $totalUser = \App\Models\User::count();
+        $totalArsipLinked = array_sum($arsipCounts->toArray());
         $latestDept = Department::latest()->first()->name ?? '-';
 
-        return view('departments.index', compact('departments', 'totalDept', 'totalUser', 'latestDept'));
+        return view('departments.index', compact('departments', 'totalDept', 'totalUser', 'totalArsipLinked', 'latestDept'));
     }
 
     public function create()
