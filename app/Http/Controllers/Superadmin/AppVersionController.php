@@ -67,8 +67,23 @@ class AppVersionController extends Controller
      */
     public function uploadApk(Request $request, $id)
     {
+        // Ekstensi wajib .apk. MIME detection PHP sering salah kaprah karena APK = ZIP magic bytes,
+        // jadi accept semua varian umum yg pernah keluar dari `finfo_file()`.
         $request->validate([
-            'apk_file' => 'required|file|mimetypes:application/vnd.android.package-archive,application/octet-stream|max:204800', // 200 MB
+            'apk_file' => [
+                'required',
+                'file',
+                'max:204800', // 200 MB
+                'mimetypes:application/vnd.android.package-archive,application/octet-stream,application/zip,application/java-archive,application/x-zip-compressed,application/x-compressed',
+                function ($attribute, $value, $fail) {
+                    if (strtolower($value->getClientOriginalExtension()) !== 'apk') {
+                        $fail('File harus berekstensi .apk');
+                    }
+                },
+            ],
+        ], [
+            'apk_file.mimetypes' => 'File yang di-upload bukan APK yang valid.',
+            'apk_file.max'       => 'Ukuran APK maksimum 200 MB.',
         ]);
 
         $ver = AppVersion::findOrFail($id);
