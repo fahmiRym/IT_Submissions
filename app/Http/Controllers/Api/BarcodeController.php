@@ -82,29 +82,41 @@ class BarcodeController extends Controller
     public function updateStatus(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:arsips,id',
-            'status' => 'required|string'
+            'id'     => 'required|exists:arsips,id',
+            'status' => 'required|string|in:arsip,accept_ba',
         ]);
 
         try {
-            // Jika status dari mobile adalah "arsip", jalankan logika Arsip Sistem (Generate No Doc)
-            if (strtolower($request->status) === 'arsip') {
+            $action = strtolower($request->status);
+
+            if ($action === 'arsip') {
+                // Archive Now → generate No Dokumen, set semua status ke Done
                 $arsip = Arsip::processArchiving($request->id);
-                $message = 'Status arsip berhasil diperbarui menjadi Done (No Doc: ' . $arsip->no_doc . ')';
-            } else {
-                // Untuk status lain (jika ada), update manual
+                $message = 'Arsip berhasil diproses (No Doc: ' . $arsip->no_doc . ')';
+
+            } elseif ($action === 'accept_ba') {
+                // Accept BA → hanya set kolom ba = Done. JANGAN corrupt kolom status utama.
                 $arsip = Arsip::findOrFail($request->id);
+
+                if ($arsip->ba === 'Done') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Berita Acara sudah Done sebelumnya',
+                        'data'    => $arsip->fresh(),
+                    ], 200);
+                }
+
                 $arsip->update([
-                    'status' => $request->status,
-                    'tgl_arsip' => now(),
+                    'ba'         => 'Done',
+                    'updated_by' => auth()->id(),
                 ]);
-                $message = 'Status arsip berhasil diperbarui menjadi ' . $request->status;
+                $message = 'Berita Acara berhasil di-accept (BA: Done)';
             }
 
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'data' => $arsip
+                'data'    => $arsip->fresh(),
             ], 200);
 
         } catch (\Exception $e) {

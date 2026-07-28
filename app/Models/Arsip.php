@@ -54,6 +54,20 @@ class Arsip extends Model
         'detail_barang' => 'array'
     ];
 
+    protected $appends = ['status_utama'];
+
+    /**
+     * status_utama — label ringkas untuk header UI (Android + web).
+     * Prioritas: Reject > Done (via no_doc atau status Done) > Proses.
+     */
+    public function getStatusUtamaAttribute(): string
+    {
+        if ($this->status === 'Reject') return 'DITOLAK';
+        if ($this->status === 'Void')   return 'DIBATALKAN';
+        if ($this->status === 'Done' || !empty($this->no_doc)) return 'DONE';
+        return 'DALAM PROSES';
+    }
+
 
 
     /**
