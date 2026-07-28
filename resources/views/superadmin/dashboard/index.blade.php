@@ -715,11 +715,11 @@
                             <tr>
                                 <th class="ps-4">No Registrasi</th>
                                 <th>User Pengaju</th>
-                                <th>Jenis</th>
-                                <th>Lot</th>
+                                <th class="d-none d-lg-table-cell">Jenis</th>
+                                <th class="d-none d-xl-table-cell">Lot</th>
                                 <th>Status</th>
-                                <th class="text-center">Berkas</th>
-                                <th class="text-end pe-4">Tanggal</th>
+                                <th class="text-center d-none d-md-table-cell">Berkas</th>
+                                <th class="text-end pe-4 d-none d-sm-table-cell">Tanggal</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -749,10 +749,10 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><span
+                                    <td class="d-none d-lg-table-cell"><span
                                             class="badge bg-light text-dark border fw-bold px-3 py-2" style="font-size: 0.65rem;">{{ str_replace('_', ' ', $submission->jenis_pengajuan) }}</span>
                                     </td>
-                                    <td>
+                                    <td class="d-none d-xl-table-cell">
                                         @if($lotList->count() > 0)
                                             <div class="d-flex flex-wrap gap-1" style="max-width: 160px;">
                                                 @foreach($lotList->take(3) as $lot)
@@ -776,7 +776,7 @@
                                             {{ $submission->ket_process }}
                                         </span>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-center d-none d-md-table-cell">
                                         <div class="d-flex gap-1 justify-content-center align-items-center">
                                             {{-- Scan Final IT --}}
                                             @if($submission->scan_final)
@@ -792,7 +792,7 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="text-end pe-4 small text-muted font-monospace">
+                                    <td class="text-end pe-4 small text-muted font-monospace d-none d-sm-table-cell">
                                         {{ $submission->tgl_pengajuan ? $submission->tgl_pengajuan->format('d/m/y') : '-' }}</td>
                                 </tr>
                             @empty

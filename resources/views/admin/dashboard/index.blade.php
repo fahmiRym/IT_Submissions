@@ -5,6 +5,15 @@
 
 @push('styles')
     <style>
+        /* ── NO TRANSAKSI DROPDOWN CHEVRON ─────────────── */
+        [data-bs-toggle="collapse"] .nt-chevron {
+            transition: transform 0.2s ease;
+        }
+
+        [data-bs-toggle="collapse"][aria-expanded="true"] .nt-chevron {
+            transform: rotate(180deg);
+        }
+
         /* ── TOP STAT CARDS ─────────────────────────────── */
         .card-stat-vibrant {
             border: none;
@@ -623,18 +632,18 @@
             <table class="table table-modern mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-4">Tgl Pengajuan</th>
+                        <th class="ps-4 d-none d-md-table-cell">Tgl</th>
                         <th>No Reg / Transaksi</th>
-                        <th class="d-none d-lg-table-cell">Jenis</th>
+                        <th class="d-none d-xl-table-cell">Jenis</th>
                         <th>Status</th>
-                        <th class="text-center d-none d-sm-table-cell">Qty</th>
-                        <th class="text-end pe-4 d-none d-md-table-cell">Detail</th>
+                        <th class="text-center d-none d-lg-table-cell">Qty</th>
+                        <th class="text-end pe-4 d-none d-xxl-table-cell">Detail</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($arsips as $a)
                         <tr>
-                            <td class="ps-4">
+                            <td class="ps-4 d-none d-md-table-cell">
                                 <div class="fw-bold text-dark" style="font-size:.9rem;">
                                     {{ optional($a->tgl_pengajuan)->format('d M Y') }}</div>
                                 <div class="small text-muted"><i
@@ -650,15 +659,39 @@
                                         </div>
                                     @endif
                                     @if($a->no_transaksi)
-                                        <div class="d-flex align-items-center mt-1">
-                                            <i class="bi bi-file-earmark-text hierarchy-connector"></i>
-                                            <span class="text-primary fw-bold font-monospace"
-                                                style="font-size:0.75rem;">{{ $a->no_transaksi }}</span>
+                                        @php
+                                            $ntLines = preg_split('/\r\n|\r|\n/', trim($a->no_transaksi), -1, PREG_SPLIT_NO_EMPTY);
+                                            $ntCount = count($ntLines);
+                                            $ntId    = 'notx-' . $a->id;
+                                        @endphp
+                                        <div class="mt-1">
+                                            <button type="button"
+                                                class="btn btn-sm p-0 border-0 bg-transparent d-inline-flex align-items-center gap-1"
+                                                data-bs-toggle="collapse" data-bs-target="#{{ $ntId }}"
+                                                aria-expanded="false" aria-controls="{{ $ntId }}"
+                                                style="font-size:0.72rem;">
+                                                <i class="bi bi-file-earmark-text text-primary"></i>
+                                                <span class="text-primary fw-bold">No Transaksi</span>
+                                                @if($ntCount > 1)
+                                                    <span class="badge rounded-pill bg-primary"
+                                                        style="font-size:0.6rem;">{{ $ntCount }}</span>
+                                                @endif
+                                                <i class="bi bi-chevron-down text-primary small nt-chevron"></i>
+                                            </button>
+                                            <div class="collapse" id="{{ $ntId }}">
+                                                <div class="mt-1 ps-2 border-start border-2 border-primary border-opacity-25">
+                                                    @foreach($ntLines as $ntLine)
+                                                        <div class="text-primary fw-bold font-monospace"
+                                                            style="font-size:0.72rem; line-height:1.4;">
+                                                            {{ $ntLine }}</div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
                                         </div>
                                     @endif
                                 </div>
                             </td>
-                            <td class="d-none d-lg-table-cell">
+                            <td class="d-none d-xl-table-cell">
                                 @php
                                     $jc = match ($a->jenis_pengajuan) {
                                         'Adjust' => ['bg' => '#f0f9ff', 'text' => '#0ea5e9'],
@@ -692,12 +725,12 @@
                                     </div>
                                     {{ strtoupper($a->ket_process) }}
                                 </div>
-                                <div class="d-lg-none mt-2">
+                                <div class="d-xl-none mt-2">
                                     <span class="badge"
                                         style="font-size:0.6rem; background:{{ $jc['bg'] }}; color:{{ $jc['text'] }};">{{ strtoupper(str_replace('_', ' ', $a->jenis_pengajuan)) }}</span>
                                 </div>
                             </td>
-                            <td class="text-center d-none d-sm-table-cell">
+                            <td class="text-center d-none d-lg-table-cell">
                                 <div class="d-flex gap-2 justify-content-center">
                                     <span class="badge rounded-pill bg-success fw-bold px-2"
                                         style="font-size:.72rem;">+{{ (int) $a->total_qty_in }}</span>
@@ -706,7 +739,7 @@
                                 </div>
                                 <small class="text-muted fw-bold mt-1 d-block" style="font-size:.6rem;">TOTAL QTY</small>
                             </td>
-                            <td class="text-end pe-4 d-none d-md-table-cell">
+                            <td class="text-end pe-4 d-none d-xxl-table-cell">
                                 <div class="d-flex flex-column gap-1 align-items-end" style="min-width:200px;">
                                     @php $itemsFound = false; @endphp
                                     @if($a->adjustItems->count() > 0)

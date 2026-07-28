@@ -84,14 +84,15 @@ class BarcodeController extends Controller
         $request->validate([
             'id'     => 'required|exists:arsips,id',
             'status' => 'required|string|in:arsip,accept_ba',
+            'note'   => 'nullable|string|max:2000',
         ]);
 
         try {
             $action = strtolower($request->status);
 
             if ($action === 'arsip') {
-                // Archive Now → generate No Dokumen, set semua status ke Done
-                $arsip = Arsip::processArchiving($request->id);
+                // Archive Now → generate No Dokumen, set semua status ke Done + append note ke catatan_it
+                $arsip = Arsip::processArchiving($request->id, null, $request->note);
                 $message = 'Arsip berhasil diproses (No Doc: ' . $arsip->no_doc . ')';
 
             } elseif ($action === 'accept_ba') {

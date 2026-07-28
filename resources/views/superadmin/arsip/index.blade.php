@@ -5,6 +5,14 @@
 
 @push('styles')
 <style>
+    /* ── NO TRANSAKSI DROPDOWN CHEVRON ─────────────── */
+    [data-bs-toggle="collapse"] .nt-chevron {
+        transition: transform 0.2s ease;
+    }
+    [data-bs-toggle="collapse"][aria-expanded="true"] .nt-chevron {
+        transform: rotate(180deg);
+    }
+
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
     
     body { font-family: 'Outfit', sans-serif; background-color: #f4f7fa; color: #0f172a; }
@@ -586,23 +594,49 @@
                                 @endif
 
                                 @if($a->no_transaksi)
-                                    <div class="d-flex flex-column gap-1 ps-2">
-                                        @if(!empty($a->no_transaksi_rows))
-                                            @foreach($a->no_transaksi_rows as $group)
-                                                @foreach($group as $line)
-                                                    @php $isInduk = $loop->first; @endphp
-                                                    <div class="d-flex align-items-center {{ $isInduk ? 'mb-1' : 'ms-3 mb-1' }}">
-                                                        <i class="bi {{ $isInduk ? 'bi-file-earmark-text' : 'bi-arrow-return-right' }} hierarchy-connector"></i>
-                                                        <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem; letter-spacing: -0.2px;">{{ $line }}</span>
+                                    @php
+                                        $ntTotal = 0;
+                                        if(!empty($a->no_transaksi_rows)) {
+                                            foreach($a->no_transaksi_rows as $g) { $ntTotal += count($g); }
+                                        } else {
+                                            $ntTotal = count(preg_split('/\r\n|\r|\n/', trim($a->no_transaksi), -1, PREG_SPLIT_NO_EMPTY));
+                                        }
+                                        $ntId = 'notx-sa-' . $a->id;
+                                    @endphp
+                                    <div class="mt-1 ps-2">
+                                        <button type="button"
+                                            class="btn btn-sm p-0 border-0 bg-transparent d-inline-flex align-items-center gap-1"
+                                            data-bs-toggle="collapse" data-bs-target="#{{ $ntId }}"
+                                            aria-expanded="false" aria-controls="{{ $ntId }}"
+                                            style="font-size:0.72rem;">
+                                            <i class="bi bi-file-earmark-text text-secondary"></i>
+                                            <span class="text-secondary fw-bold">No Transaksi</span>
+                                            @if($ntTotal > 1)
+                                                <span class="badge rounded-pill bg-secondary"
+                                                    style="font-size:0.6rem;">{{ $ntTotal }}</span>
+                                            @endif
+                                            <i class="bi bi-chevron-down text-secondary small nt-chevron"></i>
+                                        </button>
+                                        <div class="collapse" id="{{ $ntId }}">
+                                            <div class="d-flex flex-column gap-1 mt-1">
+                                                @if(!empty($a->no_transaksi_rows))
+                                                    @foreach($a->no_transaksi_rows as $group)
+                                                        @foreach($group as $line)
+                                                            @php $isInduk = $loop->first; @endphp
+                                                            <div class="d-flex align-items-center {{ $isInduk ? 'mb-1' : 'ms-3 mb-1' }}">
+                                                                <i class="bi {{ $isInduk ? 'bi-file-earmark-text' : 'bi-arrow-return-right' }} hierarchy-connector"></i>
+                                                                <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem; letter-spacing: -0.2px;">{{ $line }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    @endforeach
+                                                @else
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-file-earmark-text hierarchy-connector"></i>
+                                                        <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem;">{{ $a->no_transaksi }}</span>
                                                     </div>
-                                                @endforeach
-                                            @endforeach
-                                        @else
-                                            <div class="d-flex align-items-center">
-                                                <i class="bi bi-file-earmark-text hierarchy-connector"></i>
-                                                <span class="text-secondary fw-bold font-monospace" style="font-size: 0.78rem;">{{ $a->no_transaksi }}</span>
+                                                @endif
                                             </div>
-                                        @endif
+                                        </div>
                                     </div>
                                 @endif
                             </div>
@@ -1364,6 +1398,7 @@ $(document).ready(function() {
     $('.btn-arsip-sistem').on('click', function() {
         _arsipSistemCurrentId = $(this).data('id');
         $('#arsipSistemSeqInput').val('');
+        $('#arsipSistemNoteInput').val('');
     });
 
     $('#formArsipSistem').on('submit', function(e) {

@@ -42,7 +42,7 @@ Internal Memo   : IM/{{ date('Y') }}/{{ date('m') }}/1485
                     </div>
 
                     {{-- MANUAL SEQUENCE INPUT --}}
-                    <div class="p-3 rounded-3 border border-success border-opacity-25 bg-white shadow-sm">
+                    <div class="p-3 rounded-3 border border-success border-opacity-25 bg-white shadow-sm mb-3">
                         <label class="form-label small fw-bold text-success d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-hash fs-5 animate-pulse-green"></i>
                             Atur Nomor Urut (Manual Sequence)
@@ -53,6 +53,22 @@ Internal Memo   : IM/{{ date('Y') }}/{{ date('m') }}/1485
                         <div class="form-text mt-2 small text-muted">
                             <i class="bi bi-info-circle me-1"></i> Biarkan <b>KOSONG</b> untuk menggunakan nomor urut
                             otomatis sistem.
+                        </div>
+                    </div>
+
+                    {{-- NOTE / CATATAN IT --}}
+                    <div class="p-3 rounded-3 border border-primary border-opacity-25 bg-white shadow-sm">
+                        <label class="form-label small fw-bold text-primary d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-journal-text fs-5"></i>
+                            Catatan Arsip (Opsional)
+                        </label>
+                        <textarea name="note" id="arsipSistemNoteInput" rows="3" maxlength="2000"
+                            class="form-control fw-semibold text-dark border-2"
+                            placeholder="Contoh: file fisik diserahkan ke bagian gudang lantai 2, atau catatan lain terkait proses arsip ini."
+                            style="border-color: #dbeafe !important;"></textarea>
+                        <div class="form-text mt-2 small text-muted">
+                            <i class="bi bi-info-circle me-1"></i> Catatan ini akan di-<b>append</b> ke kolom
+                            <code>catatan_it</code> dgn timestamp — history tetap tersimpan.
                         </div>
                     </div>
 

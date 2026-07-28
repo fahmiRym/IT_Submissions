@@ -407,8 +407,12 @@ class ArsipController extends Controller
     public function arsipSistem(Request $request, $id)
     {
         try {
+            $request->validate([
+                'sequence_number' => 'nullable|integer|min:1',
+                'note'            => 'nullable|string|max:2000',
+            ]);
             // Jalankan logika arsip sistem terpusat di Model
-            $arsip = Arsip::processArchiving($id, $request->sequence_number);
+            $arsip = Arsip::processArchiving($id, $request->sequence_number, $request->note);
 
             if ($request->wantsJson() || $request->ajax()) {
                 $finalNoDoc = $arsip->no_doc;

@@ -76,7 +76,7 @@ class Arsip extends Model
      * ======================================================
      * Digunakan oleh Web Controller dan API Barcode Android
      */
-    public static function processArchiving($id, $sequenceNumber = null)
+    public static function processArchiving($id, $sequenceNumber = null, ?string $note = null)
     {
         $arsip = self::with(['department', 'unit'])->findOrFail($id);
 
@@ -85,7 +85,7 @@ class Arsip extends Model
             throw new \Exception('Dokumen ini sudah diarsipkan dengan No Doc: ' . $arsip->no_doc);
         }
 
-        return DB::transaction(function () use ($arsip, $sequenceNumber, $id) {
+        return DB::transaction(function () use ($arsip, $sequenceNumber, $id, $note) {
             $now = Carbon::now();
 
             // 1. Generate No Registrasi jika belum ada
@@ -202,7 +202,7 @@ class Arsip extends Model
             }
 
             // 3. Update Record
-            $arsip->update([
+            $updateData = [
                 'no_registrasi' => $noRegistrasiFix,
                 'no_doc' => $finalNoDoc,
                 'tgl_arsip' => $now,
@@ -211,7 +211,14 @@ class Arsip extends Model
                 'arsip' => 'Done',
                 'ket_process' => 'Done',
                 'updated_by' => auth()->id(),
-            ]);
+            ];
+            if (!empty($note)) {
+                // Append (bukan overwrite) supaya history catatan IT tetap kejaga.
+                $prefix = $arsip->catatan_it ? trim($arsip->catatan_it) . "\n" : '';
+                $stamp  = $now->format('Y-m-d H:i');
+                $updateData['catatan_it'] = $prefix . "[{$stamp}] " . trim($note);
+            }
+            $arsip->update($updateData);
 
             // 4. Buat Notifikasi
             \App\Models\Notification::create([

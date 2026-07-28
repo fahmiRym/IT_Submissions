@@ -5,6 +5,15 @@
 
 @push('styles')
     <style>
+        /* ── NO TRANSAKSI DROPDOWN CHEVRON ─────────────── */
+        [data-bs-toggle="collapse"] .nt-chevron {
+            transition: transform 0.2s ease;
+        }
+
+        [data-bs-toggle="collapse"][aria-expanded="true"] .nt-chevron {
+            transform: rotate(180deg);
+        }
+
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
         body {
@@ -223,7 +232,7 @@
                     <label class="form-label small fw-bold text-secondary mb-1">⚙️ Status</label>
                     <select name="ket_process" class="form-select bg-light border-0 px-3" style="border-radius: 8px;">
                         <option value="">Semua Status</option>
-                        @foreach(['Review', 'Process', 'Done', 'Pending', 'Void'] as $st)
+                        @foreach(['Review', 'Process', 'Done', 'Partial Done', 'Pending', 'Void'] as $st)
                             <option value="{{ $st }}" {{ request('ket_process') == $st ? 'selected' : '' }}>{{ $st }}</option>
                         @endforeach
                     </select>
@@ -451,8 +460,34 @@
                                         @endif
                                         
                                         @if($a->no_transaksi)
-                                            <div class="text-secondary fw-semibold font-monospace mt-n1" style="font-size: 0.68rem; opacity: 0.8;">
-                                                {{ $a->no_transaksi }}
+                                            @php
+                                                $ntLines = preg_split('/\r\n|\r|\n/', trim($a->no_transaksi), -1, PREG_SPLIT_NO_EMPTY);
+                                                $ntCount = count($ntLines);
+                                                $ntId    = 'notx-arsip-' . $a->id;
+                                            @endphp
+                                            <div class="mt-1">
+                                                <button type="button"
+                                                    class="btn btn-sm p-0 border-0 bg-transparent d-inline-flex align-items-center gap-1"
+                                                    data-bs-toggle="collapse" data-bs-target="#{{ $ntId }}"
+                                                    aria-expanded="false" aria-controls="{{ $ntId }}"
+                                                    style="font-size:0.68rem;">
+                                                    <i class="bi bi-file-earmark-text text-secondary"></i>
+                                                    <span class="text-secondary fw-semibold">No Transaksi</span>
+                                                    @if($ntCount > 1)
+                                                        <span class="badge rounded-pill bg-secondary"
+                                                            style="font-size:0.55rem;">{{ $ntCount }}</span>
+                                                    @endif
+                                                    <i class="bi bi-chevron-down text-secondary small nt-chevron"></i>
+                                                </button>
+                                                <div class="collapse" id="{{ $ntId }}">
+                                                    <div class="mt-1 ps-2 border-start border-2 border-secondary border-opacity-25">
+                                                        @foreach($ntLines as $ntLine)
+                                                            <div class="text-secondary fw-semibold font-monospace"
+                                                                style="font-size:0.68rem; line-height:1.4; opacity:0.85;">
+                                                                {{ $ntLine }}</div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                             </div>
                                         @endif
 
