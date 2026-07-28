@@ -33,17 +33,28 @@
 
     /* Table internal styling */
     .table thead th {
-        font-size: 0.725rem;
-        letter-spacing: 0.1em;
-        padding-top: 1.25rem;
-        padding-bottom: 1.25rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.05em;
+        padding-top: 0.6rem;
+        padding-bottom: 0.6rem;
         background-color: #f8fafc;
         border-bottom: 2px solid #e2e8f0;
         text-transform: uppercase;
         color: #475569;
         font-weight: 800;
     }
-    
+
+    /* Compact table row spacing */
+    .table.table-tight td {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        vertical-align: middle;
+    }
+    .table.table-tight th {
+        padding-top: 0.55rem;
+        padding-bottom: 0.55rem;
+    }
+
     .table-hover tbody tr:hover {
         background-color: #f1f5f9;
         transition: background-color 0.2s ease;
@@ -337,20 +348,20 @@
             $resetFilters = array_diff_key(request()->all(), array_flip(['ket_process', 'ba', 'arsip']));
         @endphp
         <a href="{{ route('superadmin.arsip.index', $resetFilters) }}" class="text-decoration-none h-100 d-block">
-            <div class="card border-0 stat-card-main text-white h-100 p-1 shadow-sm transform-scale" style="background: {{ $sConfig['bg'] }}; min-height: 160px; cursor: pointer;">
+            <div class="card border-0 stat-card-main text-white h-100 p-1 shadow-sm transform-scale" style="background: {{ $sConfig['bg'] }}; min-height: 115px; cursor: pointer;">
                 <div class="mesh-gradient"></div>
                 <div class="pattern-overlay"></div>
-                
-                <div class="card-body d-flex flex-column justify-content-between p-4 position-relative" style="z-index: 2;">
+
+                <div class="card-body d-flex flex-column justify-content-between p-3 position-relative" style="z-index: 2;">
                     <div class="d-flex justify-content-between align-items-start">
-                        <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 56px; height: 56px; backdrop-filter: blur(4px);">
-                            <i class="bi {{ $sConfig['icon'] }} fs-3 text-white"></i>
+                        <div class="bg-white bg-opacity-20 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; backdrop-filter: blur(4px);">
+                            <i class="bi {{ $sConfig['icon'] }} text-white" style="font-size: 1rem;"></i>
                         </div>
-                        <div class="glass-badge">ACTIVE</div>
+                        <div class="glass-badge" style="font-size: 0.55rem; padding: 2px 8px;">ACTIVE</div>
                     </div>
                     <div>
-                        <h1 class="fw-extrabold mb-0 lh-1 stat-card-text-large" style="font-size: 2.8rem; letter-spacing: -2px;">{{ number_format($stats['total'] ?? 0) }}</h1>
-                        <p class="mb-0 small fw-extrabold opacity-75 mt-2 letter-spacing-1 text-uppercase text-white" style="font-size: 0.72rem;">{{ $sConfig['title'] }}</p>
+                        <h1 class="fw-extrabold mb-0 lh-1 stat-card-text-large" style="font-size: 1.85rem; letter-spacing: -1.5px;">{{ number_format($stats['total'] ?? 0) }}</h1>
+                        <p class="mb-0 fw-extrabold opacity-75 mt-1 letter-spacing-1 text-uppercase text-white" style="font-size: 0.62rem;">{{ $sConfig['title'] }}</p>
                     </div>
                 </div>
             </div>
@@ -362,6 +373,7 @@
         $mainStats = [
             ['label' => 'REVIEW', 'key' => 'Review', 'icon' => 'bi-clock-history', 'color' => '#3b82f6', 'param' => 'ket_process'],
             ['label' => 'ON PROCESS', 'key' => 'Process', 'icon' => 'bi-hourglass-split', 'color' => '#f59e0b', 'param' => 'ket_process'],
+            ['label' => 'PARTIAL DONE', 'key' => 'Partial Done', 'icon' => 'bi-check2-square', 'color' => '#8b5cf6', 'param' => 'ket_process'],
             ['label' => 'PENDING', 'key' => 'Pending', 'icon' => 'bi-pause-circle-fill', 'color' => '#94a3b8', 'param' => 'ket_process'],
             ['label' => 'DONE', 'key' => 'Done', 'icon' => 'bi-check-circle-fill', 'color' => '#10b981', 'param' => 'ket_process'],
             ['label' => 'VOID / REJECT', 'key' => 'Void', 'icon' => 'bi-slash-circle-fill', 'color' => '#ef4444', 'param' => 'ket_process'],
@@ -387,15 +399,15 @@
                         $cleanParams[$ts['param']] = $ts['key'];
                     @endphp
                     <a href="{{ route('superadmin.arsip.index', $cleanParams) }}" class="text-decoration-none h-100 d-block">
-                        <div class="card mini-stat-card border-0 shadow-sm h-100 py-1" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease; cursor: pointer;">
-                            <div class="card-body p-3 d-flex flex-column justify-content-center gap-1">
+                        <div class="card mini-stat-card border-0 shadow-sm h-100" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease; cursor: pointer;">
+                            <div class="card-body px-2 py-2 d-flex flex-column justify-content-center gap-0">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="fw-extrabold text-primary-dark mb-0" style="letter-spacing: -1px;">{{ number_format($stats[$ts['key']] ?? 0) }}</h5>
-                                    <div class="bg-white rounded-circle shadow-xs d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
-                                        <i class="bi {{ $ts['icon'] }} small" style="color: {{ $ts['color'] }}; font-size: 0.7rem;"></i>
+                                    <h6 class="fw-extrabold text-primary-dark mb-0" style="letter-spacing: -0.5px; font-size: 1.05rem;">{{ number_format($stats[$ts['key']] ?? 0) }}</h6>
+                                    <div class="bg-white rounded-circle shadow-xs d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;">
+                                        <i class="bi {{ $ts['icon'] }}" style="color: {{ $ts['color'] }}; font-size: 0.62rem;"></i>
                                     </div>
                                 </div>
-                                <div class="text-secondary fw-extrabold text-uppercase mt-1" style="font-size: 0.55rem; letter-spacing: 0.5px; opacity: 0.8;">{{ $ts['label'] }}</div>
+                                <div class="text-secondary fw-extrabold text-uppercase" style="font-size: 0.5rem; letter-spacing: 0.3px; opacity: 0.8; line-height: 1.2; margin-top: 2px;">{{ $ts['label'] }}</div>
                             </div>
                         </div>
                     </a>
@@ -411,15 +423,15 @@
                         $cleanParams[$ts['param']] = $ts['val'];
                     @endphp
                     <a href="{{ route('superadmin.arsip.index', $cleanParams) }}" class="text-decoration-none h-100 d-block">
-                        <div class="card mini-stat-card border-0 shadow-sm h-100 py-1" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease; border-left: 3px solid {{ $ts['color'] }} !important; cursor: pointer;">
-                            <div class="card-body p-3 d-flex flex-column justify-content-center gap-1">
+                        <div class="card mini-stat-card border-0 shadow-sm h-100" style="background: {{ $ts['color'] }}08; transition: all 0.3s ease; border-left: 3px solid {{ $ts['color'] }} !important; cursor: pointer;">
+                            <div class="card-body px-2 py-2 d-flex flex-column justify-content-center gap-0">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="fw-extrabold text-primary-dark mb-0" style="letter-spacing: -1px;">{{ number_format($stats[$ts['key']] ?? 0) }}</h5>
-                                    <div class="bg-white rounded-circle shadow-xs d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
-                                        <i class="bi {{ $ts['icon'] }} small" style="color: {{ $ts['color'] }}; font-size: 0.7rem;"></i>
+                                    <h6 class="fw-extrabold text-primary-dark mb-0" style="letter-spacing: -0.5px; font-size: 1.05rem;">{{ number_format($stats[$ts['key']] ?? 0) }}</h6>
+                                    <div class="bg-white rounded-circle shadow-xs d-flex align-items-center justify-content-center" style="width: 20px; height: 20px;">
+                                        <i class="bi {{ $ts['icon'] }}" style="color: {{ $ts['color'] }}; font-size: 0.62rem;"></i>
                                     </div>
                                 </div>
-                                <div class="text-secondary fw-extrabold text-uppercase mt-1" style="font-size: 0.55rem; letter-spacing: 0.5px; opacity: 0.8;">{{ $ts['label'] }}</div>
+                                <div class="text-secondary fw-extrabold text-uppercase" style="font-size: 0.5rem; letter-spacing: 0.3px; opacity: 0.8; line-height: 1.2; margin-top: 2px;">{{ $ts['label'] }}</div>
                             </div>
                         </div>
                     </a>
@@ -488,103 +500,98 @@
 <div class="card border-0 shadow-sm animate-on-scroll" style="border-radius: 12px; animation-delay: 0.3s; overflow: hidden;">
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover table-tight align-middle mb-0">
                 <thead class="bg-light text-secondary">
-                    <tr style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <th class="ps-4 text-center d-none d-sm-table-cell" width="40">
+                    <tr style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3px;">
+                        <th class="ps-3 text-center d-none d-sm-table-cell" width="32">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'id', 'dir' => request('sort') == 'id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 #
                             </a>
                         </th>
-                        <th width="100" class="text-nowrap ps-4 d-none d-md-table-cell">
+                        <th width="80" class="text-nowrap ps-2 d-none d-md-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'tgl_pengajuan', 'dir' => request('sort') == 'tgl_pengajuan' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
-                                TGL PENGAJUAN
+                                TGL
                             </a>
                         </th>
-                        <th width="100" class="text-nowrap d-none d-xl-table-cell">
+                        <th width="80" class="text-nowrap d-none d-xl-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'tgl_arsip', 'dir' => request('sort') == 'tgl_arsip' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 TGL ARSIP
                             </a>
                         </th>
-                        <th width="180" class="text-nowrap">
+                        <th style="min-width: 160px;" class="text-nowrap">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'no_registrasi', 'dir' => request('sort') == 'no_registrasi' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
-                                NO REGISTRASI
+                                NO REG / DOK
                             </a>
                         </th>
-                        <th width="80" class="d-none d-xl-table-cell">JENIS</th>
-                        <th width="130" class="text-nowrap d-none d-lg-table-cell">
+                        <th width="70" class="d-none d-xl-table-cell">JENIS</th>
+                        <th width="110" class="text-nowrap d-none d-lg-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'admin_id', 'dir' => request('sort') == 'admin_id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 PENGAJU
                             </a>
                         </th>
-                        <th width="150" class="text-nowrap d-none d-xl-table-cell">
+                        <th width="130" class="text-nowrap d-none d-xl-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'department_id', 'dir' => request('sort') == 'department_id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 DEPT & UNIT
                             </a>
                         </th>
-                        <th width="150" class="text-nowrap">
+                        <th width="120" class="text-nowrap">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'ket_process', 'dir' => request('sort') == 'ket_process' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 STATUS
                             </a>
                         </th>
-                        <th class="text-center d-none d-md-table-cell" width="80"><span class="text-uppercase fw-bold">QTY</span></th>
-                        <th style="min-width: 200px;" class="d-none d-xxl-table-cell">DETAIL DOKUMEN</th>
-                        <th width="100" class="text-center pe-4">AKSI</th>
+                        <th class="text-center d-none d-md-table-cell" width="60"><span class="text-uppercase fw-bold">QTY</span></th>
+                        <th style="min-width: 180px;" class="d-none d-xxl-table-cell">DETAIL</th>
+                        <th width="80" class="text-center pe-3">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($arsips as $a)
-                    <tr class="transition-hover" style="font-size: 0.85rem; border-bottom: 1px solid #f1f5f9;">
-                        <td class="ps-4 text-center fw-bold text-muted d-none d-sm-table-cell">
+                    <tr class="transition-hover" style="font-size: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+                        <td class="ps-3 text-center fw-bold text-muted d-none d-sm-table-cell">
                             {{ ($arsips->currentPage() - 1) * $arsips->perPage() + $loop->iteration }}
                         </td>
 
-                        <td class="text-nowrap ps-4 position-relative d-none d-md-table-cell">
-                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">{{ optional($a->tgl_pengajuan)->format('d/m/Y') }}</div>
-                            <small class="text-primary fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-                                <i class="bi bi-clock-history me-1"></i>{{ optional($a->tgl_pengajuan)->format('H:i') }} WIB
+                        <td class="text-nowrap ps-2 position-relative d-none d-md-table-cell">
+                            <div class="fw-bold text-dark" style="font-size: 0.78rem;">{{ optional($a->tgl_pengajuan)->format('d/m/y') }}</div>
+                            <small class="text-primary fw-bold" style="font-size: 0.62rem; letter-spacing: 0.3px;">
+                                {{ optional($a->tgl_pengajuan)->format('H:i') }}
                             </small>
                         </td>
 
-                        <td class="text-nowrap ps-3 position-relative d-none d-xl-table-cell">
+                        <td class="text-nowrap ps-2 position-relative d-none d-xl-table-cell">
                             @if($a->tgl_arsip)
-                                <div class="text-dark fw-bold" style="font-size: 0.85rem;">{{ $a->tgl_arsip->format('d/m/Y') }}</div>
-                                <small class="text-success fw-bold d-block" style="font-size: 0.65rem;">
-                                    <i class="bi bi-check-circle-fill me-1"></i>Finalized
+                                <div class="text-dark fw-bold" style="font-size: 0.72rem;">{{ $a->tgl_arsip->format('d/m/y') }}</div>
+                                <small class="text-success fw-bold d-block" style="font-size: 0.58rem;">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Final
                                 </small>
                             @endif
 
                             @if($a->updated_by)
-                                <div class="mt-2 pt-2 border-top border-light">
-                                    <small class="text-muted d-block" style="font-size: 0.6rem; font-weight: 700;">LAST MODIFIED:</small>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <i class="bi bi-person-fill-gear text-secondary" style="font-size: 0.7rem;"></i>
-                                        <span class="fw-bold text-dark" style="font-size: 0.68rem;">{{ $a->editor->name ?? 'System' }}</span>
-                                    </div>
-                                    <small class="text-secondary d-block mt-1" style="font-size: 0.62rem;">
-                                        <i class="bi bi-clock-history me-1"></i>{{ $a->updated_at->format('d/m/y H:i') }}
-                                    </small>
+                                <div class="mt-1" title="Editor: {{ $a->editor->name ?? 'System' }} · {{ $a->updated_at->format('d/m/y H:i') }}">
+                                    <span class="text-secondary" style="font-size: 0.58rem;">
+                                        <i class="bi bi-person-gear me-1"></i>{{ $a->editor->name ?? 'System' }}
+                                    </span>
                                 </div>
                             @elseif(!$a->tgl_arsip)
-                                <span class="text-muted opacity-30 fw-bold fs-5">-</span>
+                                <span class="text-muted opacity-30 fw-bold">-</span>
                             @endif
                         </td>
 
-                        <td class="ps-3">
-                            <div class="d-flex flex-column gap-1">
+                        <td class="ps-2">
+                            <div class="d-flex flex-column gap-0">
                                 @if($a->no_registrasi)
                                     <div class="d-flex align-items-center mb-1">
-                                        <div class="px-3 py-1 rounded-pill fw-bold font-monospace bg-white border border-info border-opacity-50 text-info shadow-sm" 
-                                             style="font-size: 0.75rem; letter-spacing: 0.5px; border-width: 2px !important;">
-                                            <i class="bi bi-bookmark-fill me-2 opacity-50"></i>{{ $a->no_registrasi }}
+                                        <div class="px-2 py-0 rounded fw-bold font-monospace bg-white border border-info border-opacity-50 text-info"
+                                             style="font-size: 0.66rem; letter-spacing: 0.3px;">
+                                            <i class="bi bi-bookmark-fill me-1 opacity-50"></i>{{ $a->no_registrasi }}
                                         </div>
                                     </div>
                                 @endif
 
                                 @if($a->no_doc)
-                                    <div class="d-flex align-items-center mb-1 ps-2">
-                                        <div class="text-primary fw-extrabold font-monospace d-flex align-items-center gap-2" 
-                                             style="font-size: 0.82rem; border-left: 3px solid #0d6efd; padding-left: 8px; cursor: pointer;"
+                                    <div class="d-flex align-items-center mb-0 ps-1">
+                                        <div class="text-primary fw-extrabold font-monospace d-flex align-items-center gap-1"
+                                             style="font-size: 0.72rem; border-left: 2px solid #0d6efd; padding-left: 6px; cursor: pointer;"
                                              onclick="copyToClipboard({{ json_encode($a->copy_all_text) }}, this)"
                                              title="Klik untuk Salin No Doc & Transaksi">
                                             <span>{{ strtoupper($a->no_doc) }}</span>
@@ -649,63 +656,63 @@
                                 if(str_contains($a->jenis_pengajuan, 'Mutasi')) $jc = 'primary';
                                 if($a->jenis_pengajuan == 'Cancel') $jc = 'danger';
                             @endphp
-                            <span class="badge bg-{{ $jc }} bg-opacity-10 text-{{ $jc }} fw-bold px-3 py-1 rounded-pill border-{{ $jc }} border-opacity-25" style="font-size: 0.68rem; border: 1px solid;">
+                            <span class="badge bg-{{ $jc }} bg-opacity-10 text-{{ $jc }} fw-bold px-2 py-0 rounded border-{{ $jc }} border-opacity-25" style="font-size: 0.6rem; border: 1px solid;">
                                 {{ str_replace('_', ' ', strtoupper($a->jenis_pengajuan)) }}
                             </span>
                         </td>
 
                         <td class="text-nowrap d-none d-lg-table-cell">
                             <div class="d-flex align-items-center">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm text-white fw-bold"
-                                     style="width:38px; height:38px; font-size: 1rem; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-2 text-white fw-bold"
+                                     style="width:28px; height:28px; font-size: 0.72rem; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);">
                                     {{ substr($a->admin->name ?? 'U', 0, 1) }}
                                 </div>
                                 <div class="lh-1">
-                                    <div class="fw-bold text-dark text-truncate" style="max-width: 110px; font-size: 0.88rem;">{{ $a->admin->name ?? 'Unknown' }}</div>
-                                    <small class="text-muted text-uppercase fw-extrabold" style="font-size: 0.62rem; letter-spacing: 0.5px;">{{ $a->admin->role ?? 'PPIC' }}</small>
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 90px; font-size: 0.72rem;">{{ $a->admin->name ?? 'Unknown' }}</div>
+                                    <small class="text-muted text-uppercase" style="font-size: 0.55rem; letter-spacing: 0.3px;">{{ $a->admin->role ?? 'PPIC' }}</small>
                                 </div>
                             </div>
                         </td>
 
                         <td class="d-none d-xl-table-cell">
-                            <div class="fw-bold text-dark lh-sm mb-1 text-truncate" style="max-width: 160px; font-size: 0.88rem;">{{ $a->department->name ?? '-' }}</div>
-                            <span class="bg-light text-secondary px-2 py-0 rounded fw-bold" style="font-size: 0.68rem; border: 1px solid #cbd5e1;">{{ $a->unit->name ?? '-' }}</span>
+                            <div class="fw-bold text-dark lh-sm text-truncate" style="max-width: 130px; font-size: 0.72rem;">{{ $a->department->name ?? '-' }}</div>
+                            <span class="bg-light text-secondary px-1 py-0 rounded fw-bold" style="font-size: 0.58rem; border: 1px solid #cbd5e1;">{{ $a->unit->name ?? '-' }}</span>
                         </td>
 
                         <td>
-                            <div class="d-flex flex-column gap-2 align-items-start">
+                            <div class="d-flex flex-column gap-1 align-items-start">
                                 @php
                                     $kpC = match($a->ket_process) {
                                         'Review'  => ['bg' => '#fefce8', 'text' => '#854d0e', 'border' => '#fde047', 'dot' => '#facc15'],
-                                        'Process' => ['bg' => '#f0f9ff', 'text' => '#075985', 'border' => '#7dd3fc', 'dot' => '#38bdf8'], 
+                                        'Process' => ['bg' => '#f0f9ff', 'text' => '#075985', 'border' => '#7dd3fc', 'dot' => '#38bdf8'],
                                         'Done'    => ['bg' => '#f0fdf4', 'text' => '#166534', 'border' => '#86efac', 'dot' => '#22c55e'],
                                         'Pending' => ['bg' => '#f8fafc', 'text' => '#334155', 'border' => '#cbd5e1', 'dot' => '#64748b'],
                                         'Void'    => ['bg' => '#fef2f2', 'text' => '#991b1b', 'border' => '#fca5a5', 'dot' => '#ef4444'],
-                                        'Partial Done' => ['bg' => '#eff6ff', 'text' => '#1e40af', 'border' => '#bfdbfe', 'dot' => '#3b82f6'],
+                                        'Partial Done' => ['bg' => '#f5f3ff', 'text' => '#5b21b6', 'border' => '#c4b5fd', 'dot' => '#8b5cf6'],
                                         default   => ['bg' => '#f8fafc', 'text' => '#475569', 'border' => '#e2e8f0', 'dot' => '#94a3b8'],
                                     };
                                 @endphp
-                                <div class="px-3 py-1 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-xs" 
-                                     style="font-size: 0.72rem; background: {{ $kpC['bg'] }}; color: {{ $kpC['text'] }}; border: 1.5px solid {{ $kpC['border'] }};">
-                                    <div class="rounded-circle shadow-sm" style="width: 6px; height: 6px; background-color: {{ $kpC['dot'] }};"></div>
+                                <div class="px-2 py-0 rounded-pill fw-bold d-flex align-items-center gap-1"
+                                     style="font-size: 0.6rem; background: {{ $kpC['bg'] }}; color: {{ $kpC['text'] }}; border: 1px solid {{ $kpC['border'] }};">
+                                    <div class="rounded-circle" style="width: 5px; height: 5px; background-color: {{ $kpC['dot'] }};"></div>
                                     {{ strtoupper($a->ket_process ?? '-') }}
                                 </div>
 
                                 <div class="d-flex gap-1">
-                                    <div class="bg-white border text-secondary px-2 py-0 rounded-pill fw-bold shadow-xs d-flex align-items-center" style="font-size: 0.62rem; border-color: #e2e8f0 !important;">
-                                        <span class="text-muted opacity-75 me-1">BA:</span> {{ $a->ba ?? 'Pending' }}
+                                    <div class="bg-white border text-secondary px-1 py-0 rounded fw-bold d-flex align-items-center" style="font-size: 0.55rem; border-color: #e2e8f0 !important;">
+                                        <span class="text-muted opacity-75 me-1">BA:</span>{{ $a->ba ?? 'Pending' }}
                                     </div>
-                                    <div class="bg-white border text-secondary px-2 py-0 rounded-pill fw-bold shadow-xs d-flex align-items-center" style="font-size: 0.62rem; border-color: #e2e8f0 !important;">
-                                        <span class="text-muted opacity-75 me-1">ARSIP:</span> {{ $a->arsip ?? 'Pending' }}
+                                    <div class="bg-white border text-secondary px-1 py-0 rounded fw-bold d-flex align-items-center" style="font-size: 0.55rem; border-color: #e2e8f0 !important;">
+                                        <span class="text-muted opacity-75 me-1">ARSIP:</span>{{ $a->arsip ?? 'Pending' }}
                                     </div>
                                 </div>
                             </div>
                         </td>
 
                         <td class="text-center d-none d-md-table-cell">
-                            <div class="d-flex flex-column align-items-center">
-                                <span class="fw-bold text-success" style="font-size: 0.85rem;">+{{ $a->total_qty_in + 0 }}</span>
-                                <span class="fw-bold text-danger" style="font-size: 0.85rem;">-{{ $a->total_qty_out + 0 }}</span>
+                            <div class="d-flex flex-column align-items-center lh-1">
+                                <span class="fw-bold text-success" style="font-size: 0.72rem;">+{{ $a->total_qty_in + 0 }}</span>
+                                <span class="fw-bold text-danger" style="font-size: 0.72rem;">-{{ $a->total_qty_out + 0 }}</span>
                             </div>
                         </td>
 

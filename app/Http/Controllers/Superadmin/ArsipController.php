@@ -123,6 +123,7 @@ class ArsipController extends Controller
             'total' => (clone $statsQuery)->count(),
             'Review' => (clone $statsQuery)->where('ket_process', 'Review')->count(),
             'Process' => (clone $statsQuery)->where('ket_process', 'Process')->count(),
+            'Partial Done' => (clone $statsQuery)->where('ket_process', 'Partial Done')->count(),
             'Done' => (clone $statsQuery)->where('ket_process', 'Done')->count(),
             'Pending' => (clone $statsQuery)->where('ket_process', 'Pending')->count(),
             'Void' => (clone $statsQuery)->where('ket_process', 'Void')->count(),
