@@ -306,6 +306,8 @@ Route::prefix('superadmin')
 
         // LOG AKTIVITAS
         Route::get('activity-logs', [SuperActivity::class, 'index'])->name('activity-logs.index');
+        Route::delete('activity-logs/bulk', [SuperActivity::class, 'bulkDelete'])->name('activity-logs.bulk-delete');
+        Route::delete('activity-logs/{id}', [SuperActivity::class, 'destroy'])->name('activity-logs.destroy');
 
         // STATISTIK SERVER
         Route::get('server-stats', [SuperServer::class, 'index'])->name('server-stats.index');

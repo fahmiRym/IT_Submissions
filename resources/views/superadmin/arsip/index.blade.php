@@ -491,17 +491,17 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-secondary">
                     <tr style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <th class="ps-4 text-center" width="40">
+                        <th class="ps-4 text-center d-none d-sm-table-cell" width="40">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'id', 'dir' => request('sort') == 'id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 #
                             </a>
                         </th>
-                        <th width="100" class="text-nowrap ps-4">
+                        <th width="100" class="text-nowrap ps-4 d-none d-md-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'tgl_pengajuan', 'dir' => request('sort') == 'tgl_pengajuan' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 TGL PENGAJUAN
                             </a>
                         </th>
-                        <th width="100" class="text-nowrap">
+                        <th width="100" class="text-nowrap d-none d-xl-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'tgl_arsip', 'dir' => request('sort') == 'tgl_arsip' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 TGL ARSIP
                             </a>
@@ -511,42 +511,42 @@
                                 NO REGISTRASI
                             </a>
                         </th>
-                        <th width="80">JENIS</th>
-                        <th width="130" class="text-nowrap">
+                        <th width="80" class="d-none d-xl-table-cell">JENIS</th>
+                        <th width="130" class="text-nowrap d-none d-lg-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'admin_id', 'dir' => request('sort') == 'admin_id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 PENGAJU
                             </a>
                         </th>
-                        <th width="150" class="text-nowrap">
+                        <th width="150" class="text-nowrap d-none d-xl-table-cell">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'department_id', 'dir' => request('sort') == 'department_id' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
                                 DEPT & UNIT
                             </a>
                         </th>
                         <th width="150" class="text-nowrap">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'ket_process', 'dir' => request('sort') == 'ket_process' && request('dir') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-secondary">
-                                STATUS DETAIL
+                                STATUS
                             </a>
                         </th>
-                        <th class="text-center" width="80"><span class="text-uppercase fw-bold">QTY</span></th>
-                        <th style="min-width: 200px;">DETAIL DOKUMEN</th>
+                        <th class="text-center d-none d-md-table-cell" width="80"><span class="text-uppercase fw-bold">QTY</span></th>
+                        <th style="min-width: 200px;" class="d-none d-xxl-table-cell">DETAIL DOKUMEN</th>
                         <th width="100" class="text-center pe-4">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($arsips as $a)
                     <tr class="transition-hover" style="font-size: 0.85rem; border-bottom: 1px solid #f1f5f9;">
-                        <td class="ps-4 text-center fw-bold text-muted">
+                        <td class="ps-4 text-center fw-bold text-muted d-none d-sm-table-cell">
                             {{ ($arsips->currentPage() - 1) * $arsips->perPage() + $loop->iteration }}
                         </td>
 
-                        <td class="text-nowrap ps-4 position-relative">
+                        <td class="text-nowrap ps-4 position-relative d-none d-md-table-cell">
                             <div class="fw-bold text-dark" style="font-size: 0.85rem;">{{ optional($a->tgl_pengajuan)->format('d/m/Y') }}</div>
                             <small class="text-primary fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
                                 <i class="bi bi-clock-history me-1"></i>{{ optional($a->tgl_pengajuan)->format('H:i') }} WIB
                             </small>
                         </td>
 
-                        <td class="text-nowrap ps-3 position-relative">
+                        <td class="text-nowrap ps-3 position-relative d-none d-xl-table-cell">
                             @if($a->tgl_arsip)
                                 <div class="text-dark fw-bold" style="font-size: 0.85rem;">{{ $a->tgl_arsip->format('d/m/Y') }}</div>
                                 <small class="text-success fw-bold d-block" style="font-size: 0.65rem;">
@@ -642,7 +642,7 @@
                             </div>
                         </td>
 
-                        <td class="text-nowrap">
+                        <td class="text-nowrap d-none d-xl-table-cell">
                             @php
                                 $jc = 'secondary';
                                 if($a->jenis_pengajuan == 'Adjust') $jc = 'info';
@@ -654,9 +654,9 @@
                             </span>
                         </td>
 
-                        <td class="text-nowrap">
+                        <td class="text-nowrap d-none d-lg-table-cell">
                             <div class="d-flex align-items-center">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm text-white fw-bold" 
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm text-white fw-bold"
                                      style="width:38px; height:38px; font-size: 1rem; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);">
                                     {{ substr($a->admin->name ?? 'U', 0, 1) }}
                                 </div>
@@ -667,7 +667,7 @@
                             </div>
                         </td>
 
-                        <td>
+                        <td class="d-none d-xl-table-cell">
                             <div class="fw-bold text-dark lh-sm mb-1 text-truncate" style="max-width: 160px; font-size: 0.88rem;">{{ $a->department->name ?? '-' }}</div>
                             <span class="bg-light text-secondary px-2 py-0 rounded fw-bold" style="font-size: 0.68rem; border: 1px solid #cbd5e1;">{{ $a->unit->name ?? '-' }}</span>
                         </td>
@@ -702,14 +702,14 @@
                             </div>
                         </td>
 
-                        <td class="text-center">
+                        <td class="text-center d-none d-md-table-cell">
                             <div class="d-flex flex-column align-items-center">
                                 <span class="fw-bold text-success" style="font-size: 0.85rem;">+{{ $a->total_qty_in + 0 }}</span>
                                 <span class="fw-bold text-danger" style="font-size: 0.85rem;">-{{ $a->total_qty_out + 0 }}</span>
                             </div>
                         </td>
 
-                        <td class="ps-3 pe-2">
+                        <td class="ps-3 pe-2 d-none d-xxl-table-cell">
                             <div class="d-flex flex-column gap-2" style="max-width: 320px;">
                                 @php $itemsFound = false; @endphp
 

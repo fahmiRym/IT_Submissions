@@ -342,49 +342,74 @@
         </div>
     @endif
 
-    {{-- ========= APPROVAL CHAIN (semua step) ========= --}}
-    @if($arsip->approvals && $arsip->approvals->count())
-        <div class="doc-summary mt-3">
-            <div class="sig-list-title">
-                <i class="bi bi-diagram-3-fill text-primary"></i>Alur Persetujuan
-            </div>
-            <div class="approval-chain">
-                @foreach($arsip->approvals as $step)
-                    @php
-                        $cls = $step->status === 'approved' ? 'approved'
-                             : ($step->status === 'rejected' ? 'rejected' : 'pending');
-                        $icon = $step->status === 'approved' ? 'bi-check-circle-fill'
-                              : ($step->status === 'rejected' ? 'bi-x-circle-fill' : 'bi-hourglass-split');
-                    @endphp
-                    <div class="approval-step {{ $cls }}">
-                        <div class="approval-step-num">{{ $step->step_order }}</div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between gap-2 flex-wrap">
-                                <div>
-                                    <div class="fw-bold" style="font-size:0.95rem;">{{ $step->role_label }}</div>
-                                    <div class="text-muted small">
-                                        {{ $step->approver->name ?? '—' }}
-                                        @if($step->acted_at)
-                                            · {{ optional($step->acted_at)->translatedFormat('d M Y, H:i') }} WIB
-                                        @endif
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="badge bg-{{ $cls === 'approved' ? 'success' : ($cls === 'rejected' ? 'danger' : 'warning') }}-subtle
-                                                 text-{{ $cls === 'approved' ? 'success' : ($cls === 'rejected' ? 'danger' : 'warning') }}">
-                                        <i class="bi {{ $icon }} me-1"></i>{{ strtoupper($step->status) }}
-                                    </span>
+    {{-- ========= APPROVAL CHAIN (semua step — expected + actual) ========= --}}
+    @php
+        // Bangun urutan yang diharapkan sesuai jenis: Pemohon → [role antara] → Departemen IT
+        $expectedRoles = array_merge(
+            ['Pemohon'],
+            \App\Models\ArsipApproval::rolesForJenis($arsip->jenis_pengajuan),
+            ['Departemen IT']
+        );
+
+        // Index approval actual by role_label untuk lookup cepat
+        $actualByRole = collect($arsip->approvals ?? [])->keyBy(fn($a) => $a->role_label);
+    @endphp
+    <div class="doc-summary mt-3">
+        <div class="sig-list-title">
+            <i class="bi bi-diagram-3-fill text-primary"></i>Alur Persetujuan
+        </div>
+        <div class="approval-chain">
+            @foreach($expectedRoles as $i => $role)
+                @php
+                    $step   = $actualByRole->get($role);
+                    $status = $step->status ?? 'not_yet';
+                    $cls    = match ($status) {
+                        'approved' => 'approved',
+                        'rejected' => 'rejected',
+                        'pending'  => 'pending',
+                        default    => 'pending', // not_yet (belum ada record)
+                    };
+                    $icon = match ($status) {
+                        'approved' => 'bi-check-circle-fill',
+                        'rejected' => 'bi-x-circle-fill',
+                        'pending'  => 'bi-hourglass-split',
+                        default    => 'bi-dash-circle',
+                    };
+                    $label = match ($status) {
+                        'approved' => 'APPROVED',
+                        'rejected' => 'REJECTED',
+                        'pending'  => 'PENDING',
+                        default    => 'BELUM DITENTUKAN',
+                    };
+                @endphp
+                <div class="approval-step {{ $cls }}">
+                    <div class="approval-step-num">{{ $i + 1 }}</div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between gap-2 flex-wrap">
+                            <div>
+                                <div class="fw-bold" style="font-size:0.95rem;">{{ $role }}</div>
+                                <div class="text-muted small">
+                                    {{ $step->approver->name ?? '—' }}
+                                    @if($step && $step->acted_at)
+                                        · {{ optional($step->acted_at)->translatedFormat('d M Y, H:i') }} WIB
+                                    @endif
                                 </div>
                             </div>
-                            @if($step->note)
-                                <div class="mt-1 small text-secondary" style="font-style:italic;">"{{ $step->note }}"</div>
-                            @endif
+                            <div>
+                                <span class="badge bg-{{ $cls === 'approved' ? 'success' : ($cls === 'rejected' ? 'danger' : 'warning') }}-subtle
+                                             text-{{ $cls === 'approved' ? 'success' : ($cls === 'rejected' ? 'danger' : 'warning') }}">
+                                    <i class="bi {{ $icon }} me-1"></i>{{ $label }}
+                                </span>
+                            </div>
                         </div>
+                        @if($step && $step->note)
+                            <div class="mt-1 small text-secondary" style="font-style:italic;">"{{ $step->note }}"</div>
+                        @endif
                     </div>
-                @endforeach
-            </div>
+                </div>
+            @endforeach
         </div>
-    @endif
+    </div>
 
     <div class="verify-footer">
         Diverifikasi pada {{ now()->translatedFormat('d M Y, H:i') }} WIB<br>

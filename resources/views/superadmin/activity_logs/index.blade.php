@@ -103,28 +103,81 @@
         </div>
     </div>
 
+    {{-- SESSION FEEDBACK --}}
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    {{-- BULK ACTION BAR: Retention prune --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-3" style="border-left: 4px solid #ef4444 !important;">
+        <div class="card-body p-3">
+            <form action="{{ route('superadmin.activity-logs.bulk-delete') }}" method="POST"
+                onsubmit="return confirm('Yakin hapus semua log > ' + this.older_than_days.value + ' hari? Aksi TIDAK bisa di-undo.');"
+                class="d-flex flex-wrap align-items-center gap-2">
+                @csrf @method('DELETE')
+                <i class="bi bi-trash3-fill text-danger fs-5"></i>
+                <span class="fw-bold text-dark small">Bersihkan Log Lama:</span>
+                <span class="small text-muted">Hapus semua log lebih dari</span>
+                <input type="number" name="older_than_days" min="1" max="3650" value="90" required
+                    class="form-control form-control-sm fw-bold text-danger border-danger border-opacity-25"
+                    style="width: 80px;">
+                <span class="small text-muted">hari</span>
+                <button type="submit" class="btn btn-sm btn-danger fw-bold shadow-sm ms-auto">
+                    <i class="bi bi-trash-fill me-1"></i>Prune Sekarang
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <form id="formBulkDelete" action="{{ route('superadmin.activity-logs.bulk-delete') }}" method="POST"
+        onsubmit="return confirm('Yakin hapus ' + document.querySelectorAll('input[name=\'ids[]\']:checked').length + ' log terpilih?');">
+        @csrf @method('DELETE')
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h6 class="mb-0 fw-bold text-primary-dark"><i class="bi bi-shield-lock-fill text-success me-2"></i>Riwayat Log
                 Aktivitas</h6>
-            @include('partials._per_page_select', ['id' => 'perPageLogs', 'default' => 20])
-            <span class="badge bg-light text-dark border rounded-pill px-3 py-2 fw-bold" style="font-size: 0.7rem;">Total:
-                {{ $logs->total() }} Aktivitas</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="submit" id="btnBulkDeleteSelected"
+                    class="btn btn-sm btn-outline-danger fw-bold" disabled>
+                    <i class="bi bi-trash me-1"></i>Hapus Terpilih (<span id="selectedCount">0</span>)
+                </button>
+                @include('partials._per_page_select', ['id' => 'perPageLogs', 'default' => 20])
+                <span class="badge bg-light text-dark border rounded-pill px-3 py-2 fw-bold" style="font-size: 0.7rem;">Total:
+                    {{ $logs->total() }} Aktivitas</span>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table align-middle mb-0">
                 <thead class="bg-light">
                     <tr style="font-size: 0.75rem;">
-                        <th class="ps-4 text-muted fw-bold">WAKTU & USER</th>
+                        <th class="ps-3" style="width:40px;">
+                            <input type="checkbox" id="checkAllLogs" class="form-check-input"
+                                title="Pilih semua di halaman ini">
+                        </th>
+                        <th class="text-muted fw-bold">WAKTU & USER</th>
                         <th class="text-muted fw-bold">DOKUMEN</th>
                         <th class="text-muted fw-bold">AKSI</th>
                         <th class="text-muted fw-bold">DETAIL PERUBAHAN</th>
+                        <th class="text-center text-muted fw-bold" style="width:60px;">HAPUS</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($logs as $log)
                         <tr class="border-bottom">
-                            <td class="ps-4 py-3" style="min-width: 200px;">
+                            <td class="ps-3">
+                                <input type="checkbox" name="ids[]" value="{{ $log->id }}"
+                                    class="form-check-input logCheckbox">
+                            </td>
+                            <td class="py-3" style="min-width: 200px;">
                                 <div class="d-flex align-items-center mb-1">
                                     <div class="bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 fw-bold me-2"
                                         style="font-size: 0.7rem;">
@@ -191,10 +244,17 @@
                                     <span class="text-danger small fw-bold">Data telah dihapus permanent.</span>
                                 @endif
                             </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-1 btnDeleteLog"
+                                    data-id="{{ $log->id }}" title="Hapus log ini"
+                                    style="width:32px; height:32px;">
+                                    <i class="bi bi-trash small"></i>
+                                </button>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
+                            <td colspan="6" class="text-center py-5 text-muted">
                                 <i class="bi bi-shield-slash display-4 opacity-25"></i>
                                 <p class="mt-2 small">Belum ada riwayat aktivitas mendalam yang tercatat.</p>
                             </td>
@@ -215,6 +275,12 @@
             </div>
         @endif
     </div>
+    </form>
+
+    {{-- Hidden form untuk single row delete --}}
+    <form id="formSingleDelete" method="POST" style="display:none;">
+        @csrf @method('DELETE')
+    </form>
 
     <style>
         .text-primary-dark { color: #0f172a; }
@@ -249,3 +315,39 @@
         }
     </style>
 @endsection
+
+@push('scripts')
+<script>
+    (function() {
+        const checkAll   = document.getElementById('checkAllLogs');
+        const checkboxes = document.querySelectorAll('.logCheckbox');
+        const btnBulk    = document.getElementById('btnBulkDeleteSelected');
+        const countLabel = document.getElementById('selectedCount');
+
+        function updateSelectionUi() {
+            const count = document.querySelectorAll('.logCheckbox:checked').length;
+            if (countLabel) countLabel.textContent = count;
+            if (btnBulk) btnBulk.disabled = count === 0;
+        }
+
+        if (checkAll) {
+            checkAll.addEventListener('change', function () {
+                checkboxes.forEach(cb => cb.checked = this.checked);
+                updateSelectionUi();
+            });
+        }
+        checkboxes.forEach(cb => cb.addEventListener('change', updateSelectionUi));
+
+        // Per-row delete → submit hidden form dgn action route dynamic
+        document.querySelectorAll('.btnDeleteLog').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (!confirm('Yakin hapus log ini?')) return;
+                const id = this.dataset.id;
+                const form = document.getElementById('formSingleDelete');
+                form.action = "{{ route('superadmin.activity-logs.destroy', ':id') }}".replace(':id', id);
+                form.submit();
+            });
+        });
+    })();
+</script>
+@endpush
