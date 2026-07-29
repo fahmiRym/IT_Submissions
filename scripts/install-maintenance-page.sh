@@ -47,10 +47,10 @@ else
         echo "  ✓ Backup dibuat: $BACKUP"
 fi
 
-# ---- 4) Cek apakah sudah pernah di-patch ----
-if docker exec "$NGINX_CONTAINER" grep -q "MAINTENANCE_PATCH_V1" "$DEFAULT_CONF" 2>/dev/null; then
+# ---- 4) Cek apakah sudah pernah di-patch dgn versi terbaru ----
+if docker exec "$NGINX_CONTAINER" grep -q "MAINTENANCE_PATCH_V2" "$DEFAULT_CONF" 2>/dev/null; then
     echo ""
-    echo "--- 3) Sudah pernah di-patch (marker MAINTENANCE_PATCH_V1 ditemukan). Skip write. ---"
+    echo "--- 3) Sudah pernah di-patch V2 (marker MAINTENANCE_PATCH_V2 ditemukan). Skip write. ---"
 else
     echo ""
     echo "--- 3) Tulis config baru dgn maintenance directives ---"
@@ -58,7 +58,7 @@ else
     # Pakai `cat > file` (bukan sed -i) → overwrite in-place, tidak butuh rename
     # (rename gagal di bind-mount dgn error 'Resource busy')
     docker exec -i "$NGINX_CONTAINER" sh -c "cat > $DEFAULT_CONF" <<'NGINXEOF'
-# MAINTENANCE_PATCH_V1 — jangan hapus marker ini
+# MAINTENANCE_PATCH_V2 — jangan hapus marker ini
 server {
     listen 80;
     client_max_body_size 250M;
@@ -67,19 +67,28 @@ server {
 
     root /var/www/public;
 
+    # Resolver Docker embedded DNS (127.0.0.11) supaya "app" hostname
+    # ter-resolve fresh tiap request (tidak cached ke IP mati)
+    resolver 127.0.0.11 valid=5s ipv6=off;
+    resolver_timeout 2s;
+
     # ==== Fallback: kalau upstream php-fpm error → maintenance page ====
     error_page 502 503 504 = @maintenance;
 
     location @maintenance {
         root /var/www/public;
         rewrite ^ /maintenance.html break;
-        add_header Retry-After 60 always;
-        add_header Cache-Control 'no-store, no-cache, must-revalidate' always;
+        # Pastikan browser TIDAK cache halaman maintenance (biar refresh
+        # selalu hit server, dan pas app up → langsung dapat konten baru)
+        add_header Cache-Control 'no-store, no-cache, must-revalidate, max-age=0' always;
+        add_header Pragma 'no-cache' always;
+        add_header Expires '0' always;
     }
 
     # Preview URL: https://<host>/maintenance.html (untuk cek design)
     location = /maintenance.html {
         root /var/www/public;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate, max-age=0';
     }
     # ==================================================================
 
@@ -95,9 +104,15 @@ server {
 
         # Intercept upstream errors → picu error_page di atas
         fastcgi_intercept_errors on;
-        fastcgi_connect_timeout 5s;
+
+        # FAST-FAIL saat upstream mati: total < 3s (bukan hang 5-10s)
+        # → user recovery instan sesudah container up lagi
+        fastcgi_connect_timeout 2s;
         fastcgi_read_timeout 60s;
-        fastcgi_send_timeout 60s;
+        fastcgi_send_timeout 10s;
+        fastcgi_next_upstream error timeout;
+        fastcgi_next_upstream_tries 1;
+        fastcgi_next_upstream_timeout 3s;
     }
 
     location ~ /\.ht {

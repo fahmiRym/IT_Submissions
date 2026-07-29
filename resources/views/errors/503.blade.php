@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0f172a">
-    <meta http-equiv="refresh" content="30">
     <title>Sedang Dalam Perbaikan — IT Submissions Inkalum</title>
     <link rel="icon" type="image/png" href="/img/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -385,8 +384,8 @@
                     <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
                 </div>
                 <div class="content">
-                    <div class="label">Auto Refresh</div>
-                    <div class="value">Halaman dimuat ulang otomatis dalam <span class="countdown" id="cd">30</span> detik</div>
+                    <div class="label">Auto Recovery</div>
+                    <div class="value">Cek koneksi server tiap <span class="countdown" id="cd">15</span> detik · reload otomatis begitu server hidup</div>
                 </div>
             </div>
             <div class="info-row">
@@ -415,10 +414,7 @@
     </main>
 
     <script>
-        let sec = 30;
-        const el = document.getElementById('cd');
-        setInterval(() => { if (sec > 0) { sec--; el.textContent = sec; } }, 1000);
-
+        // Live clock
         const clock = document.getElementById('liveClock');
         function pad(n) { return String(n).padStart(2, '0'); }
         function tick() {
@@ -428,6 +424,44 @@
         }
         tick();
         setInterval(tick, 1000);
+
+        // ============ SMART AUTO-RECOVERY ============
+        const cd = document.getElementById('cd');
+        let secLeft = 15;
+        cd.textContent = secLeft;
+
+        async function checkBackend() {
+            try {
+                const res = await fetch('/?_hb=' + Date.now(), {
+                    method: 'HEAD',
+                    cache: 'no-store',
+                    redirect: 'manual',
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (res.type === 'opaqueredirect' || res.ok || (res.status >= 200 && res.status < 400)) {
+                    reloadFresh();
+                    return true;
+                }
+            } catch (e) { /* still down */ }
+            return false;
+        }
+
+        function reloadFresh() {
+            const url = window.location.pathname + '?_r=' + Date.now();
+            window.location.replace(url);
+        }
+
+        setInterval(async () => {
+            secLeft--;
+            if (secLeft <= 0) {
+                const alive = await checkBackend();
+                if (!alive) { secLeft = 15; cd.textContent = secLeft; }
+            } else {
+                cd.textContent = secLeft;
+            }
+        }, 1000);
+
+        setTimeout(checkBackend, 3000);
     </script>
 </body>
 </html>
