@@ -1044,6 +1044,45 @@
 
 @push('scripts')
 <script>
+// Copy helper: pakai Clipboard API (async), fallback ke execCommand untuk browser lama /
+// context tanpa HTTPS. Flash tombol hijau saat sukses, merah saat gagal.
+window.copyToClipboard = function(text, btn) {
+    text = String(text ?? '').trim();
+    if (!text) { flashBtn(btn, false, 'Tidak ada teks'); return; }
+
+    const done = ok => flashBtn(btn, ok, ok ? 'Tersalin!' : 'Gagal salin');
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => done(true)).catch(() => fallbackCopy(text, done));
+    } else {
+        fallbackCopy(text, done);
+    }
+};
+function fallbackCopy(text, done) {
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(ok);
+    } catch (e) { done(false); }
+}
+function flashBtn(btn, ok, msg) {
+    if (!btn) return;
+    const icon = btn.querySelector('i.bi-clipboard, i.bi-clipboard-check, i.bi-x-circle');
+    if (icon) {
+        const orig = icon.className;
+        icon.className = ok ? 'bi bi-clipboard-check-fill text-success' : 'bi bi-x-circle-fill text-danger';
+        setTimeout(() => { icon.className = orig; }, 1400);
+    }
+    // Toast kecil (kalau ada bootstrap tooltip / gunakan title flash)
+    const oldTitle = btn.getAttribute('title');
+    btn.setAttribute('title', msg);
+    setTimeout(() => oldTitle && btn.setAttribute('title', oldTitle), 1400);
+}
+
 $(document).ready(function() {
 
     const $jenisSelect  = $('#jenisPengajuanTambah');
