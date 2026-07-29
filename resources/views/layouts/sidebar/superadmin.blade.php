@@ -157,7 +157,7 @@
 
             {{-- MASTER DATA --}}
             @php
-                $isMaster = request()->is('superadmin/departments*', 'superadmin/units*', 'superadmin/managers*', 'superadmin/users*', 'superadmin/locations*', 'superadmin/settings*');
+                $isMaster = request()->is('superadmin/branches*', 'superadmin/departments*', 'superadmin/units*', 'superadmin/managers*', 'superadmin/users*', 'superadmin/locations*', 'superadmin/settings*');
             @endphp
 
             <li class="nav-item">
@@ -179,6 +179,13 @@
                                class="nav-link py-2 {{ request()->routeIs('superadmin.locations.*') ? 'text-primary fw-bold' : '' }}">
                                 <i class="bi bi-geo-alt-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#10b981;"></i>
                                 <span>Lokasi Fisik</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.branches.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.branches.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-buildings-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#ef4444;"></i>
+                                <span>Cabang / Branch</span>
                             </a>
                         </li>
                         <li class="nav-item">

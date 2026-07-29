@@ -32,10 +32,13 @@ class DepartmentController extends Controller
         $perPageRaw = $request->input('per_page', 15);
         $perPage = ($perPageRaw === 'all') ? 99999 : max(1, (int) $perPageRaw);
         $departments = Department::query()
+            ->with('branch:id,name,code,kota')
             ->when($q !== '', fn ($w) => $w->where('name', 'like', "%{$q}%"))
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();
+
+        $branches = \App\Models\Branch::active()->orderBy('name')->get(['id', 'name', 'kota']);
 
         $departments->getCollection()->each(function ($d) use ($userCounts, $arsipCounts, $lastActivities) {
             $d->users_count = (int) ($userCounts[$d->id] ?? 0);
@@ -48,21 +51,23 @@ class DepartmentController extends Controller
         $totalArsipLinked = array_sum($arsipCounts->toArray());
         $latestDept = Department::latest()->first()->name ?? '-';
 
-        return view('departments.index', compact('departments', 'totalDept', 'totalUser', 'totalArsipLinked', 'latestDept'));
+        return view('departments.index', compact('departments', 'branches', 'totalDept', 'totalUser', 'totalArsipLinked', 'latestDept'));
     }
 
     public function create()
     {
-        return view('departments.create');
+        $branches = \App\Models\Branch::active()->orderBy('name')->get(['id', 'name', 'kota']);
+        return view('departments.create', compact('branches'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|unique:departments,name'
+            'name'      => 'required|unique:departments,name',
+            'branch_id' => 'nullable|exists:branches,id',
         ]);
 
-        Department::create($request->only('name'));
+        Department::create($request->only('name', 'branch_id'));
 
         return redirect()->route('superadmin.departments.index')
             ->with('success', 'Departemen berhasil ditambahkan');
@@ -70,16 +75,18 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
-        return view('departments.edit', compact('department'));
+        $branches = \App\Models\Branch::active()->orderBy('name')->get(['id', 'name', 'kota']);
+        return view('departments.edit', compact('department', 'branches'));
     }
 
     public function update(Request $request, Department $department)
     {
         $request->validate([
-            'name' => 'required|unique:departments,name,' . $department->id
+            'name'      => 'required|unique:departments,name,' . $department->id,
+            'branch_id' => 'nullable|exists:branches,id',
         ]);
 
-        $department->update($request->only('name'));
+        $department->update($request->only('name', 'branch_id'));
 
         return redirect()->route('superadmin.departments.index')
             ->with('success', 'Departemen berhasil diupdate');

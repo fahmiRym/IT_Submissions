@@ -713,7 +713,10 @@
         {{-- ─── FOOTER: Place/Date + Signature (anchored bottom) ──── --}}
         <div class="footer-section-wrap">
             @php
-                $kotaBa = \App\Models\Setting::get('kota_ba', 'PASURUAN');
+                // Prioritas kota: branch dept (per-cabang) > setting global > 'PASURUAN'
+                $arsip->loadMissing('department.branch');
+                $kotaBa = $arsip->department?->branch?->kota
+                       ?? \App\Models\Setting::get('kota_ba', 'PASURUAN');
                 \Carbon\Carbon::setLocale('id');
                 $tglSign = \Carbon\Carbon::parse($arsip->tgl_pengajuan ?: $arsip->created_at)->translatedFormat('d F Y');
             @endphp

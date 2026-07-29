@@ -319,6 +319,12 @@ Route::prefix('superadmin')
         Route::post('app-versions/{id}/upload-apk',   [\App\Http\Controllers\Superadmin\AppVersionController::class, 'uploadApk'])->name('app-versions.upload-apk');
         Route::delete('app-versions/{id}',            [\App\Http\Controllers\Superadmin\AppVersionController::class, 'destroy'])->name('app-versions.destroy');
 
+        // MASTER DATA — BRANCHES / CABANG
+        Route::get('branches',            [\App\Http\Controllers\Superadmin\BranchController::class, 'index'])->name('branches.index');
+        Route::post('branches',           [\App\Http\Controllers\Superadmin\BranchController::class, 'store'])->name('branches.store');
+        Route::put('branches/{id}',       [\App\Http\Controllers\Superadmin\BranchController::class, 'update'])->name('branches.update');
+        Route::delete('branches/{id}',    [\App\Http\Controllers\Superadmin\BranchController::class, 'destroy'])->name('branches.destroy');
+
         // MASTER DATA
         Route::patch('departments/{department}/toggle', [SuperDepartment::class, 'toggleIsActive'])->name('departments.toggle');
         Route::resource('departments', SuperDepartment::class);
