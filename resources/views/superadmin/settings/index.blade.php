@@ -42,17 +42,23 @@
                                     required>
                             </div>
 
-                            {{-- Kota BA --}}
+                            {{-- Kota BA (FALLBACK) --}}
                             <div class="col-12">
                                 <label class="form-label small fw-bold text-uppercase">
                                     <i class="bi bi-geo-alt-fill text-primary me-1"></i>Location Company
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-1" style="font-size:0.6rem;">FALLBACK</span>
                                 </label>
                                 <input type="text" name="kota_ba" class="form-control bg-light border-0 py-2 px-3"
                                     value="{{ $kota_ba ?? 'PASURUAN' }}" placeholder="Contoh: PASURUAN">
-                                <small class="text-muted">
-                                    Nama kota ini akan muncul di footer Berita Acara, contoh: <strong>PASURUAN, 09 Mei
-                                        2025</strong>
-                                </small>
+                                <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 mt-2 mb-0 py-2 px-3" style="font-size:0.78rem;">
+                                    <i class="bi bi-info-circle-fill me-1"></i>
+                                    <strong>Fallback global.</strong> Prioritas kota di dokumen:
+                                    <ol class="mb-0 mt-1 ps-3" style="font-size:0.75rem;">
+                                        <li><strong>Cabang</strong> departemen (di <a href="{{ route('superadmin.branches.index') }}" class="fw-bold">Master Cabang</a>) — paling spesifik</li>
+                                        <li>Nilai di atas ini — kalau dept belum di-assign cabang</li>
+                                        <li>Default hardcoded 'PASURUAN'</li>
+                                    </ol>
+                                </div>
                             </div>
 
                             {{-- Logo Terkini --}}

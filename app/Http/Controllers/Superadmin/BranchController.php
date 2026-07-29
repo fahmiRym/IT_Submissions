@@ -11,8 +11,20 @@ class BranchController extends Controller
 {
     public function index()
     {
-        $branches = Branch::withCount('departments')->orderBy('name')->get();
-        return view('superadmin.branches.index', compact('branches'));
+        $branches = Branch::withCount('departments')
+            ->with(['departments' => function ($q) {
+                $q->select('id', 'name', 'is_active', 'branch_id')
+                  ->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->get();
+
+        // Dept tanpa branch — supaya user bisa liat "yatim"
+        $orphanDepts = \App\Models\Department::whereNull('branch_id')
+            ->orderBy('name')
+            ->get(['id', 'name', 'is_active']);
+
+        return view('superadmin.branches.index', compact('branches', 'orphanDepts'));
     }
 
     public function store(Request $request)

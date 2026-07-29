@@ -142,11 +142,20 @@
             <p class="section-sub">Menampilkan {{ $departments->count() }} dari {{ $departments->total() }} departemen</p>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
-            <form method="GET" class="d-flex gap-2 align-items-center">
+            <form method="GET" class="d-flex gap-2 align-items-center flex-wrap">
                 <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari nama departemen..."
-                       class="form-control form-control-sm" style="min-width:230px; border-radius:10px;">
+                       class="form-control form-control-sm" style="min-width:200px; border-radius:10px;">
+                <select name="branch_id" class="form-select form-select-sm" style="min-width:170px; border-radius:10px;">
+                    <option value="">— Semua Cabang —</option>
+                    <option value="none" {{ request('branch_id') === 'none' ? 'selected' : '' }}>❗ Tanpa Cabang</option>
+                    @foreach($branches ?? [] as $b)
+                        <option value="{{ $b->id }}" {{ request('branch_id') == $b->id ? 'selected' : '' }}>
+                            {{ $b->name }} ({{ $b->kota }})
+                        </option>
+                    @endforeach
+                </select>
                 <button class="btn btn-light border btn-sm" type="submit" style="border-radius:10px;"><i class="bi bi-search"></i></button>
-                @if(request('q'))
+                @if(request('q') || request('branch_id'))
                     <a href="{{ route('superadmin.departments.index') }}" class="btn btn-link btn-sm text-muted p-0" title="Reset"><i class="bi bi-x-circle"></i></a>
                 @endif
             </form>
@@ -163,6 +172,7 @@
                     <tr>
                         <th class="ps-4" width="60">#</th>
                         <th>Nama Departemen</th>
+                        <th width="180">Cabang</th>
                         <th>Status</th>
                         <th class="text-center" width="110">Users</th>
                         <th class="text-center" width="120">Pengajuan</th>
@@ -182,6 +192,22 @@
                                 </div>
                                 <span class="fw-bold {{ !$d->is_active ? 'text-decoration-line-through text-muted' : 'text-dark' }}">{{ $d->name }}</span>
                             </div>
+                        </td>
+                        <td>
+                            @if($d->branch)
+                                <div class="d-flex flex-column gap-1">
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 fw-bold" style="font-size:0.7rem; width:fit-content;">
+                                        <i class="bi bi-buildings-fill me-1"></i>{{ $d->branch->code }}
+                                    </span>
+                                    <small class="text-muted" style="font-size:0.68rem;">
+                                        <i class="bi bi-geo-alt-fill me-1"></i>{{ $d->branch->kota }}
+                                    </small>
+                                </div>
+                            @else
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 fw-semibold" style="font-size:0.68rem;" title="Belum di-assign — pakai fallback global">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>Tanpa Cabang
+                                </span>
+                            @endif
                         </td>
                         <td>
                             @if($d->is_active)
@@ -240,7 +266,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-5">
+                        <td colspan="9" class="text-center py-5">
                             <div class="opacity-20 mb-3"><i class="bi bi-folder-x display-1"></i></div>
                             <h6 class="fw-bold text-muted">Belum ada data departemen</h6>
                         </td>

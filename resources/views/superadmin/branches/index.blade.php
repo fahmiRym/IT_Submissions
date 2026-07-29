@@ -71,9 +71,19 @@
                         <td class="fw-bold text-primary">{{ $b->kota }}</td>
                         <td class="small text-muted">{{ $b->alamat ?: '—' }}</td>
                         <td class="text-center">
-                            <span class="badge bg-light text-dark border rounded-pill fw-bold" style="font-size:0.72rem;">
-                                {{ $b->departments_count }}
-                            </span>
+                            @if($b->departments_count > 0)
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0 fw-bold btnViewDepts"
+                                        data-branch-name="{{ $b->name }}"
+                                        data-branch-code="{{ $b->code }}"
+                                        data-branch-kota="{{ $b->kota }}"
+                                        data-depts='@json($b->departments)'
+                                        style="font-size:0.72rem;"
+                                        title="Lihat departemen di cabang ini">
+                                    {{ $b->departments_count }} <i class="bi bi-eye-fill ms-1"></i>
+                                </button>
+                            @else
+                                <span class="badge bg-light text-muted border rounded-pill" style="font-size:0.72rem;">0</span>
+                            @endif
                         </td>
                         <td class="text-center">
                             @if($b->is_active)
@@ -164,6 +174,67 @@
         </div>
     </div>
 
+    {{-- ORPHAN DEPTS WARNING (kalau ada dept tanpa cabang) --}}
+    @if(!empty($orphanDepts) && count($orphanDepts) > 0)
+        <div class="card border-0 shadow-sm rounded-4 mt-3" style="border-left: 4px solid #f59e0b !important;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+                    <div class="flex-fill">
+                        <div class="fw-bold text-dark mb-1">
+                            {{ count($orphanDepts) }} Departemen belum di-assign ke cabang manapun
+                        </div>
+                        <small class="text-muted d-block mb-2">
+                            Dokumen dari dept ini akan pakai <strong>fallback global</strong> ({{ \App\Models\Setting::get('kota_ba', 'PASURUAN') }}).
+                            Klik Edit di menu <a href="{{ route('superadmin.departments.index') }}" class="fw-bold text-primary">Departemen</a> untuk assign.
+                        </small>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach($orphanDepts as $od)
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 fw-semibold" style="font-size:0.7rem;">
+                                    {{ $od->name }}
+                                    @if(!$od->is_active) <i class="bi bi-pause-fill ms-1" title="Nonaktif"></i> @endif
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL VIEW DEPARTMENTS --}}
+    <div class="modal fade" id="modalViewDepts" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0"><i class="bi bi-building-fill me-2"></i><span id="viewDeptsBranchName">—</span></h5>
+                        <small class="opacity-75">
+                            Kode: <span class="font-monospace fw-bold" id="viewDeptsBranchCode">—</span>
+                            · Kota: <span class="fw-bold" id="viewDeptsBranchKota">—</span>
+                        </small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 px-3" style="font-size:0.8rem;">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        Semua pengajuan dari departemen di bawah ini akan stamp dokumen dgn kota <strong id="viewDeptsBranchKotaInline">—</strong>.
+                    </div>
+                    <div class="list-group list-group-flush" id="viewDeptsList">
+                        {{-- populated by JS --}}
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <a href="{{ route('superadmin.departments.index') }}" class="btn btn-outline-primary rounded-pill px-4">
+                        <i class="bi bi-pencil-fill me-1"></i>Kelola Departemen
+                    </a>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- MODAL EDIT (populated via JS) --}}
     <div class="modal fade" id="modalBranchEdit" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -228,5 +299,48 @@
             new bootstrap.Modal(document.getElementById('modalBranchEdit')).show();
         });
     });
+
+    // View Departments modal
+    document.querySelectorAll('.btnViewDepts').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const depts = JSON.parse(this.dataset.depts || '[]');
+            const name  = this.dataset.branchName;
+            const code  = this.dataset.branchCode;
+            const kota  = this.dataset.branchKota;
+
+            document.getElementById('viewDeptsBranchName').textContent = name;
+            document.getElementById('viewDeptsBranchCode').textContent = code;
+            document.getElementById('viewDeptsBranchKota').textContent = kota;
+            document.getElementById('viewDeptsBranchKotaInline').textContent = kota;
+
+            const list = document.getElementById('viewDeptsList');
+            list.innerHTML = '';
+            if (depts.length === 0) {
+                list.innerHTML = '<div class="text-muted text-center py-4 small">Belum ada departemen di cabang ini.</div>';
+            } else {
+                depts.forEach((d, i) => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center px-3 py-2 border-0 border-bottom';
+                    item.innerHTML = `
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted fw-bold small" style="min-width:24px;">${i + 1}.</span>
+                            <i class="bi bi-building-fill text-primary"></i>
+                            <span class="fw-bold text-dark">${escapeHtml(d.name)}</span>
+                        </div>
+                        <span class="badge ${d.is_active ? 'bg-success' : 'bg-secondary'} bg-opacity-10 text-${d.is_active ? 'success' : 'secondary'} border border-${d.is_active ? 'success' : 'secondary'} border-opacity-25 rounded-pill" style="font-size:0.65rem;">
+                            ${d.is_active ? 'AKTIF' : 'NONAKTIF'}
+                        </span>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+
+            new bootstrap.Modal(document.getElementById('modalViewDepts')).show();
+        });
+    });
+
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
 </script>
 @endpush

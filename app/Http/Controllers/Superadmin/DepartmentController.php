@@ -29,11 +29,14 @@ class DepartmentController extends Controller
             ->pluck('last_at', 'department_id');
 
         $q = trim((string) $request->get('q', ''));
+        $branchFilter = $request->get('branch_id');
         $perPageRaw = $request->input('per_page', 15);
         $perPage = ($perPageRaw === 'all') ? 99999 : max(1, (int) $perPageRaw);
         $departments = Department::query()
             ->with('branch:id,name,code,kota')
             ->when($q !== '', fn ($w) => $w->where('name', 'like', "%{$q}%"))
+            ->when($branchFilter === 'none', fn ($w) => $w->whereNull('branch_id'))
+            ->when($branchFilter && $branchFilter !== 'none', fn ($w) => $w->where('branch_id', $branchFilter))
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();
