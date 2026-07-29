@@ -215,16 +215,31 @@
                 <form action="{{ route('superadmin.backup.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
                     @csrf
                     <div class="drop-zone mb-4" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                        <input type="file" name="backup_file" id="fileInput" accept=".json" onchange="handleFileSelect(this)">
+                        <input type="file" name="backup_file" id="fileInput" accept=".json,.zip" onchange="handleFileSelect(this)">
                         <div id="dropZoneContent">
                             <i class="bi bi-file-earmark-arrow-up fs-1 text-muted mb-3 d-block"></i>
-                            <div class="fw-bold text-dark mb-1">Klik atau seret file JSON ke sini</div>
-                            <div class="small text-muted">Format .json, maksimum 50MB</div>
+                            <div class="fw-bold text-dark mb-1">Klik atau seret file JSON / ZIP ke sini</div>
+                            <div class="small text-muted">Format .json atau .zip · maksimum 2 GB (via LAN direct)</div>
                         </div>
                         <div id="fileSelected" class="d-none">
                             <i class="bi bi-file-earmark-check fs-1 text-success mb-2 d-block"></i>
                             <div class="fw-bold text-dark" id="fileName">-</div>
                             <div class="small text-muted" id="fileSize">-</div>
+                        </div>
+                    </div>
+
+                    {{-- Warning kalau file > 95 MB: CF Free plan reject di 100 MB --}}
+                    <div id="cfWarnBox" class="d-none alert border-0 rounded-3 mb-3" style="background:#fef2f2; border-left:4px solid #ef4444 !important;">
+                        <div class="d-flex gap-2 align-items-start">
+                            <i class="bi bi-cloud-slash-fill text-danger fs-5 mt-1"></i>
+                            <div class="small">
+                                <div class="fw-bold text-danger mb-1">File &gt; 95 MB — kemungkinan kena batas Cloudflare</div>
+                                <div class="text-muted">Domain publik <code>dev-it-sub.inkalum.com</code> di-proxy Cloudflare Free (hard-limit 100 MB body). Bila upload gagal <b>413 Payload Too Large</b>, gunakan URL LAN langsung (bypass CF):</div>
+                                <ul class="mb-0 ps-3 mt-1 text-muted">
+                                    <li><code>http://192.168.11.199/superadmin/backup</code> — dev Linux</li>
+                                    <li><code>http://localhost:8003/superadmin/backup</code> — Laragon lokal</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -352,13 +367,13 @@ dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith('.json')) {
+    if (file && /\.(json|zip)$/i.test(file.name)) {
         const dt = new DataTransfer();
         dt.items.add(file);
         document.getElementById('fileInput').files = dt.files;
         handleFileSelect({ files: [file] });
     } else {
-        alert('Hanya file .json yang diterima.');
+        alert('Hanya file .json atau .zip yang diterima.');
     }
 });
 
@@ -368,7 +383,14 @@ function handleFileSelect(input) {
     document.getElementById('dropZoneContent').classList.add('d-none');
     document.getElementById('fileSelected').classList.remove('d-none');
     document.getElementById('fileName').textContent = file.name;
-    document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    const sizeMB = file.size / 1024 / 1024;
+    document.getElementById('fileSize').textContent = sizeMB.toFixed(2) + ' MB';
+
+    // Deteksi domain publik CF + file > 95 MB → warn
+    const isPublicCF = /inkalum\.com$/i.test(location.hostname);
+    const warnBox = document.getElementById('cfWarnBox');
+    if (warnBox) warnBox.classList.toggle('d-none', !(isPublicCF && sizeMB > 95));
+
     document.getElementById('importBtn').disabled = false;
 }
 

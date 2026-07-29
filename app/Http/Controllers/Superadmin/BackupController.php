@@ -180,7 +180,7 @@ class BackupController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'backup_file' => 'required|file|max:102400', // max 100MB
+            'backup_file' => 'required|file|mimetypes:application/json,application/zip,application/x-zip-compressed,application/octet-stream|max:2097152',
         ]);
 
         $file = $request->file('backup_file');
