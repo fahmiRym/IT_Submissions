@@ -4,6 +4,85 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-29 (lanjutan #3) — ✅ DEPLOY PAKET B ke PROD .200 (non-approval fix)
+
+**Konteks:** user approve "eksekusi Paket B" — 2 improvement independent yang tidak
+sentuh approval bertingkat / migration schema.
+
+### B1 — PHP config bump prod (07:20 UTC)
+
+Sebelum: `upload:2M post:8M mem:128M` (PHP defaults)
+Sesudah: `upload:250M post:250M mem:512M` + `max_execution_time=300s`
+
+Method: tulis `/usr/local/etc/php/conf.d/uploads.ini` di container `it_app` via
+`docker exec ... > /tmp/u.ini && cat > /usr/local/etc/php/conf.d/uploads.ini`
+(bind-mount safe pattern). Reload via `docker kill --signal=USR2 it_app` (0 downtime).
+
+Verify: `docker exec it_app php -r 'echo ini_get(...)'` → semua limit baru aktif.
+HTTP `GET /login` 200 (backend responsive).
+
+Impact:
+- ✅ Fix OOM dompdf yg tercatat di log Juni (`Allowed memory size of 134217728 bytes exhausted at Cpdf.php:6171`)
+- ✅ Upload file > 8 MB via prod tidak lagi ditolak PHP di layer awal
+- ✅ Nginx prod sudah 250M (side-effect install-maintenance-page.sh Paket A) — sekarang PHP align
+
+### B2 — Backup upload validation fix (07:22 UTC)
+
+`app/Http/Controllers/Superadmin/BackupController.php` line 183:
+- Sebelum: `'required|file|max:102400'` (100 MB)
+- Sesudah: `'required|file|mimetypes:application/json,application/zip,application/x-zip-compressed,application/octet-stream|max:256000'` (250 MB, align dgn PHP limit)
+
+`resources/views/superadmin/backup/index.blade.php` line 218/221/222/326/332:
+- `accept=".json"` → `accept=".json,.zip"`
+- "Klik atau seret file JSON ke sini" → "Klik atau seret file JSON / ZIP ke sini"
+- "Format .json, maksimum 50MB" → "Format .json atau .zip · maksimum 250 MB (PHP limit prod)"
+- Drop handler regex: `file.name.endsWith('.json')` → `/\.(json|zip)$/i.test(file.name)`
+- Reject alert: "Hanya file .json yang diterima." → "Hanya file .json atau .zip yang diterima."
+
+Method: SED in-place di prod file + python replace untuk regex escape yg tricky.
+
+Clear cache (`cache:clear + config:clear + view:clear`) + graceful reload php-fpm.
+
+### Health check (07:23 UTC)
+
+| Endpoint | HTTP |
+|---|---|
+| `GET /` | 302 (redirect ke login) |
+| `GET /login` | 200 |
+| `GET /superadmin/backup` | 302 (redirect ke login karena tidak ada session — expected, route resolve OK) |
+
+### Backup + Rollback
+
+Backup di `/root/backups/*.bak.20260729_072147`:
+- `BackupController.php.bak.20260729_072147` (17 KB)
+- `backup_index.blade.php.bak.20260729_072147` (21 KB)
+
+Rollback:
+```bash
+ssh root@192.168.11.200 "
+  cp /root/backups/BackupController.php.bak.20260729_072147 /root/it_submissions/app/Http/Controllers/Superadmin/BackupController.php
+  cp /root/backups/backup_index.blade.php.bak.20260729_072147 /root/it_submissions/resources/views/superadmin/backup/index.blade.php
+  rm /root/it_submissions/app/Http/Controllers/Superadmin/... # PHP uploads.ini rollback:
+  docker exec it_app rm /usr/local/etc/php/conf.d/uploads.ini
+  docker kill --signal=USR2 it_app
+"
+```
+
+### Yang tidak di-deploy (dijelaskan sebelumnya di list Paket B)
+
+- copyToClipboard fix — prod view tidak punya HTML call `copyToClipboard()` (verify: 0 occurrence), bug local-only
+- Kota Title Case — sentuh BranchController (branches feature belum di-deploy)
+- Sidebar refactor / view arsip index compact / Partial Done — chain deps ke approval / migration
+- Deploy script SSH key auth — non-runtime, aman kapan pun user adopsi
+
+### Untuk lanjutan
+
+- [ ] Uji upload backup ZIP < 250 MB via prod (LAN direct `http://192.168.11.200/superadmin/backup`) — sekarang muat
+- [ ] Uji PDF export besar (dompdf) — sekarang memory 512M seharusnya cukup untuk > 500 arsip
+- [ ] Staged Rollout migration untuk fitur besar (PROJECT_OVERVIEW seksi 15.9)
+
+---
+
 ## 2026-07-29 (lanjutan #2) — ✅ DEPLOY PAKET A + MAINTENANCE PAGE ke PROD .200 SUKSES
 
 **Konteks:** user approve "eksekusi Paket A lalu aktifkan maintenance page fallback nginx".
