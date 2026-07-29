@@ -71,19 +71,15 @@
                         <td class="fw-bold text-primary">{{ $b->kota }}</td>
                         <td class="small text-muted">{{ $b->alamat ?: '—' }}</td>
                         <td class="text-center">
-                            @if($b->departments_count > 0)
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-0 fw-bold btnViewDepts"
-                                        data-branch-name="{{ $b->name }}"
-                                        data-branch-code="{{ $b->code }}"
-                                        data-branch-kota="{{ $b->kota }}"
-                                        data-depts='@json($b->departments)'
-                                        style="font-size:0.72rem;"
-                                        title="Lihat departemen di cabang ini">
-                                    {{ $b->departments_count }} <i class="bi bi-eye-fill ms-1"></i>
-                                </button>
-                            @else
-                                <span class="badge bg-light text-muted border rounded-pill" style="font-size:0.72rem;">0</span>
-                            @endif
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold btnManageDepts"
+                                    data-branch-id="{{ $b->id }}"
+                                    data-branch-name="{{ $b->name }}"
+                                    data-branch-code="{{ $b->code }}"
+                                    data-branch-kota="{{ $b->kota }}"
+                                    style="font-size:0.72rem;"
+                                    title="Kelola departemen di cabang ini (checklist)">
+                                <i class="bi bi-check2-square me-1"></i>{{ $b->departments_count }} · Kelola
+                            </button>
                         </td>
                         <td class="text-center">
                             @if($b->is_active)
@@ -99,7 +95,7 @@
                         <td class="text-end pe-4">
                             <button type="button" class="btn btn-sm btn-outline-primary rounded-circle p-1 me-1 btnEditBranch"
                                     data-branch="{{ json_encode($b) }}"
-                                    style="width:32px; height:32px;" title="Edit">
+                                    style="width:32px; height:32px;" title="Edit info cabang">
                                 <i class="bi bi-pencil-fill small"></i>
                             </button>
                             <form action="{{ route('superadmin.branches.destroy', $b->id) }}" method="POST" class="d-inline"
@@ -202,38 +198,119 @@
         </div>
     @endif
 
-    {{-- MODAL VIEW DEPARTMENTS --}}
-    <div class="modal fade" id="modalViewDepts" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    {{-- MODAL KELOLA DEPARTEMEN (bulk assign via checklist) --}}
+    <div class="modal fade" id="modalManageDepts" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content rounded-4 border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white border-0">
-                    <div>
-                        <h5 class="modal-title fw-bold mb-0"><i class="bi bi-building-fill me-2"></i><span id="viewDeptsBranchName">—</span></h5>
-                        <small class="opacity-75">
-                            Kode: <span class="font-monospace fw-bold" id="viewDeptsBranchCode">—</span>
-                            · Kota: <span class="fw-bold" id="viewDeptsBranchKota">—</span>
+                <form id="formManageDepts" method="POST">
+                    @csrf
+                    <div class="modal-header bg-primary text-white border-0">
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0">
+                                <i class="bi bi-check2-square me-2"></i>Kelola Departemen — <span id="mgrBranchName">—</span>
+                            </h5>
+                            <small class="opacity-75">
+                                Kode: <span class="font-monospace fw-bold" id="mgrBranchCode">—</span>
+                                · Kota: <span class="fw-bold" id="mgrBranchKota">—</span>
+                            </small>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 px-3 mb-3" style="font-size:0.8rem;">
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            Centang dept yg mau <strong>dimasukkan ke cabang ini</strong>. Simpan → dept ter-centang otomatis pindah ke sini,
+                            dept yg tidak dicentang (tapi sebelumnya di sini) akan jadi <strong>orphan</strong> (fallback global).
+                        </div>
+
+                        {{-- Toolbar: search + bulk action --}}
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3 p-2 bg-light rounded-3">
+                            <div class="position-relative flex-grow-1" style="min-width:200px;">
+                                <i class="bi bi-search position-absolute" style="left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
+                                <input type="text" id="mgrDeptSearch" class="form-control form-control-sm ps-4" placeholder="Cari dept...">
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="mgrBtnCheckAll">
+                                <i class="bi bi-check-all me-1"></i>Centang Semua
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" id="mgrBtnCheckNone">
+                                <i class="bi bi-x-lg me-1"></i>Kosongkan
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning fw-bold" id="mgrBtnCheckOrphan">
+                                <i class="bi bi-exclamation-circle me-1"></i>Centang Orphan Saja
+                            </button>
+                            <span class="ms-auto badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2 fw-bold">
+                                <span id="mgrSelectedCount">0</span> terpilih
+                            </span>
+                        </div>
+
+                        {{-- List depts --}}
+                        <div class="row row-cols-1 row-cols-md-2 g-2" id="mgrDeptList">
+                            @foreach($allDepts as $d)
+                                <div class="col mgr-dept-item"
+                                     data-name-lower="{{ strtolower($d->name) }}"
+                                     data-current-branch-id="{{ $d->branch_id ?? '' }}"
+                                     data-current-branch-name="{{ $d->branch?->name ?? '' }}"
+                                     data-current-branch-code="{{ $d->branch?->code ?? '' }}"
+                                     data-is-orphan="{{ is_null($d->branch_id) ? '1' : '0' }}"
+                                     data-is-active="{{ $d->is_active ? '1' : '0' }}">
+                                    <label class="d-flex align-items-center gap-2 p-2 rounded-3 border h-100 mgr-dept-label"
+                                           style="cursor:pointer; transition:all .15s ease;">
+                                        <input type="checkbox" name="dept_ids[]" value="{{ $d->id }}"
+                                               class="form-check-input mt-0 mgr-dept-cb" style="flex-shrink:0; transform:scale(1.1);">
+                                        <div class="flex-grow-1 min-w-0">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="fw-bold text-dark text-truncate {{ !$d->is_active ? 'text-muted text-decoration-line-through' : '' }}"
+                                                      style="font-size:0.85rem;">{{ $d->name }}</span>
+                                                @if(!$d->is_active)
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border" style="font-size:0.55rem;">OFF</span>
+                                                @endif
+                                            </div>
+                                            <div class="mt-1 mgr-branch-label">
+                                                @if($d->branch_id)
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 fw-bold" style="font-size:0.6rem;">
+                                                        <i class="bi bi-buildings-fill me-1"></i>{{ $d->branch->code }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 fw-bold" style="font-size:0.6rem;">
+                                                        <i class="bi bi-exclamation-circle me-1"></i>ORPHAN
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div id="mgrEmptyState" class="text-center text-muted py-4 d-none">
+                            <i class="bi bi-search fs-2 opacity-50"></i>
+                            <p class="mt-2 mb-0 small">Tidak ada dept yang cocok dengan pencarian.</p>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 d-flex justify-content-between">
+                        <small class="text-muted">
+                            <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                            Total <strong>{{ count($allDepts) }}</strong> departemen tersedia
                         </small>
+                        <div>
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4">
+                                <i class="bi bi-check-lg me-1"></i>Simpan Perubahan
+                            </button>
+                        </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 py-2 px-3" style="font-size:0.8rem;">
-                        <i class="bi bi-info-circle-fill me-1"></i>
-                        Semua pengajuan dari departemen di bawah ini akan stamp dokumen dgn kota <strong id="viewDeptsBranchKotaInline">—</strong>.
-                    </div>
-                    <div class="list-group list-group-flush" id="viewDeptsList">
-                        {{-- populated by JS --}}
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <a href="{{ route('superadmin.departments.index') }}" class="btn btn-outline-primary rounded-pill px-4">
-                        <i class="bi bi-pencil-fill me-1"></i>Kelola Departemen
-                    </a>
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
-                </div>
+                </form>
             </div>
         </div>
     </div>
+
+    <style>
+        .mgr-dept-label:hover { border-color:#6366f1 !important; background:#f5f3ff; }
+        .mgr-dept-cb:checked ~ .flex-grow-1 .fw-bold { color:#4338ca !important; }
+        .col.mgr-dept-item.d-none { display:none !important; }
+    </style>
 
     {{-- MODAL EDIT (populated via JS) --}}
     <div class="modal fade" id="modalBranchEdit" tabindex="-1" aria-hidden="true">
@@ -300,47 +377,78 @@
         });
     });
 
-    // View Departments modal
-    document.querySelectorAll('.btnViewDepts').forEach(btn => {
+    // ============ MODAL KELOLA DEPARTEMEN (bulk assign) ============
+    const mgrCheckboxes = () => document.querySelectorAll('.mgr-dept-cb');
+    const mgrItems      = () => document.querySelectorAll('.mgr-dept-item');
+    const mgrCountLabel = document.getElementById('mgrSelectedCount');
+
+    function updateMgrCount() {
+        const n = document.querySelectorAll('.mgr-dept-cb:checked').length;
+        mgrCountLabel.textContent = n;
+    }
+
+    document.querySelectorAll('.btnManageDepts').forEach(btn => {
         btn.addEventListener('click', function () {
-            const depts = JSON.parse(this.dataset.depts || '[]');
-            const name  = this.dataset.branchName;
-            const code  = this.dataset.branchCode;
-            const kota  = this.dataset.branchKota;
+            const id   = this.dataset.branchId;
+            const name = this.dataset.branchName;
+            const code = this.dataset.branchCode;
+            const kota = this.dataset.branchKota;
 
-            document.getElementById('viewDeptsBranchName').textContent = name;
-            document.getElementById('viewDeptsBranchCode').textContent = code;
-            document.getElementById('viewDeptsBranchKota').textContent = kota;
-            document.getElementById('viewDeptsBranchKotaInline').textContent = kota;
+            document.getElementById('mgrBranchName').textContent = name;
+            document.getElementById('mgrBranchCode').textContent = code;
+            document.getElementById('mgrBranchKota').textContent = kota;
+            document.getElementById('formManageDepts').action = "{{ url('superadmin/branches') }}/" + id + "/sync-depts";
 
-            const list = document.getElementById('viewDeptsList');
-            list.innerHTML = '';
-            if (depts.length === 0) {
-                list.innerHTML = '<div class="text-muted text-center py-4 small">Belum ada departemen di cabang ini.</div>';
-            } else {
-                depts.forEach((d, i) => {
-                    const item = document.createElement('div');
-                    item.className = 'list-group-item d-flex justify-content-between align-items-center px-3 py-2 border-0 border-bottom';
-                    item.innerHTML = `
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted fw-bold small" style="min-width:24px;">${i + 1}.</span>
-                            <i class="bi bi-building-fill text-primary"></i>
-                            <span class="fw-bold text-dark">${escapeHtml(d.name)}</span>
-                        </div>
-                        <span class="badge ${d.is_active ? 'bg-success' : 'bg-secondary'} bg-opacity-10 text-${d.is_active ? 'success' : 'secondary'} border border-${d.is_active ? 'success' : 'secondary'} border-opacity-25 rounded-pill" style="font-size:0.65rem;">
-                            ${d.is_active ? 'AKTIF' : 'NONAKTIF'}
-                        </span>
-                    `;
-                    list.appendChild(item);
-                });
-            }
+            // Reset UI + pre-check depts yg sudah masuk branch ini
+            document.getElementById('mgrDeptSearch').value = '';
+            mgrItems().forEach(el => el.classList.remove('d-none'));
+            document.getElementById('mgrEmptyState').classList.add('d-none');
+            mgrCheckboxes().forEach(cb => {
+                const item = cb.closest('.mgr-dept-item');
+                cb.checked = (item.dataset.currentBranchId === id);
+            });
+            updateMgrCount();
 
-            new bootstrap.Modal(document.getElementById('modalViewDepts')).show();
+            new bootstrap.Modal(document.getElementById('modalManageDepts')).show();
         });
     });
 
-    function escapeHtml(s) {
-        return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    // Search filter (client-side)
+    document.getElementById('mgrDeptSearch')?.addEventListener('input', function () {
+        const kw = this.value.trim().toLowerCase();
+        let visible = 0;
+        mgrItems().forEach(el => {
+            const match = !kw || el.dataset.nameLower.includes(kw);
+            el.classList.toggle('d-none', !match);
+            if (match) visible++;
+        });
+        document.getElementById('mgrEmptyState').classList.toggle('d-none', visible > 0);
+    });
+
+    // Bulk actions
+    document.getElementById('mgrBtnCheckAll')?.addEventListener('click', () => {
+        mgrItems().forEach(el => {
+            if (!el.classList.contains('d-none')) el.querySelector('.mgr-dept-cb').checked = true;
+        });
+        updateMgrCount();
+    });
+    document.getElementById('mgrBtnCheckNone')?.addEventListener('click', () => {
+        mgrItems().forEach(el => {
+            if (!el.classList.contains('d-none')) el.querySelector('.mgr-dept-cb').checked = false;
+        });
+        updateMgrCount();
+    });
+    document.getElementById('mgrBtnCheckOrphan')?.addEventListener('click', () => {
+        mgrItems().forEach(el => {
+            if (el.classList.contains('d-none')) return;
+            el.querySelector('.mgr-dept-cb').checked = (el.dataset.isOrphan === '1');
+        });
+        updateMgrCount();
+    });
+
+    // Live count on any checkbox change
+    document.addEventListener('change', e => {
+        if (e.target.classList.contains('mgr-dept-cb')) updateMgrCount();
+    });
 </script>
 @endpush

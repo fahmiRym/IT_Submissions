@@ -19,12 +19,17 @@ class BranchController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Dept tanpa branch — supaya user bisa liat "yatim"
+        // Dept tanpa branch
         $orphanDepts = \App\Models\Department::whereNull('branch_id')
             ->orderBy('name')
             ->get(['id', 'name', 'is_active']);
 
-        return view('superadmin.branches.index', compact('branches', 'orphanDepts'));
+        // Semua dept dgn info branch saat ini — untuk modal Kelola Departemen
+        $allDepts = \App\Models\Department::with('branch:id,name,code')
+            ->orderBy('name')
+            ->get(['id', 'name', 'is_active', 'branch_id']);
+
+        return view('superadmin.branches.index', compact('branches', 'orphanDepts', 'allDepts'));
     }
 
     public function store(Request $request)
@@ -78,5 +83,46 @@ class BranchController extends Controller
 
         $branch->delete();
         return back()->with('success', "Cabang '{$branch->name}' dihapus.");
+    }
+
+    /**
+     * Bulk assign dept ke branch — dipakai modal 'Kelola Departemen'.
+     * Semantic:
+     *   - Dept di dept_ids[] → branch_id = $id (dipindah kalau lagi di branch lain)
+     *   - Dept TIDAK di dept_ids[] TAPI branch_id-nya = $id sekarang → set NULL (orphan)
+     *   - Dept lain: tidak disentuh
+     */
+    public function syncDepts(Request $request, $id)
+    {
+        $branch = Branch::findOrFail($id);
+
+        $request->validate([
+            'dept_ids'   => 'nullable|array',
+            'dept_ids.*' => 'integer|exists:departments,id',
+        ]);
+
+        $keepIds = collect($request->input('dept_ids', []))->map(fn ($v) => (int) $v)->all();
+
+        DB::transaction(function () use ($branch, $keepIds, &$assigned, &$removed) {
+            // 1) Dept yg dicentang → assign ke branch ini (from anywhere)
+            $assigned = 0;
+            if (!empty($keepIds)) {
+                $assigned = DB::table('departments')
+                    ->whereIn('id', $keepIds)
+                    ->where(function ($q) use ($branch) {
+                        $q->whereNull('branch_id')->orWhere('branch_id', '!=', $branch->id);
+                    })
+                    ->update(['branch_id' => $branch->id, 'updated_at' => now()]);
+            }
+
+            // 2) Dept yg sekarang di branch ini TAPI tidak dicentang → orphan
+            $removed = DB::table('departments')
+                ->where('branch_id', $branch->id)
+                ->when(!empty($keepIds), fn ($q) => $q->whereNotIn('id', $keepIds))
+                ->update(['branch_id' => null, 'updated_at' => now()]);
+        });
+
+        return back()->with('success',
+            "Cabang '{$branch->name}' updated: {$assigned} dept ditambahkan, {$removed} dept dilepas ke orphan.");
     }
 }

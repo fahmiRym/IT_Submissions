@@ -320,10 +320,11 @@ Route::prefix('superadmin')
         Route::delete('app-versions/{id}',            [\App\Http\Controllers\Superadmin\AppVersionController::class, 'destroy'])->name('app-versions.destroy');
 
         // MASTER DATA — BRANCHES / CABANG
-        Route::get('branches',            [\App\Http\Controllers\Superadmin\BranchController::class, 'index'])->name('branches.index');
-        Route::post('branches',           [\App\Http\Controllers\Superadmin\BranchController::class, 'store'])->name('branches.store');
-        Route::put('branches/{id}',       [\App\Http\Controllers\Superadmin\BranchController::class, 'update'])->name('branches.update');
-        Route::delete('branches/{id}',    [\App\Http\Controllers\Superadmin\BranchController::class, 'destroy'])->name('branches.destroy');
+        Route::get('branches',                        [\App\Http\Controllers\Superadmin\BranchController::class, 'index'])->name('branches.index');
+        Route::post('branches',                       [\App\Http\Controllers\Superadmin\BranchController::class, 'store'])->name('branches.store');
+        Route::put('branches/{id}',                   [\App\Http\Controllers\Superadmin\BranchController::class, 'update'])->name('branches.update');
+        Route::delete('branches/{id}',                [\App\Http\Controllers\Superadmin\BranchController::class, 'destroy'])->name('branches.destroy');
+        Route::post('branches/{id}/sync-depts',       [\App\Http\Controllers\Superadmin\BranchController::class, 'syncDepts'])->name('branches.sync-depts');
 
         // MASTER DATA
         Route::patch('departments/{department}/toggle', [SuperDepartment::class, 'toggleIsActive'])->name('departments.toggle');
