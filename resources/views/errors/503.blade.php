@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Sedang Dalam Perbaikan — IT Submissions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,.1) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        .container {
+            max-width: 560px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        .icon-wrap {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 28px;
+            background: rgba(255,255,255,.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,.25);
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,.4); }
+            50%      { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255,255,255,0); }
+        }
+        .icon-wrap svg {
+            width: 56px;
+            height: 56px;
+            fill: #fff;
+            animation: spin 8s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        h1 {
+            font-size: clamp(1.8rem, 5vw, 2.6rem);
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+            opacity: .9;
+            margin-bottom: 32px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        .info-card {
+            background: rgba(255,255,255,.12);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: .95rem;
+        }
+        .info-row:not(:last-child) {
+            border-bottom: 1px solid rgba(255,255,255,.15);
+        }
+        .info-row strong { font-weight: 700; min-width: 100px; }
+        .info-row span   { opacity: .85; }
+        .info-row svg {
+            width: 20px; height: 20px; fill: currentColor; opacity: .85; flex-shrink: 0;
+        }
+        .btn-retry {
+            background: rgba(255,255,255,.2);
+            border: 2px solid rgba(255,255,255,.4);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all .25s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        .btn-retry:hover {
+            background: rgba(255,255,255,.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,.2);
+        }
+        .footer {
+            margin-top: 32px;
+            font-size: .8rem;
+            opacity: .7;
+            font-weight: 500;
+        }
+        .footer strong { font-weight: 700; opacity: 1; }
+        .countdown {
+            display: inline-block;
+            min-width: 30px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon-wrap">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+        </div>
+
+        <h1>Sedang Dalam Perbaikan</h1>
+        <p class="subtitle">
+            Server IT Submissions sedang di-maintenance oleh tim IT.<br>
+            Mohon tunggu beberapa saat, kami akan segera kembali.
+        </p>
+
+        <div class="info-card">
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/></svg>
+                <strong>Status</strong> <span>Server sedang restart / update</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                <strong>Kontak IT</strong> <span>Hubungi Departemen IT jika mendesak</span>
+            </div>
+            <div class="info-row">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                <strong>Auto Refresh</strong> <span>Halaman ini akan dimuat ulang dalam <span class="countdown" id="cd">30</span> detik</span>
+            </div>
+        </div>
+
+        <button type="button" class="btn-retry" onclick="location.reload()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            Coba Lagi Sekarang
+        </button>
+
+        <div class="footer">
+            <strong>IT Submissions</strong> © {{ date('Y') }} · Kode: <strong>503</strong> Service Unavailable
+        </div>
+    </div>
+
+    <script>
+        // Countdown 30 → 0 (sinkron dgn meta refresh)
+        let sec = 30;
+        const el = document.getElementById('cd');
+        setInterval(() => { if (sec > 0) { sec--; el.textContent = sec; } }, 1000);
+    </script>
+</body>
+</html>
