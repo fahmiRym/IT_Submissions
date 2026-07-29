@@ -4,6 +4,60 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-29 (lanjutan) — Prep patches/prod-safe/ untuk deploy Paket A ke .200
+
+**Konteks:** user minta deploy improvement ke prod .200 tanpa perlu migration.
+Analisa reveal: main branch reference banyak model/table/kolom yang belum ada
+di prod (era April 2026). Deploy naive = crash. Butuh backport.
+
+### Investigasi & pivot rencana
+
+Sebelumnya rencana "Paket B" (sidebar refactor + view compact) dianggap doable
+dengan defensive guards `Route::has()` + `Schema::hasTable()`. Setelah cek
+baseline prod `147ff58`:
+- `User.php` prod cuma punya 2 method (`department`, `notifications`)
+- Method modern (`canAccessJenis`, `sharedArsips`, `canViewPrice`, `activeDelegate`) belum ada
+- Sidebar refactor panggil method itu → `BadMethodCallException`
+- Chain dependency: butuh User modern → butuh `RolePengajuanAccess` class → butuh table baru → butuh migration
+
+**Kesimpulan**: Paket B **BATAL** — chain deps terlalu dalam. Sisipkan ke
+Staged Rollout migration di PROJECT_OVERVIEW seksi 15.9.
+
+### Delivered: folder `patches/prod-safe/` (baru)
+
+| File | Isi |
+|---|---|
+| `app/Models/Arsip.php` (14 KB) | Baseline prod 366 baris + `$appends = ['status_utama']` + accessor `getStatusUtamaAttribute()` |
+| `app/Http/Controllers/Api/BarcodeController.php` (5 KB) | Baseline prod + fix bug `accept_ba` corrupt kolom `status` + validation `in:arsip,accept_ba` + idempoten check |
+| `deploy-to-prod.ps1` | Automated deploy script (SCP + backup + PHP lint verify + graceful php-fpm reload via `docker kill --signal=USR2`, 0 downtime). Sekaligus deploy 3 file maintenance page (static, tidak butuh backport) |
+| `README.md` | Konteks + cara pakai + rollback + sunset (hapus folder setelah migration selesai) |
+
+### 3 commit local di sesi ini (BELUM di-push, classifier blokir push main)
+
+1. `a55e515 chore: gitignore .claude/settings.local.json + public/phpinfo.php`
+2. `66ccd2f feat(backup): bump upload limit 100MB → 2GB + accept .zip + CF warning`
+3. `33464ed docs: PROJECT_OVERVIEW.md konsolidasi + DEVLOG multi-sesi + manual-book`
+4. `8fb9a7c feat(prod-safe): backport minimal Arsip + BarcodeController untuk prod .200`
+
+User perlu **push manual**: `cd c:\laragon\www\e_arsip && git push origin main`
+
+### Impact ketika Paket A dieksekusi
+
+- ✅ **Fix bug mobile Android**: status_utama muncul benar (DONE/DITOLAK/dst)
+- ✅ **Fix bug mobile Android**: Accept BA tidak lagi corrupt status utama
+- ✅ **Halaman maintenance dark theme** aktif otomatis kalau container down
+- ✅ **Zero downtime** (graceful reload php-fpm)
+- ✅ **Zero risiko schema** (backport minimal, tidak sentuh SSO customization prod)
+
+### Untuk lanjutan
+
+- [ ] User push local ke origin
+- [ ] User approve: "eksekusi Paket A" — aku jalankan `patches/prod-safe/deploy-to-prod.ps1` ke prod .200
+- [ ] Setelah deploy sukses: install nginx fallback via `bash scripts/install-maintenance-page.sh` (aktifkan redirect 502/503/504 → maintenance.html)
+- [ ] Sunset folder `patches/prod-safe/` setelah Staged Rollout migration selesai
+
+---
+
 ## 2026-07-29 — Bump backup upload limit dev 199 ke 2 GB (lanjutan fix 413 kemarin)
 
 **Konteks:** user report upload ZIP backup ke `lin-dev-it-sub/superadmin/backup/import` gagal, "biasanya bisa, mungkin karena ukurannya terlalu besar". Chrome kasih `ERR_FILE_NOT_FOUND` (browser-side, bukan server) — kemungkinan file terlalu besar untuk buffer Chrome, atau tunnel drop mid-flight. User minta atur ulang max upload.
