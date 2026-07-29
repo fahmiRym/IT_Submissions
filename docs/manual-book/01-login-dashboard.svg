@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.2"/>
+    </filter>
+    <style>
+      .title    { font-size: 26px; font-weight: 700; fill: #1e3a8a; }
+      .subtitle { font-size: 14px; fill: #64748b; }
+      .box-user   { fill: #dbeafe; stroke: #2563eb; stroke-width: 2; }
+      .box-system { fill: #f1f5f9; stroke: #64748b; stroke-width: 2; }
+      .box-role   { fill: #fef3c7; stroke: #d97706; stroke-width: 2; }
+      .box-done   { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; }
+      .lbl-title { font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .lbl-desc  { font-size: 12px; fill: #334155; }
+      .lbl-arrow { font-size: 11px; fill: #475569; font-style: italic; }
+      .legend    { font-size: 11px; fill: #334155; }
+    </style>
+  </defs>
+
+  <text x="500" y="40" text-anchor="middle" class="title">1. LOGIN &amp; DASHBOARD</text>
+  <text x="500" y="62" text-anchor="middle" class="subtitle">Cara masuk aplikasi IT Submission dan mengenal halaman awal sesuai peran Anda</text>
+
+  <!-- Step 1 -->
+  <rect x="60"  y="110" width="220" height="90" rx="10" class="box-user" filter="url(#sh)"/>
+  <text x="170" y="140" text-anchor="middle" class="lbl-title">1. Buka Aplikasi</text>
+  <text x="170" y="162" text-anchor="middle" class="lbl-desc">Web: dev-it-sub.inkalum.com</text>
+  <text x="170" y="180" text-anchor="middle" class="lbl-desc">Android: buka IT Submission</text>
+
+  <line x1="280" y1="155" x2="380" y2="155" stroke="#333" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 2 -->
+  <rect x="390" y="110" width="220" height="90" rx="10" class="box-user" filter="url(#sh)"/>
+  <text x="500" y="140" text-anchor="middle" class="lbl-title">2. Halaman Login</text>
+  <text x="500" y="162" text-anchor="middle" class="lbl-desc">Masukkan Username</text>
+  <text x="500" y="180" text-anchor="middle" class="lbl-desc">Masukkan Password → klik LOGIN</text>
+
+  <line x1="610" y1="155" x2="710" y2="155" stroke="#333" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 3 -->
+  <rect x="720" y="110" width="220" height="90" rx="10" class="box-system" filter="url(#sh)"/>
+  <text x="830" y="140" text-anchor="middle" class="lbl-title">3. Sistem Verifikasi</text>
+  <text x="830" y="162" text-anchor="middle" class="lbl-desc">Cek username &amp; password</text>
+  <text x="830" y="180" text-anchor="middle" class="lbl-desc">Baca peran (role) Anda</text>
+
+  <!-- turn down -->
+  <path d="M 830,200 L 830,240 L 500,240 L 500,280" stroke="#333" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+  <text x="670" y="235" text-anchor="middle" class="lbl-arrow">Berhasil → arahkan ke Dashboard sesuai peran</text>
+
+  <!-- Dashboard split by role -->
+  <text x="500" y="305" text-anchor="middle" class="lbl-title">DASHBOARD (tampilan berbeda per peran)</text>
+
+  <rect x="60"  y="330" width="200" height="150" rx="10" class="box-role" filter="url(#sh)"/>
+  <text x="160" y="358" text-anchor="middle" class="lbl-title">Staff / Admin</text>
+  <text x="160" y="382" text-anchor="middle" class="lbl-desc">• Buat Pengajuan Baru</text>
+  <text x="160" y="402" text-anchor="middle" class="lbl-desc">• Daftar Pengajuan Saya</text>
+  <text x="160" y="422" text-anchor="middle" class="lbl-desc">• Inbox Bersama</text>
+  <text x="160" y="442" text-anchor="middle" class="lbl-desc">• Notifikasi</text>
+  <text x="160" y="462" text-anchor="middle" class="lbl-desc">• Profil (upload TTD)</text>
+
+  <rect x="280" y="330" width="200" height="150" rx="10" class="box-role" filter="url(#sh)"/>
+  <text x="380" y="358" text-anchor="middle" class="lbl-title">SPV / Kabag / Manager</text>
+  <text x="380" y="382" text-anchor="middle" class="lbl-desc">Semua menu Staff +</text>
+  <text x="380" y="402" text-anchor="middle" class="lbl-desc">• Approval Saya (inbox)</text>
+  <text x="380" y="422" text-anchor="middle" class="lbl-desc">• Daftar untuk di-TTD</text>
+  <text x="380" y="442" text-anchor="middle" class="lbl-desc">• Delegasi TTD</text>
+
+  <rect x="500" y="330" width="200" height="150" rx="10" class="box-role" filter="url(#sh)"/>
+  <text x="600" y="358" text-anchor="middle" class="lbl-title">Accounting</text>
+  <text x="600" y="382" text-anchor="middle" class="lbl-desc">Semua menu Staff +</text>
+  <text x="600" y="402" text-anchor="middle" class="lbl-desc">• Approval Adjustment</text>
+  <text x="600" y="422" text-anchor="middle" class="lbl-desc">• Lihat detail harga</text>
+
+  <rect x="720" y="330" width="220" height="150" rx="10" class="box-role" filter="url(#sh)"/>
+  <text x="830" y="358" text-anchor="middle" class="lbl-title">Departemen IT (Superadmin)</text>
+  <text x="830" y="382" text-anchor="middle" class="lbl-desc">Semua menu di atas +</text>
+  <text x="830" y="402" text-anchor="middle" class="lbl-desc">• TTD Final (No Dokumen)</text>
+  <text x="830" y="422" text-anchor="middle" class="lbl-desc">• Master Data (User, Dept)</text>
+  <text x="830" y="442" text-anchor="middle" class="lbl-desc">• Statistik Server + APK</text>
+
+  <!-- Fail path -->
+  <path d="M 720,155 Q 500,80 60,155" stroke="#dc2626" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+  <text x="500" y="80" text-anchor="middle" class="lbl-arrow" fill="#dc2626">Gagal login → pesan error → coba lagi</text>
+
+  <!-- Success ending -->
+  <rect x="380" y="520" width="240" height="60" rx="10" class="box-done" filter="url(#sh)"/>
+  <text x="500" y="547" text-anchor="middle" class="lbl-title">Siap Digunakan</text>
+  <text x="500" y="567" text-anchor="middle" class="lbl-desc">Anda sudah masuk ke sistem</text>
+
+  <line x1="160" y1="480" x2="440" y2="520" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="380" y1="480" x2="470" y2="520" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="600" y1="480" x2="530" y2="520" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="830" y1="480" x2="560" y2="520" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Legend -->
+  <rect x="60" y="620" width="16" height="16" class="box-user"/><text x="82" y="633" class="legend">Aksi User</text>
+  <rect x="160" y="620" width="16" height="16" class="box-system"/><text x="182" y="633" class="legend">Proses Sistem</text>
+  <rect x="290" y="620" width="16" height="16" class="box-role"/><text x="312" y="633" class="legend">Halaman per Peran</text>
+  <rect x="440" y="620" width="16" height="16" class="box-done"/><text x="462" y="633" class="legend">Selesai</text>
+  <line x1="560" y1="628" x2="600" y2="628" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4"/><text x="608" y="633" class="legend">Jalur Gagal</text>
+
+  <text x="500" y="680" text-anchor="middle" class="subtitle">Manual Book IT Submission — Halaman 1 dari 5</text>
+</svg>

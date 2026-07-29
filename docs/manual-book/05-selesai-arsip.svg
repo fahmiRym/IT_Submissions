@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 780" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.2"/>
+    </filter>
+    <style>
+      .title    { font-size: 26px; font-weight: 700; fill: #1e3a8a; }
+      .subtitle { font-size: 14px; fill: #64748b; }
+      .box-done   { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; }
+      .box-system { fill: #f1f5f9; stroke: #64748b; stroke-width: 2; }
+      .box-user   { fill: #dbeafe; stroke: #2563eb; stroke-width: 2; }
+      .box-arsip  { fill: #fef3c7; stroke: #d97706; stroke-width: 2; }
+      .box-qr     { fill: #ffffff; stroke: #0f172a; stroke-width: 1.5; }
+      .lbl-title { font-size: 14px; font-weight: 700; fill: #0f172a; }
+      .lbl-desc  { font-size: 11px; fill: #334155; }
+      .lbl-small { font-size: 10px; fill: #475569; }
+      .lbl-arrow { font-size: 11px; fill: #475569; font-style: italic; }
+      .legend    { font-size: 11px; fill: #334155; }
+    </style>
+  </defs>
+
+  <text x="500" y="40" text-anchor="middle" class="title">5. PENGAJUAN SELESAI &amp; ARSIP DIGITAL</text>
+  <text x="500" y="62" text-anchor="middle" class="subtitle">Apa yang terjadi setelah semua TTD selesai + cara download dan verifikasi keaslian</text>
+
+  <!-- Trigger box -->
+  <rect x="300" y="100" width="400" height="70" rx="10" class="box-done" filter="url(#sh)"/>
+  <text x="500" y="128" text-anchor="middle" class="lbl-title">Departemen IT klik TTD FINAL ✓</text>
+  <text x="500" y="150" text-anchor="middle" class="lbl-desc">(Tahap terakhir setelah SPV → Kabag → Manager selesai)</text>
+
+  <line x1="500" y1="170" x2="500" y2="210" stroke="#333" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Sistem otomatis 4 aksi -->
+  <text x="500" y="235" text-anchor="middle" class="lbl-title">SISTEM OTOMATIS MELAKUKAN:</text>
+
+  <g transform="translate(50, 250)">
+    <rect x="0" y="0" width="215" height="110" rx="10" class="box-system" filter="url(#sh)"/>
+    <text x="107" y="25" text-anchor="middle" class="lbl-title">① Generate</text>
+    <text x="107" y="43" text-anchor="middle" class="lbl-title">Nomor Dokumen</text>
+    <text x="107" y="65" text-anchor="middle" class="lbl-desc">Contoh: DC/2026/07/23/0001</text>
+    <text x="107" y="82" text-anchor="middle" class="lbl-small">(otomatis urut, unik,</text>
+    <text x="107" y="97" text-anchor="middle" class="lbl-small">tidak bisa diubah)</text>
+  </g>
+
+  <g transform="translate(285, 250)">
+    <rect x="0" y="0" width="215" height="110" rx="10" class="box-system" filter="url(#sh)"/>
+    <text x="107" y="25" text-anchor="middle" class="lbl-title">② Ubah Status</text>
+    <text x="107" y="43" text-anchor="middle" class="lbl-title">jadi "Done"</text>
+    <text x="107" y="65" text-anchor="middle" class="lbl-desc">Dokumen resmi &amp; final</text>
+    <text x="107" y="82" text-anchor="middle" class="lbl-small">Tidak bisa diedit lagi</text>
+    <text x="107" y="97" text-anchor="middle" class="lbl-small">oleh siapapun</text>
+  </g>
+
+  <g transform="translate(520, 250)">
+    <rect x="0" y="0" width="215" height="110" rx="10" class="box-system" filter="url(#sh)"/>
+    <text x="107" y="25" text-anchor="middle" class="lbl-title">③ Kirim Notifikasi</text>
+    <text x="107" y="43" text-anchor="middle" class="lbl-title">ke Pemohon</text>
+    <text x="107" y="65" text-anchor="middle" class="lbl-desc">Web (🔔) + Android (📱)</text>
+    <text x="107" y="82" text-anchor="middle" class="lbl-small">"Pengajuan Disetujui Penuh"</text>
+    <text x="107" y="97" text-anchor="middle" class="lbl-small">dgn nomor dokumen</text>
+  </g>
+
+  <g transform="translate(755, 250)">
+    <rect x="0" y="0" width="215" height="110" rx="10" class="box-system" filter="url(#sh)"/>
+    <text x="107" y="25" text-anchor="middle" class="lbl-title">④ Simpan ke</text>
+    <text x="107" y="43" text-anchor="middle" class="lbl-title">Arsip Digital</text>
+    <text x="107" y="65" text-anchor="middle" class="lbl-desc">Tersimpan permanen</text>
+    <text x="107" y="82" text-anchor="middle" class="lbl-small">di server dgn hash SHA256</text>
+    <text x="107" y="97" text-anchor="middle" class="lbl-small">= anti-manipulasi</text>
+  </g>
+
+  <line x1="500" y1="360" x2="500" y2="400" stroke="#333" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Dokumen final look -->
+  <text x="500" y="425" text-anchor="middle" class="lbl-title">DOKUMEN FINAL (contoh yg diterima Pemohon)</text>
+
+  <!-- mock document -->
+  <g transform="translate(180, 440)">
+    <rect x="0" y="0" width="300" height="230" rx="4" fill="white" stroke="#0f172a" stroke-width="1.5" filter="url(#sh)"/>
+    <text x="150" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#0f172a">PT INKA LUMBALINDO</text>
+    <text x="150" y="36" text-anchor="middle" font-size="9" fill="#475569">FORM ADJUSTMENT — DC/2026/07/23/0001</text>
+    <line x1="10" y1="45" x2="290" y2="45" stroke="#94a3b8"/>
+
+    <text x="15" y="65" font-size="8" fill="#334155">Tanggal: 23/07/2026</text>
+    <text x="15" y="78" font-size="8" fill="#334155">Dept   : Produksi</text>
+    <text x="15" y="91" font-size="8" fill="#334155">Produk : Billet Aluminium</text>
+    <text x="15" y="104" font-size="8" fill="#334155">Jumlah : 500 kg</text>
+    <text x="15" y="117" font-size="8" fill="#334155">Keterangan: penyesuaian hasil audit</text>
+
+    <line x1="10" y1="130" x2="290" y2="130" stroke="#94a3b8"/>
+    <text x="150" y="146" text-anchor="middle" font-size="9" font-weight="700" fill="#0f172a">TANDA TANGAN DIGITAL</text>
+
+    <!-- 4 QR mini -->
+    <g transform="translate(15, 152)">
+      <rect width="30" height="30" fill="#0f172a"/>
+      <rect x="4" y="4" width="22" height="22" fill="white"/>
+      <rect x="8" y="8" width="14" height="14" fill="#0f172a"/>
+      <text x="15" y="48" text-anchor="middle" font-size="7" fill="#334155">SPV</text>
+      <text x="15" y="58" text-anchor="middle" font-size="6" fill="#64748b">Budi S.</text>
+    </g>
+    <g transform="translate(80, 152)">
+      <rect width="30" height="30" fill="#0f172a"/>
+      <rect x="4" y="4" width="22" height="22" fill="white"/>
+      <rect x="8" y="8" width="14" height="14" fill="#0f172a"/>
+      <text x="15" y="48" text-anchor="middle" font-size="7" fill="#334155">Kabag</text>
+      <text x="15" y="58" text-anchor="middle" font-size="6" fill="#64748b">Ani W.</text>
+    </g>
+    <g transform="translate(145, 152)">
+      <rect width="30" height="30" fill="#0f172a"/>
+      <rect x="4" y="4" width="22" height="22" fill="white"/>
+      <rect x="8" y="8" width="14" height="14" fill="#0f172a"/>
+      <text x="15" y="48" text-anchor="middle" font-size="7" fill="#334155">Manager</text>
+      <text x="15" y="58" text-anchor="middle" font-size="6" fill="#64748b">Rudi H.</text>
+    </g>
+    <g transform="translate(210, 152)">
+      <rect width="30" height="30" fill="#0f172a"/>
+      <rect x="4" y="4" width="22" height="22" fill="white"/>
+      <rect x="8" y="8" width="14" height="14" fill="#0f172a"/>
+      <text x="15" y="48" text-anchor="middle" font-size="7" fill="#334155">Dept. IT</text>
+      <text x="15" y="58" text-anchor="middle" font-size="6" fill="#64748b">Fahmi R.</text>
+    </g>
+    <g transform="translate(255, 152)">
+      <rect width="30" height="30" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="15" y="20" text-anchor="middle" font-size="16">✓</text>
+      <text x="15" y="48" text-anchor="middle" font-size="7" fill="#065f46">FINAL</text>
+    </g>
+
+    <text x="150" y="215" text-anchor="middle" font-size="7" fill="#475569">Verifikasi: scan QR atau buka /verify/{token}</text>
+  </g>
+
+  <!-- Right column: 3 things user can do -->
+  <g transform="translate(510, 440)">
+    <rect x="0" y="0" width="310" height="70" rx="10" class="box-user" filter="url(#sh)"/>
+    <text x="155" y="25" text-anchor="middle" class="lbl-title">📥 Download PDF</text>
+    <text x="155" y="46" text-anchor="middle" class="lbl-desc">Buka detail → klik "Cetak / Download PDF"</text>
+    <text x="155" y="62" text-anchor="middle" class="lbl-small">Dokumen sudah include TTD + lampiran</text>
+  </g>
+
+  <g transform="translate(510, 520)">
+    <rect x="0" y="0" width="310" height="70" rx="10" class="box-arsip" filter="url(#sh)"/>
+    <text x="155" y="25" text-anchor="middle" class="lbl-title">🗂 Akses Arsip Kapan Saja</text>
+    <text x="155" y="46" text-anchor="middle" class="lbl-desc">Daftar Pengajuan → filter Status: Done</text>
+    <text x="155" y="62" text-anchor="middle" class="lbl-small">Semua pengajuan lama tersimpan permanen</text>
+  </g>
+
+  <g transform="translate(510, 600)">
+    <rect x="0" y="0" width="310" height="70" rx="10" class="box-done" filter="url(#sh)"/>
+    <text x="155" y="25" text-anchor="middle" class="lbl-title">🔍 Verifikasi Keaslian</text>
+    <text x="155" y="46" text-anchor="middle" class="lbl-desc">Pihak eksternal scan QR di dokumen</text>
+    <text x="155" y="62" text-anchor="middle" class="lbl-small">Sistem tampilkan info lengkap TTD (publik)</text>
+  </g>
+
+  <!-- Legend -->
+  <rect x="60" y="700" width="16" height="16" class="box-system"/><text x="82" y="713" class="legend">Proses Sistem</text>
+  <rect x="180" y="700" width="16" height="16" class="box-done"/>  <text x="202" y="713" class="legend">Selesai</text>
+  <rect x="270" y="700" width="16" height="16" class="box-user"/>  <text x="292" y="713" class="legend">Aksi Anda</text>
+  <rect x="370" y="700" width="16" height="16" class="box-arsip"/> <text x="392" y="713" class="legend">Arsip</text>
+
+  <text x="500" y="763" text-anchor="middle" class="subtitle">Manual Book IT Submission — Halaman 5 dari 5 (SELESAI)</text>
+</svg>

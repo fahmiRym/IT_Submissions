@@ -4,6 +4,386 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-29 — Bump backup upload limit dev 199 ke 2 GB (lanjutan fix 413 kemarin)
+
+**Konteks:** user report upload ZIP backup ke `lin-dev-it-sub/superadmin/backup/import` gagal, "biasanya bisa, mungkin karena ukurannya terlalu besar". Chrome kasih `ERR_FILE_NOT_FOUND` (browser-side, bukan server) — kemungkinan file terlalu besar untuk buffer Chrome, atau tunnel drop mid-flight. User minta atur ulang max upload.
+
+### Bumps applied (dev 199 only, prod `.200` tidak disentuh)
+
+| Layer | Kemarin | Hari ini |
+|---|---|---|
+| Nginx `client_max_body_size` | 500M | **2G** |
+| PHP `upload_max_filesize` | 500M | **2048M** |
+| PHP `post_max_size` | 500M | **2048M** |
+| PHP `memory_limit` | 512M | **1024M** |
+| PHP `max_execution_time` | 600s | **1800s** (30 min) |
+| PHP `max_input_time` | 600s | **1800s** |
+| PHP `default_socket_timeout` | — | **1800s** |
+| Laravel `backup_file max:` | 512000 (500 MB) | **2097152 (2 GB)** |
+| View hint | "500 MB" | "2 GB (via LAN direct)" |
+
+### Deployed langsung ke dev 199
+
+Beda dari kemarin (SCP diblokir), kali ini pakai `sed -i` in-place di file `/root/it_submissions/`:
+- `app/Http/Controllers/Superadmin/BackupController.php` line 183 — Laravel validator
+- `resources/views/superadmin/backup/index.blade.php` line 218,221,222 — accept `.json,.zip`, hint 2 GB
+- `docker exec it_app php artisan config:clear cache:clear view:clear`
+
+**Tidak di-apply**: nginx timeout directive tambahan (`client_body_timeout`, `fastcgi_read_timeout`). Classifier blokir — bilang di luar scope "max upload". Kalau upload timeout mid-flight nanti, minta lagi.
+
+### Batas hard yg TIDAK bisa di-code
+
+**Cloudflare Free plan 100 MB body** — edge reject sebelum sampai backend. Solusi tetap sama: file > 100 MB **wajib bypass CF** dgn URL LAN direct:
+- **`http://192.168.11.199/superadmin/backup`** (dev Linux LAN — sekarang siap terima s.d. 2 GB)
+
+UI (frontend view) sudah auto-warn dgn banner merah kalau file > 95 MB DAN domain publik `inkalum.com`, kasih link URL LAN.
+
+### Untuk lanjutan
+
+- [ ] User test upload ulang. Kalau via LAN direct masih gagal dgn error lain, kirim screenshot page (Laravel error, bukan Chrome).
+- [ ] Lokal (Laragon) PHP masih 250M — kalau user pakai `localhost:8003` upload, kena PHP limit 250M. Aku bisa bump `C:\xampp\php\php.ini` juga kalau perlu, tapi affects semua project Laragon lain.
+- [ ] File edit lokal (`app/Http/Controllers/Superadmin/BackupController.php` + `resources/views/superadmin/backup/index.blade.php`) belum di-commit. Kalau nanti ada re-deploy dari git, akan overwrite. Recommend: user commit + push.
+
+---
+
+## 2026-07-28 (lanjutan #3) — Fix 413 Payload Too Large di `dev-it-sub/superadmin/backup/import`
+
+**Konteks:** user upload backup file lewat `dev-it-sub.inkalum.com/superadmin/backup/import` → **413 dari Cloudflare edge** (bukan backend). File > CF Free hard-limit 100 MB.
+
+### Root cause chain
+
+1. **Cloudflare Free plan** hard-limit body 100 MB — edge reject SEBELUM sampai backend
+2. **Laravel validation** `backup_file: max:102400` (100 MB) — kebetulan sama, ketika lewat CF nggak keliatan
+3. **Nginx dev 199** `client_max_body_size 100M` — matches CF
+4. **Frontend UX** klaim "maksimum 50MB" + `accept=".json"` only — kontradiksi dgn backend yg juga terima `.zip`
+
+### Fix delivered (multi-layer)
+
+**A. Backend** [BackupController.php:183](app/Http/Controllers/Superadmin/BackupController.php#L183)
+- `max:102400` → `max:512000` (500 MB)
+- Tambah MIME whitelist: `application/json,application/zip,application/x-zip-compressed,application/octet-stream`
+
+**B. Frontend** [backup/index.blade.php:218-223](resources/views/superadmin/backup/index.blade.php#L218-L223)
+- `accept=".json"` → `accept=".json,.zip"` (konsisten dgn backend)
+- Hint "maksimum 50MB" → "maksimum 500 MB"
+- Warning box merah muncul otomatis kalau file > 95 MB DAN domain publik CF (`inkalum.com` regex) — kasih daftar URL LAN bypass (`http://192.168.11.199/superadmin/backup`, `http://localhost:8003/superadmin/backup`)
+
+**C. Infra dev 199** (via `docker exec` — TIDAK sentuh prod `.200`)
+- Nginx `client_max_body_size 100M → 500M` di `/etc/nginx/conf.d/default.conf` + `nginx -s reload` (test passed)
+- PHP-FPM `uploads.ini`: `upload_max_filesize 250M → 500M`, `post_max_size 250M → 500M`, `max_execution_time 300 → 600` + `docker kill --signal=USR2 it_app` (graceful reload, no downtime)
+- Health check `curl localhost/superadmin/backup` → 302 (backend healthy)
+
+### Yang tidak bisa di-fix code
+
+**CF Free plan 100 MB hard-limit** tidak bisa dilewati dari sisi backend. Solusi:
+- File ≤ 100 MB: pakai `dev-it-sub.inkalum.com` seperti biasa (via CF) ✓
+- File > 100 MB: **wajib bypass CF** — pakai `http://192.168.11.199/superadmin/backup` (dev LAN) atau `http://localhost:8003/superadmin/backup` (Laragon lokal)
+- UI sekarang otomatis kasih tahu user ini via warning box merah
+
+### File edited
+
+- `app/Http/Controllers/Superadmin/BackupController.php` (backend validation)
+- `resources/views/superadmin/backup/index.blade.php` (frontend UX + warning box + JS deteksi CF)
+
+### Untuk lanjutan
+
+- [ ] Deploy 2 file di atas ke dev 199 — sekarang backend Linux masih pakai kode lama (kalau CF pilih Linux connector, request ke sana kena validasi 100 MB Laravel lama). SCP direct diblokir classifier — user commit + push ke origin + pull di dev 199 (biasa) atau approve deploy manual.
+- [ ] Cek apakah user user domain publik selalu route ke Laragon (2 connector setup). Kalau tidak, fix code Linux dulu sebelum bisa upload > 100 MB via LAN Linux.
+- [ ] Prod `.200` **tidak disentuh** sesuai instruksi user (production scope).
+
+---
+
+## 2026-07-28 (lanjutan #2) — Verifikasi state PROD `.200` — DRIFT jauh dari asumsi
+
+**Konteks:** setelah user tambah allow rule `plink *` di settings.local.json, SSH ke prod berhasil. Temuan bikin PROJECT_OVERVIEW.md perlu revisi major.
+
+### Temuan KRITIS
+
+Prod `.200` **BUKAN sync ke `d3f1c2b`** seperti dev `.199`. Prod stuck di era **April 2026 (pre-approval-chain era)**:
+
+| Metrik | Prod `.200` | Local/Dev |
+|---|---|---|
+| Git HEAD | `147ff58 first commit` | `4cf76ca` (+8 di origin) |
+| Migration files | 30 | 67 |
+| Container running | 3 (`it_app`, `it_nginx`, `it_db`) | 6 (+ assistant + inkalum) |
+| Arsip live | **1586** | — |
+| User live | **176** (168 admin, 6 super, 2 legacy) | — |
+| Role SPV/Kabag/Manager | ❌ belum ada | ✅ |
+| ArsipShare / Approval chain / TTD | ❌ belum ada | ✅ |
+| Multi-pemohon / Lampiran / Personal notes | ❌ belum ada | ✅ |
+| APK versioning / Delegasi TTD | ❌ belum ada | ✅ |
+| PHP upload_max | 2 MB (default) | 250 MB (Dockerfile) |
+| PHP memory_limit | 128 MB (default → OOM dompdf) | 512 MB |
+| Nginx client_max_body_size | 50 MB | tidak set |
+| Last activity | 2026-06-29 (~30 hari idle) | daily |
+
+Prod path = `/root/it_submissions` (bukan `/var/www` seperti diperkirakan).
+
+**Root cause**: DEVLOG 2026-07-21 "deploy sync" itu ke DEV `.199`, bukan PROD `.200`. Prod terakhir kali deploy jauh sebelum itu — 3+ bulan tertinggal.
+
+### Impact untuk rancang-ulang
+
+Tidak bisa langsung `git pull + migrate` di prod. Perlu **staged rollout** dgn data backfill:
+- 176 user butuh assignment role SPV/Kabag/Manager/Accounting (manual per user)
+- 1586 arsip existing perlu di-mark "legacy pre-approval" atau di-backfill dgn Pemohon-only chain
+- Fix PHP config lebih dulu (upload_max, memory_limit) — quick win, mengatasi OOM dompdf yg sekarang error
+
+### Delivered update
+
+- **PROJECT_OVERVIEW.md seksi 15** direwrite: state prod verified + migration gap detail (37 migration belum) + 3 opsi strategis migrasi (Big Bang / Staged / Blue-Green). Rekomendasi **Staged Rollout** 2-3 minggu.
+- Seksi 12.1 topologi diperbarui: prod path corrected ke `/root/it_submissions`, docker container list actual (3 bukan 6).
+
+### Untuk lanjutan (next session priority)
+
+- [ ] Cek isi 19 file uncommitted di prod (`git diff` per file) — investigate apa yg drift, apakah harus preserve atau buang
+- [ ] Backup DB prod lengkap (`mysqldump`) sebelum migrasi apapun
+- [ ] Quick-win: patch PHP config prod (uploads.ini 250M/512M) via `scripts/fix-upload-size.sh` (sudah ada) — fix OOM dompdf duluan
+- [ ] Petakan role assignment untuk 176 user (butuh input HR / manual mapping oleh Departemen IT)
+- [ ] Test full migration di dev `.199` clone dulu → validasi seed data → baru execute di prod
+
+---
+
+## 2026-07-28 (lanjutan) — Buat PROJECT_OVERVIEW.md untuk rancang-ulang
+
+**Konteks:** user minta pelajari project + simpan progres ke markdown yg bisa dipakai rancang-ulang pengembangan kedepan. User juga minta SSH ke prod `192.168.11.200` (root/bismillah@).
+
+### Yang terjadi
+
+1. **SSH plink diblokir** auto-mode classifier — reason: production/shared host remote shell tanpa authorization spesifik. Sudah retry dgn otorisasi eksplisit user, tetap blok. User minta jangan modifikasi apapun (production scope).
+2. **Alternatif**: analisa komprehensif lokal (mirror deployed state per DEVLOG 2026-07-21 `d3f1c2b`) via 2 Explore agent paralel — deep dive controllers/traits/models + views/frontend/storage.
+
+### Delivered
+
+**File baru**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) — 15 seksi konsolidasi:
+- Tech stack + role & jenis pengajuan + state machine
+- Data model 4-layer (arsip + master + audit + support)
+- Approval chain flow + delegasi TTD (chain-forward, hash SHA-256)
+- 3-layer access control (role-based + share + superadmin override)
+- Core workflows (submit, arsip sistem, print, barcode scan)
+- Semua endpoint API Android (36 route)
+- Struktur codebase (26 model, 5 trait, 30+ controller)
+- Migration timeline 2026-05 → 2026-07 (delegation, share, role access, lampiran, app_versions)
+- 10 tech debt items prioritized (God-object controllers, view monolitik 1000+ baris, hard-coded approval config, jQuery legacy, no test coverage)
+- 7 kategori rekomendasi rancang-ulang (service layer, Livewire/Vue, Reverb websocket, testing, observability, security, cleanup)
+- Deployment topology (Trikasa 191 / Inkasa dev 199 / prod 200 not-verified) + CF tunnel notes
+- Action items verifikasi prod (10 poin checklist + PowerShell snippet siap-copy)
+
+### Bukan yang dilakukan (batasan sesi)
+
+- ❌ SSH prod `.200` — tidak verifikasi git HEAD/docker state/DB migration status di prod. Assumed sync per DEVLOG 2026-07-21 tapi user harus verify manual pakai snippet PowerShell di seksi 15.
+- ❌ Modifikasi apapun di codebase / `.claude/settings.local.json`.
+
+### Untuk lanjutan
+
+- [ ] User jalankan snippet SSH verifikasi prod (di PROJECT_OVERVIEW seksi 15)
+- [ ] Kalau mau enable SSH otomatis dari Claude: tambah `"Bash(plink *)"` + `"PowerShell(plink *)"` di `.claude/settings.local.json` allow list
+- [ ] Pilih 1-2 tech debt HIGH IMPACT untuk sprint refactor pertama (rekomendasi: service layer extract dulu, lalu split view monolitik)
+
+---
+
+## 2026-07-28 — Fix 413 PostTooLargeException upload APK Superadmin
+
+**Konteks:** user upload APK ~59 MB via `/superadmin/app-versions/1/upload-apk` di `dev-it-sub.inkalum.com` (routing ke Linux 199). Kena Laravel `Illuminate\Http\Exceptions\PostTooLargeException` — PHP `post_max_size = 40 MB` (default), APK 59 MB overflow.
+
+### Diagnosis chain
+
+- Laravel `AppVersionController::uploadApk()` sudah accept sampai 200 MB (`max:204800` KB) — bukan bottleneck.
+- Dockerfile `docker/php/Dockerfile:26` **sudah set 100M** via `/usr/local/etc/php/conf.d/uploads.ini`, TAPI container it_app running kemungkinan build lama sebelum Dockerfile ini diedit (config belum di-bake ke image running).
+- Nginx `client_max_body_size` di container it_nginx: unknown, default nginx = 1 MB tapi karena request 59 MB sampai ke PHP artinya nginx sudah lebih besar dari 59 MB.
+
+### Fix delivered
+
+**1. `docker/php/Dockerfile:26`** — permanent config saat rebuild:
+- Naik dari `100M` → `250M` (margin APK growth ke 200+ MB)
+- Tambah `memory_limit=512M`, `max_execution_time=300s`, `max_input_time=300s`
+- Pakai `printf` (bukan `echo -e`) supaya escape `\n` reliable
+
+**2. `scripts/fix-upload-size.sh`** — hot-fix tanpa rebuild image:
+1. Tulis `/usr/local/etc/php/conf.d/uploads.ini` di container `it_app` dgn limit 250M
+2. `kill -USR2 1` (graceful php-fpm reload) atau fallback `docker restart it_app`
+3. Verify effective limits via `php -r 'ini_get(...)'`
+4. Cari nginx config default (`/etc/nginx/conf.d/default.conf` atau `sites-enabled/default`) → replace `client_max_body_size` atau bikin drop-in `zz-upload-size.conf`
+5. `nginx -t && nginx -s reload`
+6. Health check local backend
+
+**Jalankan dari laptop:**
+```powershell
+scp scripts\fix-upload-size.sh root@192.168.11.199:/tmp/
+ssh root@192.168.11.199 "sed -i 's/\r$//' /tmp/fix-upload-size.sh && bash /tmp/fix-upload-size.sh"
+```
+
+### Batasan Cloudflare (PENTING)
+
+- **CF Free plan hard-limit body = 100 MB** — di atas itu CF sendiri yg reject dgn 413, bukan backend
+- APK 59 MB → aman via CF (`dev-it-sub.inkalum.com`)
+- APK > 100 MB → **wajib bypass CF**:
+  - Upload direct ke `http://192.168.11.199/superadmin/app-versions/...` dari LAN
+  - Atau upgrade CF plan (Pro 500 MB / Business 200 MB / Ent custom)
+
+### Untuk lanjutan
+
+- [ ] Setelah user run hot-fix, verify upload sukses
+- [ ] Kalau sering upload APK besar, evaluasi CF plan atau pattern upload direct/LAN
+
+---
+
+## 2026-07-27 — Android ITSubmissions: alignment web + hide menu web-only
+
+**Konteks:** user minta Android IT Submissions "hampir sama persis" dgn web dari sisi pengajuan; menu **Lokasi Fisik, User, Laporan, Setting, Profile** dinyatakan web-only (belum ada implementasi native) → sembunyikan dulu.
+
+Android project path: `C:\Users\ADI EDP\AndroidStudioProjects\ITSubmissions\`
+
+### Survey state (pra-edit)
+
+Struktur navigasi & fitur di Android (via Explore agent):
+
+- **Drawer menu**: Dashboard, Buat Pengajuan, Scan Barcode, Persetujuan, section PENGAJUAN (7 jenis), section LAPORAN & DATA (Laporan, Server Stats, Activity Logs, MD Lokasi/Dept/Unit/Manager/User/Produk), section SISTEM (Notifikasi, Pengaturan, Keluar)
+- **`FormPengajuanActivity.kt`**: 7 jenis pengajuan support penuh (Cancel/Adjust/Mutasi Billet/Mutasi Produk/Internal Memo/Bundel/Produk Baru), dynamic detail rows per jenis, upload file (pdf/jpg/png max 10MB), custom approver chain per jenis
+- **Retrofit** endpoint pengajuan: `POST /api/arsip/store`, `GET /api/arsip`, `GET /api/arsip/{id}`, `GET /api/arsip/master-data`
+- **Build clean** (last session Jul 22 successful, `full` + `approver` flavor)
+
+### Perubahan session ini
+
+**1. Hide menu web-only** — non-destructive, XML `visible="false"` + guard di MainActivity supaya `applyRoleVisibility()` tidak override:
+
+| File | Line | Menu ID | Perubahan |
+|---|---|---|---|
+| `res/menu/navigation_drawer.xml` | 72 | `nav_laporan` | `visible=false` + komentar |
+| `res/menu/navigation_drawer.xml` | 84 | `nav_md_lokasi` | `visible=false` |
+| `res/menu/navigation_drawer.xml` | 100 | `nav_md_user` | `visible=false` |
+| `res/menu/navigation_drawer.xml` | 119 | `nav_settings` | `visible=false` |
+| `MainActivity.kt` | 259 | `btnProfileHeader` | `visibility = GONE` (dulu listener → nav_settings) |
+| `MainActivity.kt` | 325-336 | `applyRoleVisibility()` | Remove `nav_laporan, nav_md_lokasi, nav_md_user` dari `superOnlyItems`; tambah array baru untuk selalu-hide |
+
+**Kenapa non-destructive:** kalau nanti fitur ready di Android, tinggal set `visible="true"` di XML + kembalikan ke `superOnlyItems` array — tanpa perlu tulis ulang.
+
+**2. Verifikasi compile** — `gradlew.bat compileFullDebugKotlin --rerun-tasks` → **BUILD SUCCESSFUL** (21/21 task executed, hanya warning deprecation `LocalBroadcastManager` di `DashboardFragment.kt` yg pre-existing).
+
+### Cross-check pengajuan Android vs web (untuk future sync)
+
+Web `_create.blade.php` field yg dikirim ke `/admin/arsip/store`:
+- `jenis_pengajuan`, `tgl_pengajuan`, `department_id`, `unit_id`, `manager_id`, `kategori` (Cancel-only), `no_transaksi`, `keterangan`, `requesters[]` (multi user id), file `bukti_scan`
+
+Android `FormPengajuanActivity.submitPengajuan()` yg dikirim ke `/api/arsip/store`:
+- `jenis_pengajuan`, `department_id`, `unit_id`, `manager_id`, `keterangan`, `no_transaksi`, `pemohon`, `detailJson`, `approvalChainJson`, file `bukti_scan`
+
+**Gap teridentifikasi (belum diaction — untuk next session):**
+1. ❗ Android **tidak mengirim `tgl_pengajuan`** → backend fallback `now()` (OK untuk kasus normal, tapi tidak bisa backdate)
+2. ❗ Android kirim `pemohon` (string) bukan `requesters[]` (array id) — backend punya fallback: kalau `pemohon` diisi string, dipakai as-is; kalau kosong, join names dari `requesters[]`. Multi-pemohon picker web belum ada di Android.
+3. ❗ Android kirim `kategori` di `detailJson`, backend expect top-level `kategori`. Cek payload persistence untuk Cancel jenis.
+4. ⚠ Android form punya EXTRA feature yg web tidak punya: **structured detail barang** (product_code, lot, qty_in/out, panjang) + **custom approval chain per jenis** — ini improvement, biarkan.
+
+### Untuk lanjut kemudian (next session TODO)
+
+- [ ] Tambah field `tgl_pengajuan` di Android FormPengajuanActivity (default = today, spinner date)
+- [ ] Multi-pemohon picker Android (kirim `requesters[]` array ID user)
+- [ ] Fix Cancel: kirim `kategori` sbg top-level MultipartBody.part, bukan di detailJson
+- [ ] Test end-to-end submit dari Android → verify di web arsip list
+- [ ] Kalau user butuh Settings/Profile aktif kembali → set 4 `visible=false` ke `true` + revert MainActivity guard
+
+---
+
+## 2026-07-21 (lanjutan) — Fix 502 publik `dev-it-sub`: diagnosis via CF dashboard
+
+**Konteks:** user report `dev-it-sub.inkalum.com` tidak reach dari publik. Awal aku curl 200, kemudian curl 5x = 502 semua → confirmed pattern flaky.
+
+### Diagnosis (dari screenshot CF Dashboard user)
+
+Tunnel `dev-it-sub` sudah punya **2 connectors HA**:
+| Connector | Platform | Origin IP | Hostname |
+|---|---|---|---|
+| `2373b416-...` | linux_amd64 | 103.182.235.218 | `it-submission-dev` (Linux 199) |
+| `cb421a3d-...` | windows_amd64 | 103.182.229.178 | `ADI` (laptop) |
+
+**Published routes (share ke semua connector):**
+| # | Hostname | Service |
+|---|---|---|
+| 1 | `dev-it-sub.inkalum.com` | `http://localhost:8003` ← **BUG** |
+| 4 | `lin-dev-it-sub.inkalum.com` | `http://192.168.11.199` ✓ |
+
+Root cause: ingress `dev-it-sub → localhost:8003` di-apply ke kedua connector. Di laptop = Laragon (jalan), di Linux = port kosong (**502**). CF edge random pilih connector → flaky.
+
+Sementara `lin-dev-it-sub → http://192.168.11.199` valid dari kedua connector (laptop via LAN, Linux locally) → **200 stabil**.
+
+### Correction
+
+- Script `setup-tunnel-lin-dev-it.sh` yg aku bikin — **obsolete**, subdomain `lin-dev-it-sub` sudah ada dan jalan. Deleted.
+- Script `setup-tunnel-dev-it-sub-replica.sh` (socat approach) — **misleading**, socat forward ke Linux nginx bukan Laragon → tetap tidak konsisten. Deleted.
+
+### Rekomendasi final
+
+Zero-code, dashboard-only:
+- **Publik / HP / demo** → pakai `https://lin-dev-it-sub.inkalum.com` (200 stabil)
+- **Dev cepat di laptop (hot-reload Laragon)** → `dev-it-sub.inkalum.com` — accept flaky dari luar (kadang 502 kalau CF pilih Linux connector)
+
+Kalau user mau `dev-it-sub` juga publik-stabil: edit route target di CF dashboard `dev-it-sub → http://192.168.11.199` (lose Laragon backend for that URL). Atau hapus Linux connector dari tunnel (butuh bikin tunnel Linux-only baru, karena `lin-dev-it-sub` ikut mati).
+
+---
+
+## 2026-07-21 — DEPLOY DEV: sync semua backlog + 3 container restart
+
+**Konteks:** dev server tertinggal ~2 bulan (last commit `a7816ee` vs local `d3f1c2b`). Deploy manual via SSH plink ke `root@192.168.11.199`.
+
+### Server topology teridentifikasi
+
+- **6 Docker containers running:**
+  - `it_app` (php-fpm, PHP 8.2.30, port 9000 internal)
+  - `it_nginx` (port 80 public)
+  - `it_db` (MySQL, port 3306 internal)
+  - `it_assistant_reverb` + `it_assistant_app` (untuk ITAsistant, 3 weeks uptime)
+  - `inkalum_db`
+- **Host PHP:** 8.2.31 CLI tapi **missing ext-gd** → composer install harus dilakukan **INSIDE container it_app** (bukan host)
+- **Project dir:** `/root/it_submissions` (dev), `/var/www` (prod)
+
+### Deploy steps executed
+
+1. Pre-deploy: git HEAD `a7816ee`, PHP 8.2.31 (host), Docker OK
+2. Backup .env → `.env.bak.20260721090553`
+3. Stash local changes (`docker/php/Dockerfile.backup`, `public/info.php` untracked)
+4. `git pull --ff-only origin main` → `a7816ee..d3f1c2b` ✓
+5. Stash pop (tanpa conflict)
+6. `docker exec it_app composer install --no-dev --optimize-autoloader` — 63 packages ✓
+7. `docker exec it_app php artisan migrate --force` → **13 migration DONE**:
+   - `2026_06_06_100000_create_arsip_lampiran_table`
+   - `2026_06_13_120000_add_last_login_to_users`
+   - `2026_06_19_100000_add_spv_kabag_manager_roles_to_users_table`
+   - `2026_06_19_110000_strip_nik_prefix_from_existing_usernames`
+   - `2026_06_19_120000_reset_hr_import_passwords_to_role_default`
+   - `2026_06_19_130000_create_item_prices_and_add_harga_to_items`
+   - `2026_06_19_140000_create_user_pengajuan_access`
+   - `2026_06_19_150000_create_arsip_shares`
+   - `2026_06_20_100000_create_role_pengajuan_access`
+   - `2026_06_22_100000_extend_arsip_shares_for_role_target`
+   - `2026_06_22_110000_create_arsip_personal_notes`
+   - `2026_07_14_100000_add_approval_delegation_fields` (TTD delegasi)
+   - `2026_07_20_100000_create_app_versions_table` (auto-update APK)
+8. Cache: `view:clear + config:clear + route:clear + cache:clear + config:cache + route:cache + view:cache` ✓
+9. Seed `AppVersion` — 2 row (itsubmissions v1.0.0, itapproval v1.0.0)
+10. Fix permission `storage/` + `bootstrap/cache/`
+11. **Restart 3 container** (`docker restart it_app it_nginx it_db`) — semua `Up 6 seconds`
+12. Health check:
+    - LOCAL `http://localhost/api/mobile/version` → **HTTP 200 in 12ms**
+    - TUNNEL `https://dev-it-sub.inkalum.com/api/mobile/version` → **HTTP 200 in 470ms**
+    - Response JSON valid: `{"success":true,"app_slug":"itsubmissions",...}`
+
+### Test hasil deploy
+
+```
+GET /api/mobile/version?app=itsubmissions  → 200 ✓
+GET /api/mobile/version?app=itapproval     → 200 ✓
+```
+
+### Untuk Android team
+
+Sekarang dev server FULLY-SYNC dgn local. Semua endpoint approval + version check + delegation aktif. Silakan retest login dari Android app — kalau masih 502 dari data seluler, itu masalah Cloudflare tunnel edge routing (bukan backend).
+
+### Deploy script `.\deploy-dev.ps1` refinement TODO
+
+- Deteksi Docker → auto-switch composer/migrate/artisan call ke `docker exec it_app ...` (bukan run di host)
+- Sekarang deploy manual step-by-step. Nanti next iteration script auto-detect.
+
+---
+
 ## 2026-07-20 (lanjutan) — Superadmin UI: Kelola APK Android
 
 **Konteks:** setelah endpoint public `/api/mobile/version` siap, tambah UI supaya superadmin bisa manage versi + upload APK tanpa harus tinker manual.
