@@ -45,7 +45,8 @@ class BranchController extends Controller
         ]);
 
         $data['code']      = strtoupper($data['code']);
-        $data['kota']      = strtoupper($data['kota']);
+        // Normalize kota → Title Case (Pasuruan, Tangerang) supaya display konsisten
+        $data['kota']      = \Illuminate\Support\Str::title(trim(strtolower($data['kota'])));
         $data['is_active'] = $request->boolean('is_active', true);
 
         Branch::create($data);
@@ -65,7 +66,8 @@ class BranchController extends Controller
         ]);
 
         $data['code']      = strtoupper($data['code']);
-        $data['kota']      = strtoupper($data['kota']);
+        // Normalize kota → Title Case (Pasuruan, Tangerang) supaya display konsisten
+        $data['kota']      = \Illuminate\Support\Str::title(trim(strtolower($data['kota'])));
         $data['is_active'] = $request->boolean('is_active', true);
 
         $branch->update($data);

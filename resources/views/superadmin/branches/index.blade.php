@@ -143,7 +143,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-secondary">KOTA (untuk stamp dokumen) *</label>
-                                <input type="text" name="kota" class="form-control text-uppercase" required placeholder="TANGERANG" maxlength="60">
+                                <input type="text" name="kota" class="form-control" required placeholder="Tangerang" maxlength="60">
                                 <small class="text-muted" style="font-size:0.68rem;">Muncul di dokumen: "TANGERANG, 06 Maret 2026"</small>
                             </div>
                             <div class="col-md-6">
@@ -334,7 +334,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-secondary">KOTA (untuk stamp dokumen) *</label>
-                                <input type="text" name="kota" id="editKota" class="form-control text-uppercase" required maxlength="60">
+                                <input type="text" name="kota" id="editKota" class="form-control" required maxlength="60">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-bold text-secondary">STATUS</label>

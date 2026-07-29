@@ -14,7 +14,7 @@ class SettingController extends Controller
         return view('superadmin.settings.index', [
             'app_logo' => Setting::get('app_logo'),
             'app_name' => Setting::get('app_name', config('app.name')),
-            'kota_ba' => Setting::get('kota_ba', 'PASURUAN'),
+            'kota_ba' => Setting::get('kota_ba', 'Pasuruan'),
             'wm_done' => Setting::get('wm_done', 'DONE'),
             'wm_void' => Setting::get('wm_void', 'VOID'),
             'wm_reject' => Setting::get('wm_reject', 'REJECT'),
@@ -40,8 +40,9 @@ class SettingController extends Controller
         // 1. Update Nama Aplikasi (Gunakan DB langsung agar lebih pasti)
         \DB::table('settings')->updateOrInsert(['key' => 'app_name'], ['value' => $request->app_name, 'updated_at' => now()]);
 
-        // 2. Update Kota BA
-        \DB::table('settings')->updateOrInsert(['key' => 'kota_ba'], ['value' => strtoupper($request->kota_ba ?? 'PASURUAN'), 'updated_at' => now()]);
+        // 2. Update Kota BA — Title Case (Pasuruan, Tangerang) supaya konsisten
+        $kota = \Illuminate\Support\Str::title(trim(strtolower($request->kota_ba ?? 'Pasuruan')));
+        \DB::table('settings')->updateOrInsert(['key' => 'kota_ba'], ['value' => $kota, 'updated_at' => now()]);
 
         // 3. Update Watermarks
         $wms = ['wm_done', 'wm_void', 'wm_reject'];

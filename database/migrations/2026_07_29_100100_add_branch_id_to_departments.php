@@ -20,7 +20,7 @@ return new class extends Migration
             $id = DB::table('branches')->insertGetId([
                 'name'       => 'Kantor Pusat Pasuruan',
                 'code'       => 'PSR',
-                'kota'       => 'PASURUAN',
+                'kota'       => 'Pasuruan',
                 'alamat'     => null,
                 'is_active'  => true,
                 'created_at' => now(),

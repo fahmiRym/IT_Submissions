@@ -49,7 +49,7 @@
                                     <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 ms-1" style="font-size:0.6rem;">FALLBACK</span>
                                 </label>
                                 <input type="text" name="kota_ba" class="form-control bg-light border-0 py-2 px-3"
-                                    value="{{ $kota_ba ?? 'PASURUAN' }}" placeholder="Contoh: PASURUAN">
+                                    value="{{ $kota_ba ?? 'Pasuruan' }}" placeholder="Contoh: Pasuruan">
                                 <div class="alert alert-info bg-info bg-opacity-10 border-info border-opacity-25 mt-2 mb-0 py-2 px-3" style="font-size:0.78rem;">
                                     <i class="bi bi-info-circle-fill me-1"></i>
                                     <strong>Fallback global.</strong> Prioritas kota di dokumen:
