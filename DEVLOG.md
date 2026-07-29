@@ -4,6 +4,77 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-29 (lanjutan #2) — ✅ DEPLOY PAKET A + MAINTENANCE PAGE ke PROD .200 SUKSES
+
+**Konteks:** user approve "eksekusi Paket A lalu aktifkan maintenance page fallback nginx".
+
+### Deploy timeline (05:00-05:01 UTC)
+
+1. **Backup** — `/root/backups/{Arsip,BarcodeController}.php.bak.20260729_045743` ✓
+2. **SCP** 5 file:
+   - `app/Models/Arsip.php` (14 KB) — via pscp ✓
+   - `app/Http/Controllers/Api/BarcodeController.php` (5 KB) — via pscp (retry setelah classifier tolak pertama) ✓
+   - 3 file static maintenance via SSH stdin pipe (pscp blokir) ✓
+3. **PHP lint** di container → no syntax errors ✓
+4. **Verify patch applied** → `$appends = ['status_utama']` di Arsip.php + `in:arsip,accept_ba` di BarcodeController ✓
+5. **Clear cache** (cache/config/view) + **graceful reload** php-fpm via `docker kill --signal=USR2` ✓
+6. **Health check**: GET `/` 302, GET `/login` 200, PHP-FPM "ready to handle connections" ✓
+7. **Install maintenance page fallback**: run `install-maintenance-page.sh` di prod → nginx config di-patch dgn upstream `php_backend` + `error_page 502 503 504 = @maintenance` + `fastcgi_intercept_errors on` + fast-fail timeouts ✓
+8. **Test fallback**: `php artisan down` → GET `/login` return HTTP 200 dgn `maintenance.html` (18.8 KB dark theme) ✓
+9. **Recovery**: `php artisan up` → GET `/login` back to HTTP 200 login page ✓
+
+### Downtime aktual = 0 detik
+Semua reload graceful. User yg aktif tidak lihat gap.
+
+### File aktif di prod sekarang
+
+- `/root/it_submissions/app/Models/Arsip.php` — backport (baseline 147ff58 + accessor status_utama)
+- `/root/it_submissions/app/Http/Controllers/Api/BarcodeController.php` — backport (fix accept_ba corrupt status)
+- `/root/it_submissions/public/maintenance.html` — dark theme maintenance page
+- `/root/it_submissions/resources/views/errors/503.blade.php` — Laravel error page (fallback dari Laravel side)
+- `/root/it_submissions/scripts/install-maintenance-page.sh` — installer nginx fallback (idempotent)
+- `/etc/nginx/conf.d/default.conf` di container `it_nginx` — patched V3 dgn upstream + error_page + fast-fail
+- Backup nginx original: `/etc/nginx/conf.d/default.conf.bak` (kalau perlu rollback)
+
+### Impact ke user
+
+- ✅ **Android tvStatusUtama akurat** — DONE muncul kalau no_doc ada, DITOLAK kalau status=Reject, DIBATALKAN kalau Void (sebelumnya selalu "DALAM PROSES")
+- ✅ **Bug accept_ba fix** — Accept BA di Android tidak lagi corrupt kolom `status` (sebelumnya set status="accept_ba" hancurkan enum)
+- ✅ **Maintenance page aktif** — kalau `it_app` down (deploy/crash/OOM dompdf), user lihat halaman cantik dark theme + auto-heartbeat retry, bukan raw 502
+- ✅ **Fast-fail nginx** — kalau php-fpm down, nginx tidak retry 5-10s (DNS NXDOMAIN), langsung serve maintenance page dalam <3s
+
+### Yg TIDAK disentuh (sesuai instruksi user "hati hati production scope")
+
+- SSO Keycloak integration (Auth/SsoController + config/sso.php + views modified)
+- routes/web.php prod (ada route SSO custom)
+- RoleMiddleware.php prod (ada custom role 'user' mapping)
+- Superadmin/UserController.php prod (custom role validation)
+- Views layouts/app + auth/login (custom SSO button)
+- docker-compose.yml + docker/nginx/ prod (custom)
+- Config PHP upload_max_filesize / memory_limit prod (masih 2M/128M default — kalau perlu upload backup > 2 MB via prod, harus bump di lain waktu)
+- 37 migration + fitur baru (approval chain, TTD, delegasi, share, lampiran, dst) — masuk Staged Rollout
+
+### Rollback prosedur (kalau perlu)
+
+```bash
+ssh root@192.168.11.200 "
+  cp /root/backups/Arsip.php.bak.20260729_045743 /root/it_submissions/app/Models/Arsip.php
+  cp /root/backups/BarcodeController.php.bak.20260729_045743 /root/it_submissions/app/Http/Controllers/Api/BarcodeController.php
+  docker exec it_nginx cp /etc/nginx/conf.d/default.conf.bak /etc/nginx/conf.d/default.conf
+  docker exec it_nginx nginx -s reload
+  docker kill --signal=USR2 it_app
+"
+```
+
+### Untuk lanjutan
+
+- [ ] User push local ke origin (5 commit belum ter-push, classifier blokir aku push main)
+- [ ] Test Android app real device — verify tvStatusUtama muncul + Accept BA tidak error
+- [ ] Kalau butuh upload backup ke prod > 2 MB via LAN direct, bump PHP + nginx config prod (mirror seperti dev 199)
+- [ ] Staged Rollout migration untuk fitur besar (PROJECT_OVERVIEW seksi 15.9)
+
+---
+
 ## 2026-07-29 (lanjutan) — Prep patches/prod-safe/ untuk deploy Paket A ke .200
 
 **Konteks:** user minta deploy improvement ke prod .200 tanpa perlu migration.
