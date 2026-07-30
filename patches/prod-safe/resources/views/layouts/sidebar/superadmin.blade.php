@@ -294,19 +294,11 @@
             </li>
             @endif
 
-            {{-- MAINTENANCE MODE — deploy M2 2026-07-30 (skip di dev kalau blm deploy) --}}
-            @if(Route::has('superadmin.maintenance.index'))
-            <li class="nav-item">
-                <a href="{{ route('superadmin.maintenance.index') }}"
-                    class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.maintenance.*') ? 'active' : '' }}">
-                    <i class="bi bi-tools text-danger"></i>
-                    <span>Maintenance Mode</span>
-                    @if(app()->isDownForMaintenance())
-                        <span class="badge bg-danger rounded-pill ms-auto">ON</span>
-                    @endif
-                </a>
-            </li>
-            @endif
+            {{-- MAINTENANCE MODE — MENU DIHIDE (2026-07-30)
+                 Alasan: menghindari accidentally toggle. Route + controller + view
+                 TETAP ADA di /superadmin/maintenance untuk akses via URL manual
+                 atau via SSH: docker exec it_app php artisan down/up.
+            --}}
 
         </ul>
     </div>
