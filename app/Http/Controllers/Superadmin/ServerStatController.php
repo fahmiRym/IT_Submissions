@@ -15,6 +15,8 @@ class ServerStatController extends Controller
         $diskUsed  = $diskTotal - $diskFree;
         $diskPct   = round(($diskUsed / max($diskTotal, 1)) * 100, 2);
 
+        // System memory (real RAM), fallback ke PHP memory kalau /proc/meminfo tidak ada (Windows)
+        $sysMem = $this->getSystemMemory();
         $memUsage = memory_get_usage(true);
         $memPeak  = memory_get_peak_usage(true);
         $memLimit = $this->iniBytes(ini_get('memory_limit'));
@@ -22,6 +24,8 @@ class ServerStatController extends Controller
         $loadAvg = function_exists('sys_getloadavg') ? sys_getloadavg() : [0, 0, 0];
 
         $cpuCount = $this->getCpuCount();
+        // Real CPU % dari /proc/stat (Linux only). Beda dgn load average — ini current utilization instant.
+        $cpuUsage = $this->getRealCpuUsage();
 
         $stats = [
             'php_version' => PHP_VERSION,
@@ -41,16 +45,27 @@ class ServerStatController extends Controller
             'disk_used_percent' => $diskPct,
             'disk_free_percent' => round(100 - $diskPct, 2),
 
+            // PHP process memory (buat debug PHP-level saja)
             'mem_usage' => $this->formatBytes($memUsage),
             'mem_peak' => $this->formatBytes($memPeak),
             'mem_limit' => $memLimit > 0 ? $this->formatBytes($memLimit) : (ini_get('memory_limit') ?: 'unlimited'),
             'mem_used_percent' => $memLimit > 0 ? round(($memUsage / $memLimit) * 100, 2) : 0,
+
+            // SYSTEM memory (real RAM — ini yang bermakna untuk operator)
+            'sys_mem_total' => $this->formatBytes($sysMem['total']),
+            'sys_mem_used'  => $this->formatBytes($sysMem['used']),
+            'sys_mem_free'  => $this->formatBytes($sysMem['available']),
+            'sys_mem_pct'   => $sysMem['pct_used'],
 
             'load_1m' => $loadAvg[0] ?? 0,
             'load_5m' => $loadAvg[1] ?? 0,
             'load_15m' => $loadAvg[2] ?? 0,
             'cpu_count' => $cpuCount,
             'load_pct_1m' => $cpuCount > 0 ? min(100, round(($loadAvg[0] / $cpuCount) * 100, 1)) : 0,
+            // Real CPU utilization (instant, dari /proc/stat) — bandingan yg lebih akurat drpd load avg
+            'cpu_usage_pct' => $cpuUsage['usage_pct'],
+            'cpu_iowait_pct' => $cpuUsage['iowait_pct'],
+            'cpu_idle_pct'  => $cpuUsage['idle_pct'],
 
             'uptime' => $this->getUptime(),
 
@@ -79,7 +94,7 @@ class ServerStatController extends Controller
             'mail_driver' => config('mail.default'),
             'app_logs_size' => $this->formatBytes($this->dirSize(storage_path('logs'))),
             'recent_error_count' => $this->countRecentErrors(),
-            'alerts' => $this->buildAlerts($diskPct, $memLimit > 0 ? round(($memUsage / $memLimit) * 100, 2) : 0, $cpuCount > 0 ? round(($loadAvg[0] / $cpuCount) * 100, 1) : 0),
+            'alerts' => $this->buildAlerts($diskPct, $sysMem['pct_used'], $cpuUsage['usage_pct'], $cpuUsage['iowait_pct']),
         ];
 
         // Health score 0-100
@@ -99,15 +114,97 @@ class ServerStatController extends Controller
         $memLimit  = $this->iniBytes(ini_get('memory_limit'));
         $loadAvg   = function_exists('sys_getloadavg') ? sys_getloadavg() : [0, 0, 0];
         $cpuCount  = $this->getCpuCount();
+        $sysMem    = $this->getSystemMemory();
+        $cpuUsage  = $this->getRealCpuUsage();
 
         return response()->json([
             'ts' => now()->format('H:i:s'),
-            'disk_pct' => round((1 - $diskFree / max($diskTotal, 1)) * 100, 2),
-            'mem_pct' => $memLimit > 0 ? round(($memUsage / $memLimit) * 100, 2) : 0,
-            'cpu_pct' => $cpuCount > 0 ? min(100, round(($loadAvg[0] / $cpuCount) * 100, 1)) : 0,
-            'mem_usage' => $this->formatBytes($memUsage),
-            'load_1m' => round($loadAvg[0], 2),
+            'disk_pct'    => round((1 - $diskFree / max($diskTotal, 1)) * 100, 2),
+            'mem_pct'     => $sysMem['pct_used'], // system RAM, bukan PHP process
+            'cpu_pct'     => $cpuUsage['usage_pct'], // real utilization, bukan load avg ratio
+            'cpu_iowait'  => $cpuUsage['iowait_pct'],
+            'load_1m'     => round($loadAvg[0], 2),
+            'load_ratio'  => $cpuCount > 0 ? round($loadAvg[0] / $cpuCount, 2) : 0, // 1.0 = fully utilized
         ]);
+    }
+
+    /* Read system RAM dari /proc/meminfo (Linux) */
+    protected function getSystemMemory(): array
+    {
+        if (!file_exists('/proc/meminfo') || !is_readable('/proc/meminfo')) {
+            // Fallback: PHP process memory (Windows)
+            $mu = memory_get_usage(true);
+            $ml = $this->iniBytes(ini_get('memory_limit'));
+            return [
+                'total'     => $ml ?: $mu,
+                'used'      => $mu,
+                'available' => max(0, $ml - $mu),
+                'pct_used'  => $ml > 0 ? round(($mu / $ml) * 100, 1) : 0,
+            ];
+        }
+
+        $lines = @file('/proc/meminfo', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+        $parse = fn ($k) => (int) (preg_match('/^' . preg_quote($k) . ':\s+(\d+)/i',
+            implode("\n", array_filter($lines, fn ($l) => str_starts_with($l, $k))), $m) ? $m[1] : 0);
+
+        $totalKb     = $parse('MemTotal');
+        $availableKb = $parse('MemAvailable') ?: $parse('MemFree');
+        $usedKb      = max(0, $totalKb - $availableKb);
+        $pct         = $totalKb > 0 ? round(($usedKb / $totalKb) * 100, 1) : 0;
+
+        return [
+            'total'     => $totalKb * 1024,
+            'used'      => $usedKb * 1024,
+            'available' => $availableKb * 1024,
+            'pct_used'  => $pct,
+        ];
+    }
+
+    /* Read real CPU utilization dari /proc/stat (Linux). Sample 2x dgn jeda 200ms. */
+    protected function getRealCpuUsage(): array
+    {
+        if (!file_exists('/proc/stat') || !is_readable('/proc/stat')) {
+            return ['usage_pct' => 0, 'iowait_pct' => 0, 'idle_pct' => 100];
+        }
+        $s1 = $this->readCpuLine();
+        usleep(200000); // 200ms
+        $s2 = $this->readCpuLine();
+        if (!$s1 || !$s2) return ['usage_pct' => 0, 'iowait_pct' => 0, 'idle_pct' => 100];
+
+        $totalDelta = 0;
+        $delta = [];
+        foreach (['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq', 'steal'] as $k) {
+            $delta[$k] = max(0, ($s2[$k] ?? 0) - ($s1[$k] ?? 0));
+            $totalDelta += $delta[$k];
+        }
+        if ($totalDelta === 0) return ['usage_pct' => 0, 'iowait_pct' => 0, 'idle_pct' => 100];
+
+        $idle   = $delta['idle'] + $delta['iowait'];
+        $active = $totalDelta - $idle;
+        return [
+            'usage_pct'  => round(($active / $totalDelta) * 100, 1),
+            'iowait_pct' => round(($delta['iowait'] / $totalDelta) * 100, 1),
+            'idle_pct'   => round(($delta['idle'] / $totalDelta) * 100, 1),
+        ];
+    }
+    protected function readCpuLine(): ?array
+    {
+        $first = @file_get_contents('/proc/stat');
+        if (!$first) return null;
+        $line = strtok($first, "\n");
+        if (!str_starts_with($line, 'cpu ')) return null;
+        $parts = preg_split('/\s+/', trim($line));
+        array_shift($parts); // remove 'cpu' label
+        return [
+            'user' => (int) ($parts[0] ?? 0),
+            'nice' => (int) ($parts[1] ?? 0),
+            'system' => (int) ($parts[2] ?? 0),
+            'idle' => (int) ($parts[3] ?? 0),
+            'iowait' => (int) ($parts[4] ?? 0),
+            'irq' => (int) ($parts[5] ?? 0),
+            'softirq' => (int) ($parts[6] ?? 0),
+            'steal' => (int) ($parts[7] ?? 0),
+        ];
     }
 
     /* ============================================================
@@ -410,7 +507,7 @@ class ServerStatController extends Controller
         }
     }
 
-    protected function buildAlerts(float $diskPct, float $memPct, float $cpuPct): array
+    protected function buildAlerts(float $diskPct, float $memPct, float $cpuPct, float $iowaitPct = 0): array
     {
         $alerts = [];
         if ($diskPct > 90) {
@@ -418,13 +515,23 @@ class ServerStatController extends Controller
         } elseif ($diskPct > 75) {
             $alerts[] = ['level' => 'warning', 'icon' => 'bi-hdd', 'title' => 'Disk Tinggi', 'msg' => "Disk terpakai {$diskPct}%. Pertimbangkan pembersihan."];
         }
+        // Memory: pakai SYSTEM RAM (bukan PHP process). Threshold realistic untuk server 8GB.
         if ($memPct > 90) {
-            $alerts[] = ['level' => 'danger', 'icon' => 'bi-memory', 'title' => 'Memory Kritis', 'msg' => "Memory PHP {$memPct}% dari limit."];
-        } elseif ($memPct > 70) {
-            $alerts[] = ['level' => 'warning', 'icon' => 'bi-memory', 'title' => 'Memory Tinggi', 'msg' => "Memory PHP {$memPct}% dari limit."];
+            $alerts[] = ['level' => 'danger', 'icon' => 'bi-memory', 'title' => 'Memory Kritis', 'msg' => "System RAM terpakai {$memPct}%. Cek proses berat / pertimbangkan tambah RAM."];
+        } elseif ($memPct > 75) {
+            $alerts[] = ['level' => 'warning', 'icon' => 'bi-memory', 'title' => 'Memory Tinggi', 'msg' => "System RAM terpakai {$memPct}%."];
         }
-        if ($cpuPct > 80) {
-            $alerts[] = ['level' => 'danger', 'icon' => 'bi-cpu-fill', 'title' => 'CPU Beban Tinggi', 'msg' => "Load average {$cpuPct}% dari kapasitas."];
+        // CPU: pakai REAL utilization (bukan load avg ratio). Load avg tinggi tanpa CPU% tinggi = bursty, bukan masalah.
+        if ($cpuPct > 85) {
+            $alerts[] = ['level' => 'danger', 'icon' => 'bi-cpu-fill', 'title' => 'CPU Beban Tinggi', 'msg' => "CPU utilization {$cpuPct}% (sustained). Cek proses aktif."];
+        } elseif ($cpuPct > 65) {
+            $alerts[] = ['level' => 'warning', 'icon' => 'bi-cpu', 'title' => 'CPU Cukup Tinggi', 'msg' => "CPU utilization {$cpuPct}%."];
+        }
+        // IO Wait — indikator bottleneck disk / network
+        if ($iowaitPct > 30) {
+            $alerts[] = ['level' => 'danger', 'icon' => 'bi-hourglass-split', 'title' => 'IO Wait Tinggi', 'msg' => "IO wait {$iowaitPct}% — proses banyak nunggu disk/network. Cek slow query / disk saturation."];
+        } elseif ($iowaitPct > 15) {
+            $alerts[] = ['level' => 'warning', 'icon' => 'bi-hourglass', 'title' => 'IO Wait Naik', 'msg' => "IO wait {$iowaitPct}%."];
         }
         if (config('app.debug')) {
             $alerts[] = ['level' => 'warning', 'icon' => 'bi-bug-fill', 'title' => 'APP_DEBUG=ON', 'msg' => 'Mode debug aktif. Matikan di produksi (set APP_DEBUG=false).'];
@@ -440,10 +547,15 @@ class ServerStatController extends Controller
         $score = 100;
         if ($stats['disk_used_percent'] > 90)        $score -= 25;
         elseif ($stats['disk_used_percent'] > 75)    $score -= 10;
-        if ($stats['mem_used_percent'] > 90)         $score -= 20;
-        elseif ($stats['mem_used_percent'] > 70)     $score -= 8;
-        if ($stats['load_pct_1m'] > 80)              $score -= 20;
-        elseif ($stats['load_pct_1m'] > 50)          $score -= 8;
+        // Pakai SYSTEM RAM sekarang (bukan PHP process)
+        $memPct = $stats['sys_mem_pct'] ?? $stats['mem_used_percent'];
+        if ($memPct > 90)                            $score -= 20;
+        elseif ($memPct > 75)                        $score -= 8;
+        // Pakai REAL CPU utilization (bukan load avg ratio yg bisa tinggi karena bursty)
+        $cpuPct = $stats['cpu_usage_pct'] ?? $stats['load_pct_1m'];
+        if ($cpuPct > 85)                            $score -= 20;
+        elseif ($cpuPct > 65)                        $score -= 8;
+        if (($stats['cpu_iowait_pct'] ?? 0) > 20)    $score -= 10;
         if (($stats['queue_health']['failed'] ?? 0) > 10) $score -= 10;
         if ($stats['recent_error_count'] > 50)       $score -= 15;
         elseif ($stats['recent_error_count'] > 10)   $score -= 5;

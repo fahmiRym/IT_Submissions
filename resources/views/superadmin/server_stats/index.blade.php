@@ -177,19 +177,19 @@
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="ss-kpi ss-kpi-cpu">
-                <div class="ss-kpi-lbl"><i class="bi bi-cpu-fill me-1"></i>CPU Load</div>
-                <div class="ss-kpi-val" id="kpiCpu">{{ $stats['load_pct_1m'] }}%</div>
-                <div class="ss-kpi-sub">1m: {{ number_format($stats['load_1m'], 2) }} · {{ $stats['cpu_count'] }} cores</div>
-                <div class="ss-kpi-bar"><div id="kpiCpuBar" style="width: {{ $stats['load_pct_1m'] }}%;"></div></div>
+                <div class="ss-kpi-lbl"><i class="bi bi-cpu-fill me-1"></i>CPU Usage</div>
+                <div class="ss-kpi-val" id="kpiCpu">{{ $stats['cpu_usage_pct'] ?? $stats['load_pct_1m'] }}%</div>
+                <div class="ss-kpi-sub">Load 1m: {{ number_format($stats['load_1m'], 2) }} · {{ $stats['cpu_count'] }} cores · IO wait {{ $stats['cpu_iowait_pct'] ?? 0 }}%</div>
+                <div class="ss-kpi-bar"><div id="kpiCpuBar" style="width: {{ $stats['cpu_usage_pct'] ?? $stats['load_pct_1m'] }}%;"></div></div>
                 <i class="bi bi-cpu ss-kpi-icon"></i>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="ss-kpi ss-kpi-mem">
-                <div class="ss-kpi-lbl"><i class="bi bi-memory me-1"></i>Memory</div>
-                <div class="ss-kpi-val" id="kpiMem">{{ $stats['mem_used_percent'] }}%</div>
-                <div class="ss-kpi-sub" id="kpiMemSub">{{ $stats['mem_usage'] }} / {{ $stats['mem_limit'] }}</div>
-                <div class="ss-kpi-bar"><div id="kpiMemBar" style="width: {{ $stats['mem_used_percent'] }}%;"></div></div>
+                <div class="ss-kpi-lbl"><i class="bi bi-memory me-1"></i>Memory (System RAM)</div>
+                <div class="ss-kpi-val" id="kpiMem">{{ $stats['sys_mem_pct'] ?? $stats['mem_used_percent'] }}%</div>
+                <div class="ss-kpi-sub" id="kpiMemSub">{{ $stats['sys_mem_used'] ?? $stats['mem_usage'] }} / {{ $stats['sys_mem_total'] ?? $stats['mem_limit'] }}</div>
+                <div class="ss-kpi-bar"><div id="kpiMemBar" style="width: {{ $stats['sys_mem_pct'] ?? $stats['mem_used_percent'] }}%;"></div></div>
                 <i class="bi bi-memory ss-kpi-icon"></i>
             </div>
         </div>
@@ -220,7 +220,7 @@
                 <div class="ss-card-header">
                     <i class="bi bi-activity text-primary"></i>
                     <h6>Resource Usage (Live)</h6>
-                    <span class="live-badge ms-auto">REAL-TIME · 5s</span>
+                    <span class="live-badge ms-auto">LIVE · 15s</span>
                 </div>
                 <div class="ss-card-body">
                     <canvas id="chartLive" height="120"></canvas>
@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(() => {});
     }
-    setInterval(pollMetrics, 5000);
+    setInterval(pollMetrics, 15000); // 15s (dari 5s) — kurangi self-load karena metrics fire banyak query
 });
 </script>
 @endpush
