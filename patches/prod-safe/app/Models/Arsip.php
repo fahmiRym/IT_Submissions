@@ -74,6 +74,9 @@ class Arsip extends Model
         'total_qty_out',
         'detail_barang',
         'pemohon',
+        // X1 deploy 2026-07-30: kolom baru dari migration add_tindakan_and_catatan_it
+        'tindakan',
+        'catatan_it',
     ];
 
     protected $casts = [
@@ -104,7 +107,7 @@ class Arsip extends Model
      * ======================================================
      * Digunakan oleh Web Controller dan API Barcode Android
      */
-    public static function processArchiving($id, $sequenceNumber = null)
+    public static function processArchiving($id, $sequenceNumber = null, ?string $note = null)
     {
         $arsip = self::with(['department', 'unit'])->findOrFail($id);
 
@@ -113,7 +116,7 @@ class Arsip extends Model
              throw new \Exception('Dokumen ini sudah diarsipkan dengan No Doc: ' . $arsip->no_doc);
         }
 
-        return DB::transaction(function () use ($arsip, $sequenceNumber, $id) {
+        return DB::transaction(function () use ($arsip, $sequenceNumber, $id, $note) {
             $now = Carbon::now();
 
             // 1. Generate No Registrasi jika belum ada
@@ -201,7 +204,7 @@ class Arsip extends Model
             }
 
             // 3. Update Record
-            $arsip->update([
+            $updateData = [
                 'no_registrasi' => $noRegistrasiFix,
                 'no_doc' => $finalNoDoc,
                 'tgl_arsip' => $now,
@@ -209,7 +212,14 @@ class Arsip extends Model
                 'ba' => 'Done',
                 'arsip' => 'Done',
                 'ket_process' => 'Done',
-            ]);
+            ];
+            // Append catatan (bukan overwrite) — preserve history dgn timestamp
+            if (!empty($note)) {
+                $prefix = $arsip->catatan_it ? trim($arsip->catatan_it) . "\n" : '';
+                $stamp  = $now->format('Y-m-d H:i');
+                $updateData['catatan_it'] = $prefix . "[{$stamp}] " . trim($note);
+            }
+            $arsip->update($updateData);
 
             // 4. Buat Notifikasi
             \App\Models\Notification::create([
@@ -307,6 +317,24 @@ class Arsip extends Model
     public function bundelItems()
     {
         return $this->hasMany(ArsipBundelItem::class);
+    }
+
+    /* ===================== X3 (M3): PERSONAL NOTES ===================== */
+
+    public function personalNotes()
+    {
+        return $this->hasMany(ArsipPersonalNote::class)->orderBy('created_at');
+    }
+
+    /**
+     * Simple access check untuk edit/note/share operations.
+     * Superadmin atau owner (admin_id) → allowed.
+     */
+    public function canBeEditedBy($u): bool
+    {
+        if (!$u) return false;
+        if ($u->role === 'superadmin') return true;
+        return (int) $this->admin_id === (int) $u->id;
     }
 
     /* ===================== HELPERS ===================== */
