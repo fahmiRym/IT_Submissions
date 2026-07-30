@@ -4,6 +4,78 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-30 (lanjutan #2) — ✅ SIDEBAR UNIFIED: sync file identik di prod + dev + local
+
+**Konteks:** user minta "samakan sidebar prod dengan dev dan lin-dev". Sebelumnya
+sidebar prod = backport minimal (148/248 baris, skip banyak menu), sidebar dev
+= main branch modern (200/281 baris, panggil method + route yg belum ada di prod).
+
+### Solusi: 1 file adaptive dgn defensive guards
+
+Bikin **1 file sidebar** yang bekerja di semua env. Pattern:
+
+```blade
+{{-- Route yg belum di prod --}}
+@if(Route::has('superadmin.approvals.index'))
+  <li>...menu Persetujuan...</li>
+@endif
+
+{{-- Method belum ada di User.php prod --}}
+@php
+  $hasAccessCheck = method_exists($u, 'canAccessJenis');
+  $canAccess = fn($j) => !$hasAccessCheck || $u->canAccessJenis($j);
+@endphp
+@if($canAccess('Cancel')) ... @endif
+
+{{-- Gate belum defined di AppServiceProvider prod --}}
+@can('view-price')  {{-- Laravel return false kalau Gate undefined, aman --}}
+```
+
+### Impact per env
+
+**Prod .200** (User minimal, route partial, sudah ada M1 log + M2 maintenance):
+Menu yg tampil:
+- Dashboard
+- Data Pengajuan (collapse 6 jenis, `canAccessJenis` fallback true → semua tampil)
+- Laporan
+- Master Data (Lokasi, Departemen, Unit, Manager, User, Pengaturan APP)
+  - Cabang/Branch SKIP, Akses Pengajuan SKIP, Master Produk SKIP
+- Log Aktivitas ✓ (M1)
+- Manajemen DB (Backup)
+- Maintenance Mode ✓ (M2, badge ON kalau aktif)
+- Statistik Server SKIP, Kelola APK SKIP
+- Persetujuan (Final IT) SKIP, Persetujuan Saya SKIP, Dibagikan ke Saya SKIP, Master Harga SKIP
+
+**Dev .199** (semua route + method ready): SEMUA menu tampil normal.
+
+### Deploy log (03:11-03:13 UTC)
+
+- Prod: backup → SCP via SSH stdin → clear view cache → verify render OK (11.1 KB output)
+- Dev:  backup → SCP via SSH stdin → clear view cache → health check 302 dashboard OK
+- MD5 verified IDENTIK antar 2 env:
+  - admin.blade.php: `08235469520b0e391b728cf05a475a4b` (both)
+  - superadmin.blade.php: `933170b86465f291c375d06680b05aaf` (both)
+
+### Impact user
+
+- ✅ Sidebar UI **KONSISTEN** antar dev + lin-dev + prod
+- ✅ File **IDENTIK** — future edit sekali, apply ke semua env
+- ✅ Menu tumbuh otomatis saat migration deploy (mis. kalau approvals table
+  di-migrate + route registered, menu Persetujuan otomatis muncul tanpa
+  edit sidebar lagi — Route::has evaluate runtime)
+- ✅ Zero downtime deploy (Blade compile on request)
+
+### Note
+
+Container it_app 2x exit selama deploy window (kemungkinan user paralel test
+maintenance mode toggle atau `docker stop` manual). Recover via `docker start`
+3 detik masing2. Nginx fallback aktif → user tidak lihat 502 raw.
+
+Local sidebar main branch juga diupdate ke file yg sama (via CRLF autocrlf,
+content-wise LF identik dgn dev/prod).
+
+---
+
 ## 2026-07-30 (lanjutan) — ✅ DEPLOY M1 (Log Aktivitas / Audit Trail) ke PROD .200
 
 **Konteks:** setelah M2, lanjut M1 dari daftar 4 prioritas user (log/maintenance/note/share).
