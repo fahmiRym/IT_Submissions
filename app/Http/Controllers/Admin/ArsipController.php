@@ -674,11 +674,8 @@ class ArsipController extends Controller
             'personalNotes.user:id,name,role',
         ])->findOrFail($id);
 
-        // Security check: pakai helper canBeEditedBy (owner/superadmin/accounting+Adjust/shared)
-        if (!$arsip->canBeEditedBy(auth()->user())) {
-            abort(403, 'Anda tidak punya akses untuk arsip ini.');
-        }
-
+        // VIEW-only: semua admin+ boleh liat draft PDF (internal doc, no restrict).
+        // Edit/update tetap dijaga terpisah via canBeEditedBy di endpoint update.
         $arsip->ensureVerifyToken();
 
         // Produk Baru tidak punya draft dokumen — hanya form yang diproses superadmin.
@@ -868,10 +865,11 @@ class ArsipController extends Controller
      */
     public function showDocument($id)
     {
+        // VIEW-only: semua admin+ boleh liat draft+lampiran (internal doc).
+        // Upload/delete lampiran tetap dijaga authorizeLampiran (owner + superadmin only).
         $arsip = Arsip::with(['adjustItems', 'mutasiItems', 'bundelItems', 'produkBaruItems',
                               'department', 'unit', 'manager', 'admin', 'approvals.approver',
                               'signatures', 'lampirans'])->findOrFail($id);
-        $this->authorizeLampiran($arsip);
         $service = new \App\Services\ArsipLampiranService();
         return $service->streamMergedPdf($arsip);
     }
