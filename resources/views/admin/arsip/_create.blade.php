@@ -299,9 +299,21 @@ BPB-25/12/0327
                             {{-- COMMON FIELDS --}}
                             <div class="card border-0 shadow-sm bg-white mb-3">
                                 <div class="card-body">
-                                    <div class="form-floating mb-0">
+                                    <div class="form-floating mb-3">
                                         <textarea name="keterangan" class="form-control border-light" placeholder="Keterangan" style="height: 80px"></textarea>
                                         <label class="text-muted"><i class="bi bi-chat-text me-1"></i> Deskripsi / Permasalahan</label>
+                                    </div>
+
+                                    {{-- UPLOAD BUKTI SCAN --}}
+                                    <div>
+                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-2">
+                                            <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>Upload File Berkas (PDF)
+                                        </label>
+                                        <input type="file" name="bukti_scan" accept="application/pdf,.pdf"
+                                               class="form-control border-light bg-light">
+                                        <small class="text-muted d-block mt-1" style="font-size:0.72rem;">
+                                            <i class="bi bi-info-circle me-1"></i>Format PDF · Maksimum 5 MB · Opsional
+                                        </small>
                                     </div>
                                 </div>
                             </div>

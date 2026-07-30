@@ -616,35 +616,34 @@
                                                     </button>
                                                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2"
                                                         style="border-radius: 12px; min-width: 240px;">
-                                                        {{-- Show Document + Print Draft — DISABLED (fitur digital doc/approval ditahan) --}}
+                                                        {{-- LIHAT FILE BERKAS (bukti_scan raw PDF via /preview-file) --}}
                                                         <li>
-                                                            <span class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 disabled"
-                                                                  style="opacity:.5; cursor:not-allowed; pointer-events:none;"
-                                                                  title="Fitur ditahan sementara">
-                                                                <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                                                                     style="width:32px;height:32px;background:#f1f5f9;color:#94a3b8;">
-                                                                    <i class="bi bi-file-earmark-pdf-fill"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <div class="fw-bold small text-muted">Show Document <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1" style="font-size:0.55rem;">SEGERA</span></div>
-                                                                    <div class="text-muted" style="font-size:0.65rem;">Fitur digital doc belum aktif</div>
-                                                                </div>
-                                                            </span>
-                                                        </li>
-                                                        <li><hr class="dropdown-divider my-1"></li>
-                                                        <li>
-                                                            <span class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 disabled"
-                                                                  style="opacity:.5; cursor:not-allowed; pointer-events:none;"
-                                                                  title="Fitur ditahan sementara">
-                                                                <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                                                                     style="width:32px;height:32px;background:#f1f5f9;color:#94a3b8;">
-                                                                    <i class="bi bi-printer-fill"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <div class="fw-bold small text-muted">Print Draft (saja) <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1" style="font-size:0.55rem;">SEGERA</span></div>
-                                                                    <div class="text-muted" style="font-size:0.65rem;">Fitur digital doc belum aktif</div>
-                                                                </div>
-                                                            </span>
+                                                            @if($a->bukti_scan)
+                                                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
+                                                                   href="{{ url('/preview-file/' . $a->bukti_scan) }}" target="_blank">
+                                                                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                                         style="width:32px;height:32px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#15803d;">
+                                                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="fw-bold small text-dark">Lihat File Berkas</div>
+                                                                        <div class="text-muted" style="font-size:0.65rem;">Buka PDF yg di-upload di tab baru</div>
+                                                                    </div>
+                                                                </a>
+                                                            @else
+                                                                <span class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
+                                                                      style="opacity:.5; cursor:not-allowed; pointer-events:none;"
+                                                                      title="Belum ada file ter-upload">
+                                                                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                                         style="width:32px;height:32px;background:#f1f5f9;color:#94a3b8;">
+                                                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                                                    </div>
+                                                                    <div>
+                                                                        <div class="fw-bold small text-muted">Lihat File Berkas</div>
+                                                                        <div class="text-muted" style="font-size:0.65rem;">Belum ada file ter-upload</div>
+                                                                    </div>
+                                                                </span>
+                                                            @endif
                                                         </li>
                                                         <li><hr class="dropdown-divider my-1"></li>
                                                         <li>
