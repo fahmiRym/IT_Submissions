@@ -189,7 +189,7 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')
-    ->middleware(['auth','role:admin,accounting,spv,kabag,manager','ensure.nik','force.password'])
+    ->middleware(['auth','role:admin,accounting,spv,kabag,manager','force.password'])
     ->name('admin.')
     ->group(function () {
 

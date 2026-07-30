@@ -14,8 +14,7 @@ class LoginController extends Controller
     }
 
     /**
-     * PROSES LOGIN — accept Username ATAU NIK.
-     * Auto-detect: kalau input semua digit → cari by employee_id, selain itu by username.
+     * PROSES LOGIN — username + password only (NIK/SSO tidak dipakai).
      */
     public function loginProcess(Request $request)
     {
@@ -24,23 +23,15 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        $login = trim($request->input('username'));
-        $field = ctype_digit($login) ? 'employee_id' : 'username';
-
         $credentials = [
-            $field    => $login,
+            'username' => trim($request->input('username')),
             'password' => $request->input('password'),
         ];
 
         if (!Auth::attempt($credentials)) {
-            // Fallback: kalau pakai username gagal, coba sebagai employee_id (atau sebaliknya)
-            $altField = $field === 'username' ? 'employee_id' : 'username';
-            $altCreds = [$altField => $login, 'password' => $request->input('password')];
-            if (!Auth::attempt($altCreds)) {
-                return back()->withErrors([
-                    'username' => 'Username/NIK atau password salah.',
-                ])->withInput($request->only('username'));
-            }
+            return back()->withErrors([
+                'username' => 'Username atau password salah.',
+            ])->withInput($request->only('username'));
         }
 
         // 🛡️ CEK STATUS AKTIF
@@ -63,20 +54,8 @@ class LoginController extends Controller
         $u->saveQuietly();
 
         // 🔁 REDIRECT
-        // - Superadmin: langsung ke dashboard, no middleware redirects
-        // - Lainnya: middleware EnsureLinkedToNik + ForceChangePassword akan handle
         if ($u->role === 'superadmin') {
             return redirect()->route('superadmin.dashboard');
-        }
-
-        // Order check di sini juga (selain middleware) untuk first-time UX
-        if (empty($u->employee_id)) {
-            return redirect()->route('auth.link-nik')
-                ->with('info', 'Sebelum lanjut, masukkan NIK karyawan Anda untuk verifikasi.');
-        }
-        if ($u->must_change_password) {
-            return redirect()->route('auth.change-password')
-                ->with('info', 'Demi keamanan, silakan ganti password default Anda.');
         }
 
         return redirect()->route('admin.dashboard');
