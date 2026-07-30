@@ -4,6 +4,84 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-30 (lanjutan #5) — ✅ X1+X2+X3 batch: catatan_it + dropdown + log riwayat + Personal Notes
+
+**Konteks:** user prioritas 4 fitur (log/maintenance/note/share). Setelah M1 log +
+M2 maintenance deploy, user minta juga field catatan_it di modal Arsip Sistem +
+dropdown No Transaksi + tombol Log Riwayat per arsip + Personal Notes per arsip.
+Semua non-approval-chain, deploy batch dalam 1 sesi.
+
+### X1 (03:59 UTC) — Catatan Arsip di modal Arsip Sistem
+
+- Migration `add_tindakan_and_catatan_it_to_arsips` (2 kolom nullable text)
+- Arsip.php v3: fillable + `processArchiving()` accept 3rd param `$note`
+- `_arsip_sistem.blade.php` prod: baseline 224 → local 241 (dgn textarea Catatan)
+- ArsipController prod: SED patch pass `$request->note` ke processArchiving
+- Impact: superadmin isi catatan saat arsip sistem, append ke `catatan_it`
+  dgn timestamp (history preserved)
+
+### X2 (04:02 UTC) — Dropdown No Transaksi + Tombol Log Riwayat
+
+**View arsip index prod (surgical python patch):**
+- Replace no_transaksi render block dgn collapse dropdown:
+  - Button toggle + count badge + chevron
+  - `data-bs-toggle="collapse" data-bs-target="#notx-sa-{id}"`
+- Inject tombol Log Riwayat di kolom AKSI (btn-dark, icon clock-history)
+  - Link ke `/superadmin/activity-logs?arsip_id={id}`
+  - Wrapped `@if(Route::has('superadmin.activity-logs.index'))`
+
+**ActivityLogController prod (python patch):**
+- Add filter `if ($request->filled('arsip_id')) $query->where('arsip_id', ...);`
+
+### X3 (04:10 UTC) — Personal Notes per arsip (full stack)
+
+- Migration `create_arsip_personal_notes`: arsip_id + user_id + note + timestamps
+- Model `ArsipPersonalNote`: fillable + relations arsip()/user()
+- Controller `Admin/ArsipNoteController` prod-safe:
+  - Strip `ArsipLampiranService` dependency (M4 territory, blm ada)
+  - Inline `canAccess()` check (superadmin OR owner)
+  - Methods: index (JSON list), store, update, destroy
+- Arsip.php v4: add `personalNotes()` hasMany + `canBeEditedBy()` simple check
+- Routes (common auth group, bukan admin/superadmin prefix) — 4 route:
+  GET/POST /arsip/{id}/notes + PUT/DELETE /arsip/{id}/notes/{note}
+- Modal view `admin/arsip/_note_modal.blade.php` (229 baris) — full CRUD JS
+- View arsip index prod: inject tombol Note di kolom AKSI + include modal
+  sebelum @endsection
+
+### Test end-to-end via tinker
+
+```
+X1: kolom catatan_it exists YES
+X2: route:list contains arsip_id filter, view render OK
+X3: ArsipPersonalNote::create id=1 arsip=110, personalNotes()->count()=1 ✓
+    Cleanup: note deleted, arsip clean
+```
+
+### Tombol AKSI prod sekarang (6 total)
+
+view / edit / arsip-sistem / **note (X3)** / **log-riwayat (X2)** / delete
+
+Belum ada (butuh migration + approval chain, HOLD):
+sign / share / approve / reject
+
+### Deploy files
+
+- 5 backup di `/root/backups/*.bak.20260730_*`
+- 2 migration ran successfully (audit_logs earlier + tindakan_catatan_it + personal_notes)
+- Total 7 file baru + 5 file modified di prod
+
+### Downtime = 0 (graceful reload php-fpm)
+
+### Untuk lanjutan
+
+- [ ] Verify di browser: buka arsip index → klik tombol Note → modal muncul, CRUD works
+- [ ] Test klik tombol Log Riwayat → filter activity-logs by arsip_id
+- [ ] Test klik tombol Arsip Sistem → modal ada field Catatan Arsip → submit → verify catatan_it column terisi dgn timestamp
+- [ ] M4 (Sharing pengajuan) — belum di-eksekusi, HOLD untuk sesi terpisah
+- [ ] Tombol Sign/Share/Approve/Reject — butuh approval chain (HOLD Staged Rollout)
+
+---
+
 ## 2026-07-30 (lanjutan #4) — ✅ FIX CF CACHE modern-theme.css (root cause tampilan flat)
 
 **Konteks:** setelah deploy 4 CSS + JS handler, user complain sidebar prod STILL
