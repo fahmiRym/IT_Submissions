@@ -315,7 +315,7 @@ BPB-25/12/0327
                                         <input type="file" name="bukti_scan" accept="application/pdf,.pdf"
                                                class="form-control border-light bg-light">
                                         <small class="text-muted d-block mt-1" style="font-size:0.72rem;">
-                                            <i class="bi bi-info-circle me-1"></i>Format PDF · Maksimum 5 MB · Opsional
+                                            <i class="bi bi-info-circle me-1"></i>Format PDF saja · Maksimum <strong>2 MB</strong> · Opsional
                                         </small>
                                     </div>
                                 </div>

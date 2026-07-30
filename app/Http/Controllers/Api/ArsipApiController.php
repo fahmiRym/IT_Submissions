@@ -208,7 +208,7 @@ class ArsipApiController extends Controller
             'no_transaksi' => 'nullable|string',
             'pemohon' => 'nullable|string',
             'detail_barang_json' => 'nullable|string',
-            'bukti_scan' => 'nullable|file|mimes:pdf|max:10240',
+            'bukti_scan' => 'nullable|file|mimes:pdf|mimetypes:application/pdf|max:2048',
         ]);
 
         try {

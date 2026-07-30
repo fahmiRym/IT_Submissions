@@ -921,7 +921,7 @@
                                                     </div>
                                                     <div>
                                                         <div class="fw-bold small text-dark">Kelola Lampiran</div>
-                                                        <div class="text-muted" style="font-size:0.65rem;">Upload / hapus PDF (max 10MB / file)</div>
+                                                        <div class="text-muted" style="font-size:0.65rem;">Upload / hapus PDF (max 2MB / file)</div>
                                                     </div>
                                                 </button>
                                             </li>

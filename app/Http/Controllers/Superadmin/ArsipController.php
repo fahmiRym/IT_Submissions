@@ -172,7 +172,7 @@ class ArsipController extends Controller
             'unit_id' => 'required|exists:units,id',
             'jenis_pengajuan' => 'required|string|max:30',
             'status' => 'required|in:Check,Process,Done,Reject,Void',
-            'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
+            'bukti_scan' => 'nullable|file|mimes:pdf|mimetypes:application/pdf|max:2048',
             'tindakan' => 'nullable|string',
             'catatan_it' => 'nullable|string',
             'tindakan_it_rows' => 'nullable|array',
@@ -526,8 +526,8 @@ class ArsipController extends Controller
             'ket_process' => 'nullable|in:Review,Process,Done,Pending,Void,Partial Done',
             'ba' => 'nullable',
             'arsip' => 'nullable',
-            'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
-            'scan_final' => 'nullable|file|mimes:pdf|max:10240',
+            'bukti_scan' => 'nullable|file|mimes:pdf|mimetypes:application/pdf|max:2048',
+            'scan_final' => 'nullable|file|mimes:pdf|mimetypes:application/pdf|max:2048',
             'tindakan' => 'nullable|string',
             'catatan_it' => 'nullable|string',
         ]);
@@ -919,7 +919,7 @@ ArsipAdjustItem::create([
 
         $request->validate([
             'lampiran' => 'required|array|min:1',
-            'lampiran.*' => 'file|mimes:pdf|max:10240',
+            'lampiran.*' => 'file|mimes:pdf|mimetypes:application/pdf|max:2048',
             'keterangan' => 'nullable|string|max:500',
         ]);
 

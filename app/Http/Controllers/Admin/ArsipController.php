@@ -254,7 +254,7 @@ class ArsipController extends Controller
             'unit_id' => 'required',
             'manager_id' => 'required',
             'tgl_pengajuan' => 'nullable|date',
-            'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
+            'bukti_scan' => 'nullable|file|mimes:pdf|mimetypes:application/pdf|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -372,7 +372,7 @@ class ArsipController extends Controller
         }
 
         $request->validate([
-            'bukti_scan' => 'nullable|file|mimes:pdf|max:5120',
+            'bukti_scan' => 'nullable|file|mimes:pdf|mimetypes:application/pdf|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -725,7 +725,7 @@ class ArsipController extends Controller
         }
 
         $request->validate([
-            'scan_ba' => 'required|file|mimes:pdf|max:10240',
+            'scan_ba' => 'required|file|mimes:pdf|mimetypes:application/pdf|max:2048',
         ], [
             'scan_ba.required' => 'File scan BA wajib dipilih.',
             'scan_ba.mimes'    => 'File harus berformat PDF.',
@@ -784,7 +784,7 @@ class ArsipController extends Controller
 
         $request->validate([
             'lampiran' => 'required|array|min:1',
-            'lampiran.*' => 'file|mimes:pdf|max:10240',
+            'lampiran.*' => 'file|mimes:pdf|mimetypes:application/pdf|max:2048',
             'keterangan' => 'nullable|string|max:500',
         ], [
             'lampiran.required' => 'Pilih minimal 1 file PDF.',

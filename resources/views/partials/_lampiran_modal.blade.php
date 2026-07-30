@@ -52,7 +52,7 @@
                             <i class="bi bi-cloud-arrow-up-fill text-primary"></i>
                             <h6 class="fw-bold mb-0 small">Upload Lampiran Baru</h6>
                             <span class="badge bg-info-subtle text-info ms-auto" style="font-size:0.6rem;">
-                                <i class="bi bi-file-earmark-pdf me-1"></i>PDF · MAX 10MB · MULTI
+                                <i class="bi bi-file-earmark-pdf me-1"></i>PDF · MAX 2MB · MULTI
                             </span>
                         </div>
 
