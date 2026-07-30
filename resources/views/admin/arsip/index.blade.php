@@ -1186,16 +1186,19 @@
                     }
                     $('#editKeterangan').val(data.keterangan);
 
-                    // Link Bukti Scan
-                    // Link Bukti Scan
+                    // Reset file input + tampilkan status file saat ini
+                    $('#editBuktiScan').val('');
                     if (data.bukti_scan) {
-                        $('#linkBuktiSaatIni').html(
-                            `<a href="/pdf-viewer/${data.bukti_scan}" target="_blank" class="text-decoration-none fw-bold small">
-                                <i class="bi bi-file-earmark-pdf text-danger"></i> Lihat File
-                            </a>`
+                        $('#editBuktiScanCurrent').html(
+                            `<i class="bi bi-check-circle-fill text-success me-1"></i>File saat ini: ` +
+                            `<a href="/preview-file/${data.bukti_scan}" target="_blank" class="fw-bold text-primary">` +
+                            `<i class="bi bi-file-earmark-pdf text-danger"></i> Lihat</a> · ` +
+                            `Pilih file baru untuk ganti (PDF, max 2 MB) atau kosongkan untuk tetap pakai file ini.`
                         );
                     } else {
-                        $('#linkBuktiSaatIni').text('Belum ada file.');
+                        $('#editBuktiScanCurrent').html(
+                            `<i class="bi bi-info-circle me-1"></i>Belum ada file · Format PDF · Maksimum <strong>2 MB</strong> · Kosongkan kalau tidak diganti`
+                        );
                     }
 
                     // Logic display based on Jenis

@@ -258,6 +258,19 @@
                                         <label class="small fw-bold text-muted text-uppercase mb-1">Keterangan Tambahan</label>
                                         <textarea name="keterangan" id="editKeterangan" class="form-control bg-light border-0" rows="3" placeholder="Alasan atau catatan khusus..."></textarea>
                                     </div>
+
+                                    {{-- UPLOAD FILE BERKAS (bukti_scan) --}}
+                                    <div class="mb-1">
+                                        <label class="small fw-bold text-muted text-uppercase mb-1">
+                                            <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>Ganti File Berkas (PDF)
+                                        </label>
+                                        <input type="file" name="bukti_scan" id="editBuktiScan"
+                                               accept="application/pdf,.pdf"
+                                               class="form-control bg-light border-0">
+                                        <div id="editBuktiScanCurrent" class="mt-1 small text-muted" style="font-size:0.72rem;">
+                                            <i class="bi bi-info-circle me-1"></i>Format PDF · Maksimum <strong>2 MB</strong> · Kosongkan kalau tidak diganti
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

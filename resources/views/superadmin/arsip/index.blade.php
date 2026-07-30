@@ -1336,6 +1336,21 @@ $(document).ready(function() {
                 $('#editTindakan').val(data.tindakan || '');
                 $('#editCatatanIt').val(data.catatan_it || '');
 
+                // Reset bukti_scan input + tampilkan status file saat ini
+                $('#editBuktiScan').val('');
+                if (data.bukti_scan) {
+                    $('#editBuktiScanCurrent').html(
+                        `<i class="bi bi-check-circle-fill text-success me-1"></i>File saat ini: ` +
+                        `<a href="/preview-file/${data.bukti_scan}" target="_blank" class="fw-bold text-primary">` +
+                        `<i class="bi bi-file-earmark-pdf text-danger"></i> Lihat</a> · ` +
+                        `Pilih file baru untuk ganti (PDF, max 2 MB) atau kosongkan untuk tetap pakai file ini.`
+                    );
+                } else {
+                    $('#editBuktiScanCurrent').html(
+                        `<i class="bi bi-info-circle me-1"></i>Belum ada file · Format PDF · Maksimum <strong>2 MB</strong> · Kosongkan kalau tidak diganti`
+                    );
+                }
+
                 // Tindakan IT per baris
                 $('#wrapperTindakanItEdit').empty();
                 if (data.tindakan_it_rows && data.tindakan_it_rows.length > 0) {

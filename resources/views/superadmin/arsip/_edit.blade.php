@@ -357,14 +357,26 @@
         </div>
 
 
+        {{-- 📎 BUKTI SCAN (File Berkas Pengajuan) --}}
+        <div class="mb-3 p-3 rounded-3" style="background:#fef2f2; border:1px solid #fca5a5;">
+            <label class="form-label small fw-bold text-danger d-block mb-1">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Ganti File Berkas (PDF)
+            </label>
+            <input type="file" name="bukti_scan" id="editBuktiScan"
+                   class="form-control bg-white border-0 mb-1" accept="application/pdf,.pdf">
+            <div id="editBuktiScanCurrent" class="mt-1" style="font-size:0.72rem; color:#64748b;">
+                <i class="bi bi-info-circle me-1"></i>Format PDF · Maksimum <strong>2 MB</strong> · Kosongkan kalau tidak diganti
+            </div>
+        </div>
+
         {{-- ✅ SCAN FINAL (Khusus Superadmin / Tim IT) --}}
         <div class="mb-3 p-3 rounded-3" style="background:#ecfdf5; border:1px solid #6ee7b7;">
             <label class="form-label small fw-bold text-success d-block mb-1">
                 <i class="bi bi-shield-check me-1"></i> Scan Final (Eksekusi Tim IT)
             </label>
-            <input type="file" name="scan_final" class="form-control bg-white border-0 mb-1" accept=".pdf">
+            <input type="file" name="scan_final" class="form-control bg-white border-0 mb-1" accept="application/pdf,.pdf">
             <div id="linkScanFinal" class="mt-1 text-xs"></div>
-            <small class="text-muted d-block mt-1" style="font-size:0.65rem;">PDF maks 10MB. File final yang sudah lengkap (BA + tanda tangan) untuk arsip resmi IT.</small>
+            <small class="text-muted d-block mt-1" style="font-size:0.65rem;">PDF · Maksimum <strong>2 MB</strong>. File final yang sudah lengkap (BA + tanda tangan) untuk arsip resmi IT.</small>
         </div>
 
         {{-- ALUR PERSETUJUAN (status + ubah approver bila belum berjalan) --}}
