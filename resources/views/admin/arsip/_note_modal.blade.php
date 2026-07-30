@@ -213,15 +213,30 @@
     $input.addEventListener('input', () => { $charCount.textContent = $input.value.length; });
     $submit.addEventListener('click', addNote);
 
-    // Wire up tombol Notes di tabel
+    // Wire up tombol Notes di tabel — pakai getOrCreateInstance supaya tidak
+    // duplicate Modal instance (bug: stack backdrop tidak clean saat close)
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.btn-notes');
         if (!btn) return;
+        // Prevent Bootstrap default data-bs-toggle handler (kalau ada) — cegah
+        // double trigger yang bikin backdrop duplicate
+        e.preventDefault();
+        e.stopPropagation();
         currentArsipId = parseInt(btn.dataset.arsipId, 10);
         $noReg.textContent = btn.dataset.noReg || '—';
         $input.value = ''; $charCount.textContent = '0';
-        new bootstrap.Modal($modal).show();
+        bootstrap.Modal.getOrCreateInstance($modal).show();
         loadNotes();
+    });
+
+    // Force cleanup: kadang Bootstrap tinggalkan .modal-backdrop atau body.modal-open
+    // saat modal hide (biasa terjadi kalau ada JS conflict / multiple modals).
+    // Ini bikin halaman "frozen" tidak bisa klik. Bersihkan manual saat hidden.
+    $modal.addEventListener('hidden.bs.modal', () => {
+        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
     });
 })();
 </script>
