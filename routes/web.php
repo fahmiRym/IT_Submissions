@@ -222,11 +222,8 @@ Route::prefix('admin')
         // ✅ TANDA TANGAN DIGITAL pada pengajuan
         Route::post('arsip/{id}/sign', [AdminArsip::class, 'signArsip'])->name('arsip.sign');
 
-        // ✅ MASTER HARGA (akses dijaga Gate 'view-price' di controller)
-        Route::get('prices', [\App\Http\Controllers\Admin\PriceController::class, 'index'])->name('prices.index');
-        Route::post('prices', [\App\Http\Controllers\Admin\PriceController::class, 'store'])->name('prices.store');
-        Route::put('prices/{price}', [\App\Http\Controllers\Admin\PriceController::class, 'update'])->name('prices.update');
-        Route::delete('prices/{price}', [\App\Http\Controllers\Admin\PriceController::class, 'destroy'])->name('prices.destroy');
+        // ✅ MASTER HARGA — dipindah ke group terpisah di bawah (biar bisa
+        // include superadmin yg tidak masuk role admin,accounting,spv,kabag,manager)
 
         // ✅ ARSIP SHARED INBOX (di group admin agar middleware ensure.nik & force.password aktif)
         Route::get('shared-inbox', [\App\Http\Controllers\Admin\ArsipShareController::class, 'inbox'])->name('arsip.shared-inbox');
@@ -240,6 +237,23 @@ Route::prefix('admin')
         Route::get('notifications', [AdminNotification::class,'index'])->name('notifications.index');
         Route::put('notifications/{notification}/read',[AdminNotification::class,'read'])->name('notifications.read');
 
+    });
+
+/*
+|--------------------------------------------------------------------------
+| MASTER HARGA — akses TERBATAS: hanya superadmin + accounting
+|--------------------------------------------------------------------------
+| Dipisah dari group admin di atas supaya bisa include role superadmin
+| (yang tidak masuk role admin,accounting,spv,kabag,manager di group utama)
+*/
+Route::prefix('admin')
+    ->middleware(['auth','role:superadmin,accounting','force.password'])
+    ->name('admin.')
+    ->group(function () {
+        Route::get('prices',            [\App\Http\Controllers\Admin\PriceController::class, 'index'])->name('prices.index');
+        Route::post('prices',           [\App\Http\Controllers\Admin\PriceController::class, 'store'])->name('prices.store');
+        Route::put('prices/{price}',    [\App\Http\Controllers\Admin\PriceController::class, 'update'])->name('prices.update');
+        Route::delete('prices/{price}', [\App\Http\Controllers\Admin\PriceController::class, 'destroy'])->name('prices.destroy');
     });
 
 /*
