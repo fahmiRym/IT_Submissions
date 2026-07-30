@@ -1,3 +1,15 @@
+{{-- ============================================================================
+     UNIFIED SIDEBAR SUPERADMIN — safe di prod .200 (era April 2026) DAN dev .199 (modern)
+     ----------------------------------------------------------------------------
+     Struktur identik dgn dev/local (main branch), dgn defensive guards:
+     - `Route::has('...')` untuk route yang belum ada di prod
+     Di prod → menu approvals/branches/pengajuan-access/products/server-stats/
+              app-versions otomatis skip; menu maintenance mode + log aktivitas
+              tampil (sudah deploy M1 + M2).
+     Di dev → semua menu tampil normal.
+
+     Deploy 2026-07-30 M-Sync (samakan sidebar dgn dev + tambah Maintenance Mode).
+     ============================================================================ --}}
 <aside class="sidebar">
 
     {{-- HEADER --}}
@@ -19,7 +31,7 @@
                 <small style="font-size: 0.65rem; font-weight: 800; color: #dc2626; letter-spacing: 0.5px;">SUPER ADMIN</small>
             </div>
         </div>
-        
+
         {{-- Desktop Toggle Button inside Sidebar --}}
         <button class="btn btn-light d-none d-lg-flex shadow-sm rounded-circle p-0 align-items-center justify-content-center sidebar-toggle-in"
             onclick="toggleSidebar();"
@@ -65,74 +77,58 @@
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index') }}"
                                 class="nav-link py-2 {{ request('jenis') == null && request()->routeIs('superadmin.arsip.index') ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-stack text-secondary"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <i class="bi bi-stack text-secondary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Semua Data</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Cancel']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Cancel' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-trash3-fill text-danger"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <i class="bi bi-trash3-fill text-danger" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Cancel</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Adjust']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Adjust' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-sliders2-vertical text-info"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <i class="bi bi-sliders2-vertical text-info" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Adjustment</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Mutasi_Billet']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Mutasi_Billet' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-arrow-repeat text-primary"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <i class="bi bi-arrow-repeat text-primary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Mutasi Billet</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Mutasi_Produk']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Mutasi_Produk' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-box-fill text-success"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <i class="bi bi-box-fill text-success" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Mutasi Produk</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Internal_Memo']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Internal_Memo' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-file-earmark-richtext-fill text-warning"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <i class="bi bi-file-earmark-richtext-fill text-warning" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Internal Memo</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Bundel']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Bundel' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-collection-fill text-danger"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <i class="bi bi-collection-fill text-danger" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Bundel</span>
                             </a>
                         </li>
-                        {{-- Daftar Produk Baru — DIBEKUKAN SEMENTARA --}}
-                        {{-- <li class="nav-item">
-                            <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Produk_Baru']) }}"
-                                class="nav-link py-2 {{ request('jenis') == 'Produk_Baru' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-box-seam-fill text-primary"
-                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
-                                <span>Daftar Produk Baru</span>
-                                <span class="badge bg-primary ms-auto" style="font-size:0.5rem;"></span>
-                            </a>
-                        </li> --}}
                     </ul>
                 </div>
             </li>
 
-            {{-- PERSETUJUAN --}}
+            {{-- PERSETUJUAN (Final IT) — butuh arsip_approvals table (prod skip) --}}
+            @if(Route::has('superadmin.approvals.index'))
             <li class="nav-item mt-2">
                 <a href="{{ route('superadmin.approvals.index') }}"
                     class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.approvals.*') ? 'active' : '' }}">
@@ -143,6 +139,7 @@
                     @endif
                 </a>
             </li>
+            @endif
 
             {{-- LAPORAN --}}
             <li class="nav-item mt-2">
@@ -181,6 +178,8 @@
                                 <span>Lokasi Fisik</span>
                             </a>
                         </li>
+                        {{-- CABANG / BRANCH — butuh branches table (prod skip) --}}
+                        @if(Route::has('superadmin.branches.index'))
                         <li class="nav-item">
                             <a href="{{ route('superadmin.branches.index') }}"
                                class="nav-link py-2 {{ request()->routeIs('superadmin.branches.*') ? 'text-primary fw-bold' : '' }}">
@@ -188,6 +187,7 @@
                                 <span>Cabang / Branch</span>
                             </a>
                         </li>
+                        @endif
                         <li class="nav-item">
                             <a href="{{ route('superadmin.departments.index') }}"
                                class="nav-link py-2 {{ request()->routeIs('superadmin.departments.*') ? 'text-primary fw-bold' : '' }}">
@@ -216,6 +216,8 @@
                                 <span>User</span>
                             </a>
                         </li>
+                        {{-- AKSES PENGAJUAN — butuh role_pengajuan_access (prod skip) --}}
+                        @if(Route::has('superadmin.pengajuan-access.index'))
                         <li class="nav-item">
                             <a href="{{ route('superadmin.pengajuan-access.index') }}"
                                class="nav-link py-2 d-flex align-items-center {{ request()->routeIs('superadmin.pengajuan-access.*') ? 'text-primary fw-bold' : '' }}">
@@ -224,14 +226,17 @@
                                 <span class="badge text-white ms-auto" style="font-size:0.5rem; background:linear-gradient(135deg,#7c3aed,#5b21b6);">NEW</span>
                             </a>
                         </li>
+                        @endif
+                        {{-- MASTER PRODUK — butuh products table (prod skip) --}}
+                        @if(Route::has('superadmin.products.index'))
                         <li class="nav-item">
                             <a href="{{ route('superadmin.products.index') }}"
                                class="nav-link py-2 d-flex align-items-center {{ request()->routeIs('superadmin.products.*') ? 'text-primary fw-bold' : '' }}">
                                 <i class="bi bi-box-seam-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#06b6d4;"></i>
                                 <span>Master Produk</span>
-                                <span class="badge bg-gradient text-white ms-auto" style="font-size:0.5rem; background:linear-gradient(135deg,#06b6d4,#0891b2);"></span>
                             </a>
                         </li>
+                        @endif
                         <li class="nav-item mt-2">
                             <a href="{{ route('superadmin.settings.index') }}"
                                class="nav-link py-2 {{ request()->routeIs('superadmin.settings.*') ? 'fw-bold text-primary' : 'text-warning fw-bold' }}">
@@ -245,14 +250,18 @@
 
             <li class="nav-header">SYSTEM MONITOR</li>
 
+            {{-- LOG AKTIVITAS — deploy M1 2026-07-30 (guard tetap ada untuk cross-env safety) --}}
+            @if(Route::has('superadmin.activity-logs.index'))
             <li class="nav-item">
-                <a href="{{ route('superadmin.activity-logs.index') }}" 
+                <a href="{{ route('superadmin.activity-logs.index') }}"
                     class="nav-link {{ request()->routeIs('superadmin.activity-logs.*') ? 'active' : '' }}">
                     <i class="bi bi-journal-text text-info"></i>
                     <span>Log Aktivitas</span>
                 </a>
             </li>
+            @endif
 
+            {{-- MANAJEMEN DB (Backup & Restore) --}}
             <li class="nav-item">
                 <a href="{{ route('superadmin.backup.index') }}"
                     class="nav-link {{ request()->is('superadmin/backup*') ? 'active' : '' }}">
@@ -261,6 +270,8 @@
                 </a>
             </li>
 
+            {{-- STATISTIK SERVER — belum di prod (skip) --}}
+            @if(Route::has('superadmin.server-stats.index'))
             <li class="nav-item">
                 <a href="{{ route('superadmin.server-stats.index') }}"
                     class="nav-link {{ request()->routeIs('superadmin.server-stats.*') ? 'active' : '' }}">
@@ -268,7 +279,10 @@
                     <span>Statistik Server</span>
                 </a>
             </li>
+            @endif
 
+            {{-- KELOLA APK ANDROID — belum di prod (skip) --}}
+            @if(Route::has('superadmin.app-versions.index'))
             <li class="nav-item">
                 <a href="{{ route('superadmin.app-versions.index') }}"
                     class="nav-link {{ request()->routeIs('superadmin.app-versions.*') ? 'active' : '' }}">
@@ -276,6 +290,22 @@
                     <span>Kelola APK Android</span>
                 </a>
             </li>
+            @endif
+
+            {{-- MAINTENANCE MODE — deploy M2 2026-07-30 (skip di dev kalau blm deploy) --}}
+            @if(Route::has('superadmin.maintenance.index'))
+            <li class="nav-item">
+                <a href="{{ route('superadmin.maintenance.index') }}"
+                    class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.maintenance.*') ? 'active' : '' }}">
+                    <i class="bi bi-tools text-danger"></i>
+                    <span>Maintenance Mode</span>
+                    @if(app()->isDownForMaintenance())
+                        <span class="badge bg-danger rounded-pill ms-auto">ON</span>
+                    @endif
+                </a>
+            </li>
+            @endif
+
         </ul>
     </div>
 

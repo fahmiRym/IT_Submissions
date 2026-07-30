@@ -1,3 +1,16 @@
+{{-- ============================================================================
+     UNIFIED SIDEBAR ADMIN — safe di prod .200 (era April 2026) DAN dev .199 (modern)
+     ----------------------------------------------------------------------------
+     Struktur identik dgn dev/local (main branch), dgn defensive guards:
+     - `Route::has('...')` untuk route yang belum ada di prod
+     - `method_exists($u, 'method')` fallback true untuk User modern methods
+       yang belum ada di User.php prod (canAccessJenis, sharedArsips)
+
+     Di prod → menu yg route belum registered otomatis skip.
+     Di dev → semua menu tampil normal.
+
+     Deploy 2026-07-30 M-Sync (samakan sidebar dgn dev).
+     ============================================================================ --}}
 <aside class="sidebar">
 
     {{-- HEADER --}}
@@ -27,7 +40,7 @@
                     style="font-size: 0.65rem; font-weight: 800; color: {{ $roleBadge['color'] }}; letter-spacing: 0.5px;">{{ $roleBadge['text'] }}</small>
             </div>
         </div>
-        
+
         {{-- Desktop Toggle Button inside Sidebar --}}
         <button class="btn btn-light d-none d-lg-flex shadow-sm rounded-circle p-0 align-items-center justify-content-center sidebar-toggle-in"
             onclick="toggleSidebar();"
@@ -51,8 +64,14 @@
 
             <li class="nav-header">OPERASIONAL</li>
 
-            {{-- ================= ARSIP PENGAJUAN ================= --}}
+            {{-- ================= ARSIP PENGAJUAN =================
+                 canAccessJenis fallback: kalau method belum ada (prod), tampilkan semua.
+                 Kalau method ada (dev/local), cek permission per jenis.
+            --}}
             @php
+                $u = auth()->user();
+                $hasAccessCheck = method_exists($u, 'canAccessJenis');
+                $canAccess = fn($j) => !$hasAccessCheck || $u->canAccessJenis($j);
                 $isArsip = request()->is('admin/arsip*');
             @endphp
 
@@ -78,7 +97,7 @@
                                 <span>Semua Data</span>
                             </a>
                         </li>
-                        @if(auth()->user()->canAccessJenis('Cancel'))
+                        @if($canAccess('Cancel'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Cancel']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Cancel' ? 'text-primary fw-bold' : '' }}">
@@ -88,7 +107,7 @@
                             </a>
                         </li>
                         @endif
-                        @if(auth()->user()->canAccessJenis('Adjust'))
+                        @if($canAccess('Adjust'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Adjust']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Adjust' ? 'text-primary fw-bold' : '' }}">
@@ -98,7 +117,7 @@
                             </a>
                         </li>
                         @endif
-                        @if(auth()->user()->canAccessJenis('Mutasi_Billet'))
+                        @if($canAccess('Mutasi_Billet'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Mutasi_Billet']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Mutasi_Billet' ? 'text-primary fw-bold' : '' }}">
@@ -108,7 +127,7 @@
                             </a>
                         </li>
                         @endif
-                        @if(auth()->user()->canAccessJenis('Mutasi_Produk'))
+                        @if($canAccess('Mutasi_Produk'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Mutasi_Produk']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Mutasi_Produk' ? 'text-primary fw-bold' : '' }}">
@@ -118,7 +137,7 @@
                             </a>
                         </li>
                         @endif
-                        @if(auth()->user()->canAccessJenis('Internal_Memo'))
+                        @if($canAccess('Internal_Memo'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Internal_Memo']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Internal_Memo' ? 'text-primary fw-bold' : '' }}">
@@ -128,7 +147,7 @@
                             </a>
                         </li>
                         @endif
-                        @if(auth()->user()->canAccessJenis('Bundel'))
+                        @if($canAccess('Bundel'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Bundel']) }}"
                                 class="nav-link py-2 {{ request('jenis') == 'Bundel' ? 'text-primary fw-bold' : '' }}">
@@ -145,13 +164,14 @@
                                 <i class="bi bi-box-seam-fill text-primary"
                                     style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
                                 <span>Daftar Produk Baru</span>
-                                <span class="badge bg-primary ms-auto" style="font-size:0.5rem;"></span>
                             </a>
                         </li> --}}
                     </ul>
                 </div>
             </li>
 
+            {{-- PERSETUJUAN SAYA — butuh arsip_approvals table (prod skip via Route::has) --}}
+            @if(Route::has('admin.approvals.index'))
             <li class="nav-item">
                 <a href="{{ route('admin.approvals.index') }}"
                     class="nav-link d-flex align-items-center {{ request()->routeIs('admin.approvals.*') ? 'active' : '' }}">
@@ -162,20 +182,26 @@
                     @endif
                 </a>
             </li>
+            @endif
 
+            {{-- DIBAGIKAN KE SAYA — butuh arsip_shares table + method User::sharedArsips (prod skip) --}}
+            @if(Route::has('admin.arsip.shared-inbox') && method_exists($u, 'sharedArsips'))
             <li class="nav-item">
                 <a href="{{ route('admin.arsip.shared-inbox') }}"
                     class="nav-link d-flex align-items-center {{ request()->routeIs('admin.arsip.shared-inbox') ? 'active' : '' }}">
                     <i class="bi bi-inbox-fill text-info"></i>
                     <span>Dibagikan ke Saya</span>
-                    @php $sharedCount = auth()->user()->sharedArsips()->count(); @endphp
+                    @php $sharedCount = $u->sharedArsips()->count(); @endphp
                     @if($sharedCount > 0)
                         <span class="badge text-white ms-auto" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">{{ $sharedCount }}</span>
                     @endif
                 </a>
             </li>
+            @endif
 
-            @can('view-price')
+            {{-- MASTER HARGA — Gate view-price + route admin.prices.index (prod skip) --}}
+            @if(Route::has('admin.prices.index'))
+                @can('view-price')
                 <li class="nav-header">ACCOUNTING</li>
                 <li class="nav-item">
                     <a href="{{ route('admin.prices.index') }}"
@@ -184,7 +210,8 @@
                         <span>Master Harga</span>
                     </a>
                 </li>
-            @endcan
+                @endcan
+            @endif
 
             <li class="nav-header">SISTEM</li>
             <li class="nav-item">

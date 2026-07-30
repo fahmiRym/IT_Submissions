@@ -1,148 +1,228 @@
 {{-- ============================================================================
-     PROD-SAFE BACKPORT — Sidebar Admin
-     Baseline prod .200 (147ff58): 54 baris, cuma Dashboard + Buat Pengajuan.
-     Backport: tambah collapse Data Pengajuan + 6 jenis submenu + Notifikasi + Profil.
+     UNIFIED SIDEBAR ADMIN — safe di prod .200 (era April 2026) DAN dev .199 (modern)
+     ----------------------------------------------------------------------------
+     Struktur identik dgn dev/local (main branch), dgn defensive guards:
+     - `Route::has('...')` untuk route yang belum ada di prod
+     - `method_exists($u, 'method')` fallback true untuk User modern methods
+       yang belum ada di User.php prod (canAccessJenis, sharedArsips)
 
-     NON-METHOD-CALL: tidak panggil canAccessJenis(), sharedArsips(),
-     canViewPrice() — semua method itu belum ada di User.php prod.
-     NON-NEW-ROUTE: hanya reference route yang sudah registered di prod
-     (admin.dashboard, admin.arsip.index, admin.notifications.index, admin.profile).
+     Di prod → menu yg route belum registered otomatis skip.
+     Di dev → semua menu tampil normal.
 
-     Style: PRESERVE prod baseline class (`sidebar sidebar-dark`, custom-scrollbar-dark)
-     supaya CSS existing di prod tetap apply.
+     Deploy 2026-07-30 M-Sync (samakan sidebar dgn dev).
      ============================================================================ --}}
-<aside class="sidebar sidebar-dark d-flex flex-column h-100 shadow-lg">
+<aside class="sidebar">
 
     {{-- HEADER --}}
-    <div class="sidebar-header p-4 d-flex align-items-center">
-        <div class="bg-white rounded p-1 me-3 d-flex align-items-center justify-content-center shadow-sm"
-             style="width: 40px; height: 40px;">
-            @if($app_logo)
-                <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
-            @else
-                <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
-            @endif
+    <div class="sidebar-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <div class="bg-white rounded-3 p-1 me-2 d-flex align-items-center justify-content-center shadow-sm"
+                style="width: 42px; height: 42px; min-width: 42px;">
+                @if($app_logo ?? false)
+                    <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                @else
+                    <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                @endif
+            </div>
+            <div class="sidebar-title overflow-hidden">
+                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 0.95rem;">
+                    {{ $app_name ?? 'IT Submission' }}
+                </h6>
+                @php
+                    $roleBadge = match (auth()->user()->role) {
+                        'superadmin' => ['text' => 'SUPER ADMIN', 'color' => '#dc2626'],
+                        'accounting' => ['text' => 'ACCOUNTING', 'color' => '#f59e0b'],
+                        default => ['text' => 'ADMIN', 'color' => '#4f46e5'],
+                    };
+                @endphp
+                <small
+                    style="font-size: 0.65rem; font-weight: 800; color: {{ $roleBadge['color'] }}; letter-spacing: 0.5px;">{{ $roleBadge['text'] }}</small>
+            </div>
         </div>
-        <div>
-            <h6 class="mb-0 fw-bold text-white sidebar-title">{{ $app_name }}</h6>
-            <small class="text-slate-500" style="font-size: 0.75rem;">Admin Panel</small>
-        </div>
+
+        {{-- Desktop Toggle Button inside Sidebar --}}
+        <button class="btn btn-light d-none d-lg-flex shadow-sm rounded-circle p-0 align-items-center justify-content-center sidebar-toggle-in"
+            onclick="toggleSidebar();"
+            style="width: 32px; height: 32px; min-width: 32px; border: none; background: #f1f5f9;">
+            <i class="bi bi-chevron-left text-primary" style="font-size: 0.9rem;"></i>
+        </button>
     </div>
 
     {{-- MENU WRAPPER --}}
-    <div class="sidebar-menu flex-grow-1 overflow-auto p-3 custom-scrollbar-dark">
-        <ul class="nav flex-column gap-2">
+    <div class="sidebar-menu">
+        <ul class="nav flex-column">
 
-            <li class="nav-header text-xs fw-bold text-secondary text-uppercase mt-2 mb-1 ps-3">Menu Utama</li>
-
-            {{-- DASHBOARD --}}
+            <li class="nav-header">DASHBOARD</li>
             <li class="nav-item">
                 <a href="{{ route('admin.dashboard') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="bi bi-grid-fill me-3 text-primary"></i>
-                    <span class="fw-medium">Dashboard</span>
+                    class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-grid-fill text-primary"></i>
+                    <span>Dashboard</span>
                 </a>
             </li>
 
-            <li class="nav-header text-xs fw-bold text-secondary text-uppercase mt-3 mb-1 ps-3">Operasional</li>
+            <li class="nav-header">OPERASIONAL</li>
 
-            {{-- DATA PENGAJUAN (collapse dgn 6 jenis submenu) --}}
-            @php $isArsip = request()->is('admin/arsip*'); @endphp
+            {{-- ================= ARSIP PENGAJUAN =================
+                 canAccessJenis fallback: kalau method belum ada (prod), tampilkan semua.
+                 Kalau method ada (dev/local), cek permission per jenis.
+            --}}
+            @php
+                $u = auth()->user();
+                $hasAccessCheck = method_exists($u, 'canAccessJenis');
+                $canAccess = fn($j) => !$hasAccessCheck || $u->canAccessJenis($j);
+                $isArsip = request()->is('admin/arsip*');
+            @endphp
+
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center justify-content-between {{ $isArsip ? 'text-white' : '' }}"
-                   data-bs-toggle="collapse" href="#arsipMenu" aria-expanded="{{ $isArsip ? 'true' : 'false' }}">
+                <a class="nav-link d-flex align-items-center justify-content-between {{ $isArsip ? 'bg-light text-primary' : '' }}"
+                    data-bs-toggle="collapse" href="#arsipMenu" aria-expanded="{{ $isArsip ? 'true' : 'false' }}">
+
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-clipboard2-data-fill me-3 text-warning"></i>
-                        <span class="fw-medium">Data Pengajuan</span>
+                        <i class="bi bi-clipboard2-data-fill {{ $isArsip ? 'text-primary' : 'text-warning' }}"></i>
+                        <span>Data Pengajuan</span>
                     </div>
-                    <i class="bi bi-chevron-down transition-icon" style="transition:transform .2s; {{ $isArsip ? 'transform:rotate(180deg);' : '' }}"></i>
+                    <i class="bi bi-chevron-right transition-icon ms-auto {{ $isArsip ? 'rotate-90' : '' }}"
+                        style="font-size: 0.8rem; margin-right:0;"></i>
                 </a>
+
                 <div class="collapse {{ $isArsip ? 'show' : '' }}" id="arsipMenu">
-                    <ul class="nav flex-column ms-3 mt-1 ps-3 border-start border-secondary border-opacity-25">
+                    <ul class="nav flex-column ms-4 mt-2 ps-2 border-start border-secondary border-opacity-25">
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index') }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == null && request()->routeIs('admin.arsip.index') ? 'text-warning fw-bold' : '' }}">
-                                <i class="bi bi-stack me-2"></i>Semua Data
+                                class="nav-link py-2 {{ request('jenis') == null && request()->routeIs('admin.arsip.index') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-stack text-secondary"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Semua Data</span>
                             </a>
                         </li>
+                        @if($canAccess('Cancel'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Cancel']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == 'Cancel' ? 'text-warning fw-bold' : '' }}">
-                                <i class="bi bi-trash3-fill me-2 text-danger"></i>Cancel
+                                class="nav-link py-2 {{ request('jenis') == 'Cancel' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-trash3-fill text-danger"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Cancel</span>
                             </a>
                         </li>
+                        @endif
+                        @if($canAccess('Adjust'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Adjust']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == 'Adjust' ? 'text-warning fw-bold' : '' }}">
-                                <i class="bi bi-sliders2-vertical me-2 text-info"></i>Adjustment
+                                class="nav-link py-2 {{ request('jenis') == 'Adjust' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-sliders2-vertical text-info"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Adjustment</span>
                             </a>
                         </li>
+                        @endif
+                        @if($canAccess('Mutasi_Billet'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Mutasi_Billet']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == 'Mutasi_Billet' ? 'text-warning fw-bold' : '' }}">
-                                <i class="bi bi-arrow-repeat me-2 text-primary"></i>Mutasi Billet
+                                class="nav-link py-2 {{ request('jenis') == 'Mutasi_Billet' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-arrow-repeat text-primary"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Mutasi Billet</span>
                             </a>
                         </li>
+                        @endif
+                        @if($canAccess('Mutasi_Produk'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Mutasi_Produk']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == 'Mutasi_Produk' ? 'text-warning fw-bold' : '' }}">
-                                <i class="bi bi-box-fill me-2 text-success"></i>Mutasi Produk
+                                class="nav-link py-2 {{ request('jenis') == 'Mutasi_Produk' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-box-fill text-success"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Mutasi Produk</span>
                             </a>
                         </li>
+                        @endif
+                        @if($canAccess('Internal_Memo'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Internal_Memo']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == 'Internal_Memo' ? 'text-warning fw-bold' : '' }}">
-                                <i class="bi bi-file-earmark-richtext-fill me-2 text-warning"></i>Internal Memo
+                                class="nav-link py-2 {{ request('jenis') == 'Internal_Memo' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-file-earmark-richtext-fill text-warning"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Internal Memo</span>
                             </a>
                         </li>
+                        @endif
+                        @if($canAccess('Bundel'))
                         <li class="nav-item">
                             <a href="{{ route('admin.arsip.index', ['jenis' => 'Bundel']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == 'Bundel' ? 'text-warning fw-bold' : '' }}">
-                                <i class="bi bi-collection-fill me-2 text-danger"></i>Bundel
+                                class="nav-link py-2 {{ request('jenis') == 'Bundel' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-collection-fill text-danger"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Bundel</span>
                             </a>
                         </li>
+                        @endif
+                        {{-- Daftar Produk Baru — DIBEKUKAN SEMENTARA --}}
+                        {{-- <li class="nav-item">
+                            <a href="{{ route('admin.arsip.index', ['jenis' => 'Produk_Baru']) }}"
+                                class="nav-link py-2 {{ request('jenis') == 'Produk_Baru' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-box-seam-fill text-primary"
+                                    style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Daftar Produk Baru</span>
+                            </a>
+                        </li> --}}
                     </ul>
                 </div>
             </li>
 
-            {{-- BUAT PENGAJUAN — shortcut ke index dgn trigger modal via ?action=new --}}
-            <li class="nav-item mt-1">
-                <a href="{{ route('admin.arsip.index') }}?action=new"
-                   class="nav-link d-flex align-items-center">
-                    <i class="bi bi-plus-circle-fill me-3 text-success"></i>
-                    <span class="fw-medium">Buat Pengajuan</span>
-                </a>
-            </li>
-
-            <li class="nav-header text-xs fw-bold text-secondary text-uppercase mt-3 mb-1 ps-3">Sistem</li>
-
-            {{-- NOTIFIKASI --}}
+            {{-- PERSETUJUAN SAYA — butuh arsip_approvals table (prod skip via Route::has) --}}
+            @if(Route::has('admin.approvals.index'))
             <li class="nav-item">
-                <a href="{{ route('admin.notifications.index') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}">
-                    <i class="bi bi-bell-fill me-3 text-info"></i>
-                    <span class="fw-medium">Notifikasi</span>
-                    @if(($unreadCount ?? 0) > 0)
-                        <span class="badge bg-danger rounded-pill ms-auto">{{ $unreadCount }}</span>
+                <a href="{{ route('admin.approvals.index') }}"
+                    class="nav-link d-flex align-items-center {{ request()->routeIs('admin.approvals.*') ? 'active' : '' }}">
+                    <i class="bi bi-check2-square text-success"></i>
+                    <span>Persetujuan Saya</span>
+                    @if(($pendingApprovalCount ?? 0) > 0)
+                        <span class="badge bg-danger rounded-pill ms-auto">{{ $pendingApprovalCount }}</span>
                     @endif
                 </a>
             </li>
+            @endif
 
-            {{-- PROFIL --}}
+            {{-- DIBAGIKAN KE SAYA — butuh arsip_shares table + method User::sharedArsips (prod skip) --}}
+            @if(Route::has('admin.arsip.shared-inbox') && method_exists($u, 'sharedArsips'))
             <li class="nav-item">
-                <a href="{{ route('admin.profile') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('admin.profile') ? 'active' : '' }}">
-                    <i class="bi bi-person-badge-fill me-3 text-secondary"></i>
-                    <span class="fw-medium">Profil Saya</span>
+                <a href="{{ route('admin.arsip.shared-inbox') }}"
+                    class="nav-link d-flex align-items-center {{ request()->routeIs('admin.arsip.shared-inbox') ? 'active' : '' }}">
+                    <i class="bi bi-inbox-fill text-info"></i>
+                    <span>Dibagikan ke Saya</span>
+                    @php $sharedCount = $u->sharedArsips()->count(); @endphp
+                    @if($sharedCount > 0)
+                        <span class="badge text-white ms-auto" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">{{ $sharedCount }}</span>
+                    @endif
+                </a>
+            </li>
+            @endif
+
+            {{-- MASTER HARGA — Gate view-price + route admin.prices.index (prod skip) --}}
+            @if(Route::has('admin.prices.index'))
+                @can('view-price')
+                <li class="nav-header">ACCOUNTING</li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.prices.index') }}"
+                        class="nav-link {{ request()->routeIs('admin.prices.*') ? 'active' : '' }}">
+                        <i class="bi bi-cash-coin text-success"></i>
+                        <span>Master Harga</span>
+                    </a>
+                </li>
+                @endcan
+            @endif
+
+            <li class="nav-header">SISTEM</li>
+            <li class="nav-item">
+                <a href="{{ route('admin.profile') ?? '#' }}"
+                    class="nav-link {{ request()->routeIs('admin.profile') ? 'active' : '' }}">
+                    <i class="bi bi-person-badge-fill text-secondary"></i>
+                    <span>Profil Saya</span>
                 </a>
             </li>
 
         </ul>
-    </div>
-
-    {{-- FOOTER --}}
-    <div class="sidebar-footer p-3 border-top border-secondary border-opacity-25 bg-dark bg-opacity-25 text-center">
-        <small class="text-secondary text-xs">© 2026 IT Submission V1.0</small>
     </div>
 
 </aside>

@@ -1,194 +1,304 @@
 {{-- ============================================================================
-     PROD-SAFE BACKPORT — Sidebar Superadmin
-     Baseline prod .200 (147ff58): 158 baris, sudah punya struktur bagus.
-     Backport: ganti emoji → Bootstrap Icons colored, tambah Backup menu di section
-     Sistem, preserve semua route existing.
+     UNIFIED SIDEBAR SUPERADMIN — safe di prod .200 (era April 2026) DAN dev .199 (modern)
+     ----------------------------------------------------------------------------
+     Struktur identik dgn dev/local (main branch), dgn defensive guards:
+     - `Route::has('...')` untuk route yang belum ada di prod
+     Di prod → menu approvals/branches/pengajuan-access/products/server-stats/
+              app-versions otomatis skip; menu maintenance mode + log aktivitas
+              tampil (sudah deploy M1 + M2).
+     Di dev → semua menu tampil normal.
 
-     NON-METHOD-CALL: tidak panggil canAccessJenis, sharedArsips, canViewPrice.
-     NON-NEW-ROUTE: hanya reference route registered di prod
-     (superadmin.dashboard, arsip.index dgn ?jenis=X, laporan, locations, departments,
-      units, managers, users, settings, backup, notifications, profile).
-
-     Skip: approvals, pengajuan-access, products, activity-logs, server-stats,
-     app-versions — route belum ada di prod (butuh migration).
+     Deploy 2026-07-30 M-Sync (samakan sidebar dgn dev + tambah Maintenance Mode).
      ============================================================================ --}}
-<aside class="sidebar bg-white shadow-sm d-flex flex-column h-100">
+<aside class="sidebar">
 
-    {{-- ================= HEADER ================= --}}
-    <div class="sidebar-header p-4 d-flex align-items-center">
-        <div class="bg-white rounded p-1 me-3 d-flex align-items-center justify-content-center shadow-sm"
-             style="width:40px;height:40px">
-            @if($app_logo)
-                <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
-            @else
-                <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
-            @endif
+    {{-- HEADER --}}
+    <div class="sidebar-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <div class="bg-white rounded-3 p-1 me-2 d-flex align-items-center justify-content-center shadow-sm"
+                style="width: 42px; height: 42px; min-width: 42px;">
+                @if($app_logo ?? false)
+                    <img src="{{ asset('storage/settings/' . $app_logo) }}" alt="Logo"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                @else
+                    <img src="{{ asset('img/logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                @endif
+            </div>
+            <div class="sidebar-title overflow-hidden">
+                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 0.95rem;">
+                    {{ $app_name ?? 'IT Submission' }}
+                </h6>
+                <small style="font-size: 0.65rem; font-weight: 800; color: #dc2626; letter-spacing: 0.5px;">SUPER ADMIN</small>
+            </div>
         </div>
-        <div>
-            <h6 class="mb-0 fw-bold text-dark">{{ $app_name }}</h6>
-            <small class="text-slate-500 text-xs">Superadmin Panel</small>
-        </div>
+
+        {{-- Desktop Toggle Button inside Sidebar --}}
+        <button class="btn btn-light d-none d-lg-flex shadow-sm rounded-circle p-0 align-items-center justify-content-center sidebar-toggle-in"
+            onclick="toggleSidebar();"
+            style="width: 32px; height: 32px; min-width: 32px; border: none; background: #f1f5f9;">
+            <i class="bi bi-chevron-left text-primary" style="font-size: 0.9rem;"></i>
+        </button>
     </div>
 
-    {{-- ================= MENU ================= --}}
-    <div class="sidebar-menu flex-grow-1 overflow-auto p-3 custom-scrollbar">
-        <ul class="nav flex-column gap-1">
+    {{-- MENU WRAPPER --}}
+    <div class="sidebar-menu">
+        <ul class="nav flex-column">
 
-            {{-- DASHBOARD --}}
+            <li class="nav-header">DASHBOARD</li>
             <li class="nav-item">
                 <a href="{{ route('superadmin.dashboard') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.dashboard') ? 'active' : '' }}">
-                    <i class="bi bi-grid-fill me-3 text-primary"></i>
-                    <span class="fw-medium">Dashboard</span>
+                    class="nav-link {{ request()->routeIs('superadmin.dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-grid-fill text-primary"></i>
+                    <span>Dashboard</span>
                 </a>
             </li>
 
-            <li class="nav-header text-xs fw-bold text-slate-500 text-uppercase mt-4 mb-2 ps-3">
-                Operasional
-            </li>
+            <li class="nav-header">OPERASIONAL</li>
 
             {{-- ================= ARSIP PENGAJUAN ================= --}}
-            @php $isArsip = request()->is('superadmin/arsip*'); @endphp
+            @php
+                $isArsip = request()->is('superadmin/arsip*');
+            @endphp
+
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse" href="#arsipMenu" aria-expanded="{{ $isArsip ? 'true' : 'false' }}">
+                <a class="nav-link d-flex align-items-center justify-content-between {{ $isArsip ? 'bg-light text-primary' : '' }}"
+                    data-bs-toggle="collapse" href="#arsipMenu" aria-expanded="{{ $isArsip ? 'true' : 'false' }}">
+
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-folder2-open me-3 text-warning"></i>
-                        <span class="fw-medium">Data Pengajuan</span>
+                        <i class="bi bi-clipboard2-data-fill {{ $isArsip ? 'text-primary' : 'text-warning' }}"></i>
+                        <span>Data Pengajuan</span>
                     </div>
-                    <i class="bi bi-chevron-down transition-icon" style="transition:transform .2s; {{ $isArsip ? 'transform:rotate(180deg);' : '' }}"></i>
+                    <i class="bi bi-chevron-right transition-icon ms-auto {{ $isArsip ? 'rotate-90' : '' }}"
+                        style="font-size: 0.8rem; margin-right:0;"></i>
                 </a>
 
                 <div class="collapse {{ $isArsip ? 'show' : '' }}" id="arsipMenu">
-                    <ul class="nav flex-column ms-3 mt-1 ps-3 border-start border-2">
+                    <ul class="nav flex-column ms-4 mt-2 ps-2 border-start border-secondary border-opacity-25">
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index') }}"
-                               class="nav-link py-2 text-sm {{ request('jenis') == null && request()->routeIs('superadmin.arsip.index') ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-stack me-2 text-secondary"></i>Semua Data
+                                class="nav-link py-2 {{ request('jenis') == null && request()->routeIs('superadmin.arsip.index') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-stack text-secondary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Semua Data</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Cancel']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis')=='Cancel' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-trash3-fill me-2 text-danger"></i>Cancel
+                                class="nav-link py-2 {{ request('jenis') == 'Cancel' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-trash3-fill text-danger" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Cancel</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Adjust']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis')=='Adjust' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-sliders2-vertical me-2 text-info"></i>Adjustment
+                                class="nav-link py-2 {{ request('jenis') == 'Adjust' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-sliders2-vertical text-info" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Adjustment</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Mutasi_Billet']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis')=='Mutasi_Billet' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-arrow-repeat me-2 text-primary"></i>Mutasi Billet
+                                class="nav-link py-2 {{ request('jenis') == 'Mutasi_Billet' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-arrow-repeat text-primary" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Mutasi Billet</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Mutasi_Produk']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis')=='Mutasi_Produk' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-box-fill me-2 text-success"></i>Mutasi Produk
+                                class="nav-link py-2 {{ request('jenis') == 'Mutasi_Produk' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-box-fill text-success" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Mutasi Produk</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Internal_Memo']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis')=='Internal_Memo' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-file-earmark-richtext-fill me-2 text-warning"></i>Internal Memo
+                                class="nav-link py-2 {{ request('jenis') == 'Internal_Memo' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-file-earmark-richtext-fill text-warning" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Internal Memo</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.arsip.index', ['jenis' => 'Bundel']) }}"
-                               class="nav-link py-2 text-sm {{ request('jenis')=='Bundel' ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-collection-fill me-2 text-danger"></i>Bundel
+                                class="nav-link py-2 {{ request('jenis') == 'Bundel' ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-collection-fill text-danger" style="font-size:1rem; min-width:20px; margin-right:8px;"></i>
+                                <span>Bundel</span>
                             </a>
                         </li>
                     </ul>
                 </div>
             </li>
 
+            {{-- PERSETUJUAN (Final IT) — butuh arsip_approvals table (prod skip) --}}
+            @if(Route::has('superadmin.approvals.index'))
+            <li class="nav-item mt-2">
+                <a href="{{ route('superadmin.approvals.index') }}"
+                    class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.approvals.*') ? 'active' : '' }}">
+                    <i class="bi bi-check2-square text-success"></i>
+                    <span>Persetujuan (Final IT)</span>
+                    @if(($pendingApprovalCount ?? 0) > 0)
+                        <span class="badge bg-danger rounded-pill ms-auto">{{ $pendingApprovalCount }}</span>
+                    @endif
+                </a>
+            </li>
+            @endif
+
             {{-- LAPORAN --}}
-            <li class="nav-item mt-1">
+            <li class="nav-item mt-2">
                 <a href="{{ route('superadmin.laporan.index') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.laporan.*') ? 'active' : '' }}">
-                    <i class="bi bi-file-earmark-bar-graph-fill me-3 text-success"></i>
-                    <span class="fw-medium">Laporan</span>
+                    class="nav-link {{ request()->routeIs('superadmin.laporan.*') ? 'active' : '' }}">
+                    <i class="bi bi-file-earmark-bar-graph-fill text-success"></i>
+                    <span>Laporan</span>
                 </a>
             </li>
 
-            <li class="nav-header text-xs fw-bold text-slate-500 text-uppercase mt-4 mb-2 ps-3">
-                Master Data
-            </li>
+            <li class="nav-header">PENGATURAN UMUM</li>
 
             {{-- MASTER DATA --}}
             @php
-                $isMaster = request()->is('superadmin/departments*', 'superadmin/units*', 'superadmin/managers*', 'superadmin/users*', 'superadmin/locations*');
+                $isMaster = request()->is('superadmin/branches*', 'superadmin/departments*', 'superadmin/units*', 'superadmin/managers*', 'superadmin/users*', 'superadmin/locations*', 'superadmin/settings*');
             @endphp
+
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center justify-content-between"
-                   data-bs-toggle="collapse" href="#masterMenu" aria-expanded="{{ $isMaster ? 'true' : 'false' }}">
+                <a class="nav-link d-flex align-items-center justify-content-between {{ $isMaster ? 'bg-light text-primary' : '' }}"
+                    data-bs-toggle="collapse" href="#masterMenu" aria-expanded="{{ $isMaster ? 'true' : 'false' }}">
+
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-database-fill me-3 text-info"></i>
-                        <span class="fw-medium">Master Data</span>
+                        <i class="bi bi-database-fill {{ $isMaster ? 'text-primary' : 'text-info' }}"></i>
+                        <span>Master Data</span>
                     </div>
-                    <i class="bi bi-chevron-down transition-icon" style="transition:transform .2s; {{ $isMaster ? 'transform:rotate(180deg);' : '' }}"></i>
+                    <i class="bi bi-chevron-right transition-icon ms-auto {{ $isMaster ? 'rotate-90' : '' }}"
+                        style="font-size: 0.8rem; margin-right:0;"></i>
                 </a>
+
                 <div class="collapse {{ $isMaster ? 'show' : '' }}" id="masterMenu">
-                    <ul class="nav flex-column ms-3 mt-1 ps-3 border-start border-2">
+                    <ul class="nav flex-column ms-4 mt-2 ps-2 border-start border-secondary border-opacity-25">
                         <li class="nav-item">
                             <a href="{{ route('superadmin.locations.index') }}"
-                               class="nav-link py-2 text-sm {{ request()->routeIs('superadmin.locations.*') ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-geo-alt-fill me-2 text-danger"></i>Lokasi Fisik
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.locations.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-geo-alt-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#10b981;"></i>
+                                <span>Lokasi Fisik</span>
                             </a>
                         </li>
+                        {{-- CABANG / BRANCH — butuh branches table (prod skip) --}}
+                        @if(Route::has('superadmin.branches.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.branches.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.branches.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-buildings-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#ef4444;"></i>
+                                <span>Cabang / Branch</span>
+                            </a>
+                        </li>
+                        @endif
                         <li class="nav-item">
                             <a href="{{ route('superadmin.departments.index') }}"
-                               class="nav-link py-2 text-sm {{ request()->routeIs('superadmin.departments.*') ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-building-fill me-2 text-primary"></i>Departemen
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.departments.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-building-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#3b82f6;"></i>
+                                <span>Departemen</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.units.index') }}"
-                               class="nav-link py-2 text-sm {{ request()->routeIs('superadmin.units.*') ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-box-seam-fill me-2 text-warning"></i>Unit
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.units.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-diagram-3-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#8b5cf6;"></i>
+                                <span>Unit</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.managers.index') }}"
-                               class="nav-link py-2 text-sm {{ request()->routeIs('superadmin.managers.*') ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-person-check-fill me-2 text-success"></i>Manager
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.managers.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-person-badge-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#f59e0b;"></i>
+                                <span>Manager</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('superadmin.users.index') }}"
-                               class="nav-link py-2 text-sm {{ request()->routeIs('superadmin.users.*') ? 'text-primary fw-bold' : '' }}">
-                                <i class="bi bi-people-fill me-2 text-info"></i>User
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.users.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-people-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#ec4899;"></i>
+                                <span>User</span>
+                            </a>
+                        </li>
+                        {{-- AKSES PENGAJUAN — butuh role_pengajuan_access (prod skip) --}}
+                        @if(Route::has('superadmin.pengajuan-access.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.pengajuan-access.index') }}"
+                               class="nav-link py-2 d-flex align-items-center {{ request()->routeIs('superadmin.pengajuan-access.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-shield-lock-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#7c3aed;"></i>
+                                <span>Akses Pengajuan</span>
+                                <span class="badge text-white ms-auto" style="font-size:0.5rem; background:linear-gradient(135deg,#7c3aed,#5b21b6);">NEW</span>
+                            </a>
+                        </li>
+                        @endif
+                        {{-- MASTER PRODUK — butuh products table (prod skip) --}}
+                        @if(Route::has('superadmin.products.index'))
+                        <li class="nav-item">
+                            <a href="{{ route('superadmin.products.index') }}"
+                               class="nav-link py-2 d-flex align-items-center {{ request()->routeIs('superadmin.products.*') ? 'text-primary fw-bold' : '' }}">
+                                <i class="bi bi-box-seam-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#06b6d4;"></i>
+                                <span>Master Produk</span>
+                            </a>
+                        </li>
+                        @endif
+                        <li class="nav-item mt-2">
+                            <a href="{{ route('superadmin.settings.index') }}"
+                               class="nav-link py-2 {{ request()->routeIs('superadmin.settings.*') ? 'fw-bold text-primary' : 'text-warning fw-bold' }}">
+                                <i class="bi bi-gear-fill" style="font-size:1rem; min-width:20px; margin-right:8px; color:#f97316;"></i>
+                                <span>Pengaturan APP</span>
                             </a>
                         </li>
                     </ul>
                 </div>
             </li>
 
-            <li class="nav-header text-xs fw-bold text-slate-500 text-uppercase mt-4 mb-2 ps-3">
-                Sistem
-            </li>
+            <li class="nav-header">SYSTEM MONITOR</li>
 
-            {{-- BACKUP & RESTORE (route existing di prod) --}}
+            {{-- LOG AKTIVITAS — deploy M1 2026-07-30 (guard tetap ada untuk cross-env safety) --}}
+            @if(Route::has('superadmin.activity-logs.index'))
+            <li class="nav-item">
+                <a href="{{ route('superadmin.activity-logs.index') }}"
+                    class="nav-link {{ request()->routeIs('superadmin.activity-logs.*') ? 'active' : '' }}">
+                    <i class="bi bi-journal-text text-info"></i>
+                    <span>Log Aktivitas</span>
+                </a>
+            </li>
+            @endif
+
+            {{-- MANAJEMEN DB (Backup & Restore) --}}
             <li class="nav-item">
                 <a href="{{ route('superadmin.backup.index') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.backup.*') ? 'active' : '' }}">
-                    <i class="bi bi-database-fill-gear me-3 text-primary"></i>
-                    <span class="fw-medium">Backup & Restore</span>
+                    class="nav-link {{ request()->is('superadmin/backup*') ? 'active' : '' }}">
+                    <i class="bi bi-database-check text-primary"></i>
+                    <span>Manajemen DB</span>
                 </a>
             </li>
 
-            {{-- MAINTENANCE MODE (baru — deploy 2026-07-30) --}}
+            {{-- STATISTIK SERVER — belum di prod (skip) --}}
+            @if(Route::has('superadmin.server-stats.index'))
+            <li class="nav-item">
+                <a href="{{ route('superadmin.server-stats.index') }}"
+                    class="nav-link {{ request()->routeIs('superadmin.server-stats.*') ? 'active' : '' }}">
+                    <i class="bi bi-speedometer2 text-warning"></i>
+                    <span>Statistik Server</span>
+                </a>
+            </li>
+            @endif
+
+            {{-- KELOLA APK ANDROID — belum di prod (skip) --}}
+            @if(Route::has('superadmin.app-versions.index'))
+            <li class="nav-item">
+                <a href="{{ route('superadmin.app-versions.index') }}"
+                    class="nav-link {{ request()->routeIs('superadmin.app-versions.*') ? 'active' : '' }}">
+                    <i class="bi bi-android2 text-success"></i>
+                    <span>Kelola APK Android</span>
+                </a>
+            </li>
+            @endif
+
+            {{-- MAINTENANCE MODE — deploy M2 2026-07-30 (skip di dev kalau blm deploy) --}}
             @if(Route::has('superadmin.maintenance.index'))
             <li class="nav-item">
                 <a href="{{ route('superadmin.maintenance.index') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.maintenance.*') ? 'active' : '' }}">
-                    <i class="bi bi-tools me-3 text-danger"></i>
-                    <span class="fw-medium">Maintenance Mode</span>
+                    class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.maintenance.*') ? 'active' : '' }}">
+                    <i class="bi bi-tools text-danger"></i>
+                    <span>Maintenance Mode</span>
                     @if(app()->isDownForMaintenance())
                         <span class="badge bg-danger rounded-pill ms-auto">ON</span>
                     @endif
@@ -196,52 +306,7 @@
             </li>
             @endif
 
-            {{-- LOG AKTIVITAS (M1 — deploy 2026-07-30) --}}
-            @if(Route::has('superadmin.activity-logs.index'))
-            <li class="nav-item">
-                <a href="{{ route('superadmin.activity-logs.index') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.activity-logs.*') ? 'active' : '' }}">
-                    <i class="bi bi-journal-text me-3 text-info"></i>
-                    <span class="fw-medium">Log Aktivitas</span>
-                </a>
-            </li>
-            @endif
-
-            {{-- PENGATURAN --}}
-            <li class="nav-item">
-                <a href="{{ route('superadmin.settings.index') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.settings.*') ? 'active' : '' }}">
-                    <i class="bi bi-gear-fill me-3 text-secondary"></i>
-                    <span class="fw-medium">Pengaturan</span>
-                </a>
-            </li>
-
-            {{-- NOTIFIKASI --}}
-            <li class="nav-item">
-                <a href="{{ route('superadmin.notifications.index') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.notifications.*') ? 'active' : '' }}">
-                    <i class="bi bi-bell-fill me-3 text-warning"></i>
-                    <span class="fw-medium">Notifikasi</span>
-                    @if(($unreadCount ?? 0) > 0)
-                        <span class="badge bg-danger rounded-pill ms-auto">{{ $unreadCount }}</span>
-                    @endif
-                </a>
-            </li>
-
-            {{-- PROFIL --}}
-            <li class="nav-item">
-                <a href="{{ route('superadmin.profile') }}"
-                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.profile') ? 'active' : '' }}">
-                    <i class="bi bi-person-badge-fill me-3 text-secondary"></i>
-                    <span class="fw-medium">Profil Saya</span>
-                </a>
-            </li>
-
         </ul>
     </div>
 
-    {{-- FOOTER --}}
-    <div class="sidebar-footer p-3 border-top bg-light text-center">
-        <small class="text-slate-500 text-xs">© 2026 IT Submission V1.0</small>
-    </div>
 </aside>
