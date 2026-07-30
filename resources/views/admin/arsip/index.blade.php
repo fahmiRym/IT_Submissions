@@ -646,6 +646,36 @@
                                                             @endif
                                                         </li>
                                                         <li><hr class="dropdown-divider my-1"></li>
+                                                        {{-- SHOW DOCUMENT — draft + lampiran gabung jadi 1 PDF --}}
+                                                        <li>
+                                                            <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
+                                                               href="{{ route('admin.arsip.show-document', $a->id) }}" target="_blank">
+                                                                <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                                     style="width:32px;height:32px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;">
+                                                                    <i class="bi bi-file-earmark-text-fill"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="fw-bold small text-dark">Show Document</div>
+                                                                    <div class="text-muted" style="font-size:0.65rem;">Draft + Lampiran (gabung jadi 1 PDF)</div>
+                                                                </div>
+                                                            </a>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider my-1"></li>
+                                                        {{-- PRINT DRAFT — draft saja tanpa lampiran --}}
+                                                        <li>
+                                                            <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
+                                                               href="{{ route('admin.arsip.print-draft', $a->id) }}" target="_blank">
+                                                                <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                                     style="width:32px;height:32px;background:linear-gradient(135deg,#fef3c7,#fde68a);color:#d97706;">
+                                                                    <i class="bi bi-printer-fill"></i>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="fw-bold small text-dark">Print Draft (saja)</div>
+                                                                    <div class="text-muted" style="font-size:0.65rem;">Tanpa lampiran</div>
+                                                                </div>
+                                                            </a>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider my-1"></li>
                                                         <li>
                                                             <button type="button"
                                                                 class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"

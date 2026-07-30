@@ -102,8 +102,11 @@ BPB-25/12/0327
                                 </div>
                             </div>
 
+                            {{-- NAMA PEMOHON — pakai skema lama: simple textarea (bebas ketik) --}}
                             <div class="mb-3">
-                                @include('partials._pemohon_picker', ['fieldId' => 'pemohonPickerCreate', 'name' => 'requesters', 'selected' => []])
+                                <label class="form-label small fw-bold text-secondary text-uppercase">Nama Pemohon</label>
+                                <textarea name="pemohon" class="form-control bg-white border-0 shadow-sm"
+                                          rows="2" placeholder="Nama-nama Pemohon..."></textarea>
                             </div>
 
                              {{-- Kategori Error (Muncul jika Cancel) --}}
