@@ -77,10 +77,12 @@
                                 </div>
                             </div>
 
+                            {{-- NAMA PEMOHON — textarea sederhana (skema lama) --}}
                             <div class="mb-3">
-                                @include('partials._pemohon_picker', ['fieldId' => 'pemohonPickerEditAdmin', 'name' => 'requesters', 'selected' => [], 'textName' => 'pemohon'])
-                                {{-- legacy hidden field for backward-compat scripts referencing #editPemohon --}}
-                                <input type="hidden" id="editPemohon">
+                                <label class="form-label small fw-bold text-secondary text-uppercase">Nama Pemohon</label>
+                                <textarea name="pemohon" id="editPemohon"
+                                          class="form-control bg-white border-0 shadow-sm"
+                                          rows="2" placeholder="Nama-nama Pemohon..."></textarea>
                             </div>
 
                             {{-- Kategori (Cancel Only) --}}
@@ -259,7 +261,8 @@
                                 </div>
                             </div>
 
-                            {{-- ALUR PERSETUJUAN (status + ubah approver bila belum berjalan) --}}
+                            {{-- ALUR PERSETUJUAN — DISABLED (approval digital ditahan) --}}
+                            @if(false)
                             <div class="card border-0 shadow-sm bg-white mb-2">
                                 <div class="card-body">
                                     <h6 class="fw-bold text-primary mb-2" style="font-size:0.85rem;"><i class="bi bi-diagram-3-fill me-1"></i>Alur Persetujuan</h6>
@@ -270,6 +273,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -300,7 +300,8 @@
                         <td style="width: 48%; text-align: center; vertical-align: middle; padding: 4px;">
                             <div class="header-title">FORM PENGAJUAN ISI BUNDLE</div>
                             <div class="header-sub">Form {{ $k + 1 }} dari {{ $displayFormCount }}</div>
-                            @if($arsip->verify_token)
+                            {{-- SCAN QR — hidden (fitur digital ditahan) --}}
+                            @if(false && $arsip->verify_token)
                                 <div style="font-size: 7px; color: #1d4ed8; margin-top: 2px; font-weight: 700; letter-spacing: 0.5px;">
                                     SCAN QR UNTUK VERIFIKASI
                                 </div>

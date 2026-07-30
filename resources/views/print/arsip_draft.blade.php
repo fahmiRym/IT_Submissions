@@ -429,13 +429,10 @@
         @endphp
         <table class="doc-header">
             <tr>
+                {{-- QR VERIFIKASI — hidden (fitur digital signature ditahan) --}}
                 <td class="qr-wrapper">
-                    @if($qrDocVerify)
-                        <img src="{{ $qrDocVerify }}" alt="QR Verify">
-                    @endif
-                    @if($arsip->verify_token)
-                        <div class="qr-label verify">SCAN VERIFIKASI</div>
-                    @endif
+                    {{-- @if($qrDocVerify)<img src="{{ $qrDocVerify }}" alt="QR Verify">@endif --}}
+                    {{-- @if($arsip->verify_token)<div class="qr-label verify">SCAN VERIFIKASI</div>@endif --}}
                 </td>
 
                 <td class="doc-header-center">
@@ -815,7 +812,8 @@
                 {{ $isAdjust ? 'Adjustment' : ($isProdukBaru ? 'Produk Baru' : 'System Odoo') }} / 01 / 15 Januari 2025
             </div>
 
-            @if($arsip->signatures->count() > 0)
+            {{-- Digital signature footer — hidden (fitur approval digital ditahan) --}}
+            @if(false && $arsip->signatures->count() > 0)
                 @php $signedNames = $arsip->signatures->pluck('role_label')->all(); @endphp
                 <div class="ttd-validation">
                     <span class="ttd-text">
