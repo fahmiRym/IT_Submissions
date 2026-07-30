@@ -849,32 +849,35 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2"
                                             style="border-radius: 12px; min-width: 240px;">
+                                            {{-- Show Document + Print Draft — DISABLED (fitur digital doc/approval ditahan) --}}
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
-                                                   href="{{ route('superadmin.arsip.show-document', $a->id) }}" target="_blank">
+                                                <span class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 disabled"
+                                                      style="opacity:.5; cursor:not-allowed; pointer-events:none;"
+                                                      title="Fitur ditahan sementara">
                                                     <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                                                         style="width:32px;height:32px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#15803d;">
+                                                         style="width:32px;height:32px;background:#f1f5f9;color:#94a3b8;">
                                                         <i class="bi bi-file-earmark-pdf-fill"></i>
                                                     </div>
                                                     <div>
-                                                        <div class="fw-bold small text-dark">Show Document</div>
-                                                        <div class="text-muted" style="font-size:0.65rem;">Draft + Lampiran (gabung jadi 1 PDF)</div>
+                                                        <div class="fw-bold small text-muted">Show Document <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1" style="font-size:0.55rem;">SEGERA</span></div>
+                                                        <div class="text-muted" style="font-size:0.65rem;">Fitur digital doc belum aktif</div>
                                                     </div>
-                                                </a>
+                                                </span>
                                             </li>
                                             <li><hr class="dropdown-divider my-1"></li>
                                             <li>
-                                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
-                                                   href="{{ route('superadmin.arsip.print-draft', $a->id) }}" target="_blank">
+                                                <span class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 disabled"
+                                                      style="opacity:.5; cursor:not-allowed; pointer-events:none;"
+                                                      title="Fitur ditahan sementara">
                                                     <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                                                         style="width:32px;height:32px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;">
+                                                         style="width:32px;height:32px;background:#f1f5f9;color:#94a3b8;">
                                                         <i class="bi bi-printer-fill"></i>
                                                     </div>
                                                     <div>
-                                                        <div class="fw-bold small text-dark">Print Draft (saja)</div>
-                                                        <div class="text-muted" style="font-size:0.65rem;">Tanpa lampiran</div>
+                                                        <div class="fw-bold small text-muted">Print Draft (saja) <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1" style="font-size:0.55rem;">SEGERA</span></div>
+                                                        <div class="text-muted" style="font-size:0.65rem;">Fitur digital doc belum aktif</div>
                                                     </div>
-                                                </a>
+                                                </span>
                                             </li>
                                             <li><hr class="dropdown-divider my-1"></li>
                                             <li>

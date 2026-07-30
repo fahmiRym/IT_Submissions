@@ -118,8 +118,10 @@ BPB-25/12/0327
                                 </div>
                             </div>
 
-                            {{-- ALUR PERSETUJUAN (Approver bertingkat) --}}
-                            @include('partials._approver_select', ['approverUsers' => $approverUsers ?? collect(), 'jenisSelectId' => 'jenisPengajuanTambahAdmin'])
+                            {{-- ALUR PERSETUJUAN — DISABLED (approval digital ditahan) --}}
+                            @if(false)
+                                @include('partials._approver_select', ['approverUsers' => $approverUsers ?? collect(), 'jenisSelectId' => 'jenisPengajuanTambahAdmin'])
+                            @endif
                         </div>
 
                         {{-- RIGHT COLUMN: DETAIL & ITEMS --}}
