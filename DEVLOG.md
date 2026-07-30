@@ -4,6 +4,80 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-30 (lanjutan #3) — ✅ FIX SIDEBAR PROD: deploy 3 CSS + inject collapse handler
+
+**Konteks:** setelah sidebar unified deployed, user screenshot prod → sidebar
+tampak "jelek dan gelap" + collapse tidak works. Bandingkan dgn dev tampilan
+premium (rounded logo, colored icon, hover effect, submenu smooth).
+
+### Root cause
+
+1. **Prod cuma punya 1 CSS**: `modern-theme.css` versi Feb 2026 (9.3 KB).
+   Dev/local punya 4 CSS: `modern-theme` (16 KB, versi baru), `premium-sidebar-topbar`,
+   `responsive-mobile`, `adjust-theme`. Prod missing style premium sidebar +
+   collapse transition + chevron rotation + hover translate.
+
+2. **Prod app.blade.php cuma load 1 CSS** (`modern-theme.css`). Missing 3
+   `<link>` untuk premium-sidebar-topbar + responsive-mobile + adjust-theme.
+
+3. **Prod app.blade.php TIDAK PUNYA JS handler**: `toggleSidebar()` (referenced
+   di sidebar header button), chevron rotation on collapse events. Bootstrap 5
+   collapse DOM still works via `data-bs-toggle="collapse"`, tapi tanpa visual
+   feedback (chevron stuck).
+
+### Deploy (03:30 UTC)
+
+**Layer 1 — CSS files:**
+- Backup: `/root/backups/{modern-theme.css,app.blade.php}.bak.20260730_033036`
+- SCP 4 CSS ke `/root/it_submissions/public/css/`:
+  * `modern-theme.css` (updated Feb → newer, 16 KB, tambah `.sidebar.bg-white` etc)
+  * `premium-sidebar-topbar.css` (BARU, 15.5 KB — collapse transition, chevron rotation, mini mode)
+  * `responsive-mobile.css` (BARU, 12.5 KB)
+  * `adjust-theme.css` (BARU, 4.3 KB)
+
+**Layer 2 — Inject 3 CSS links ke app.blade.php prod** (via python anchor-based):
+```
+<link href="{{ asset('css/premium-sidebar-topbar.css') }}?v=..." rel="stylesheet">
+<link href="{{ asset('css/responsive-mobile.css') }}?v=..." rel="stylesheet">
+<link href="{{ asset('css/adjust-theme.css') }}?v=..." rel="stylesheet">
+```
+Preserve SSO customization — hanya insert after `modern-theme.css` line.
+
+**Layer 3 — Inject `<script id="sidebar-collapse-handler">` ke app.blade.php prod**
+(setelah bootstrap.bundle.min.js load, sebelum @stack scripts):
+- `window.toggleSidebar` — no-op safe (toggle body.sidebar-mini + localStorage
+  persist). Kalau prod adopsi mini mode fitur nanti, function ini standby.
+- `$('.sidebar .collapse').on('show/hide.bs.collapse', ...)` — rotate
+  `.transition-icon` add/remove `rotate-90` class → chevron animation smooth
+- Mobile resize: auto-remove `sidebar-mini` di layar < 992px
+
+**Verify:**
+- 4 CSS accessible via HTTP 200
+- View cache cleared
+- Health: GET /login 200, GET /superadmin/dashboard 302
+
+### Impact
+
+- ✅ Sidebar prod visual **sekarang match dev** — rounded logo, colored icons,
+  hover translate-X, active gradient, submenu smooth expand/collapse
+- ✅ Collapse Data Pengajuan + Master Data works dgn chevron rotate 90°
+- ✅ Zero downtime (Blade compile on request)
+- ✅ Backward-safe: kalau prod nanti deploy layout modern, script inject
+  akan skip (check id="sidebar-collapse-handler")
+
+### File berubah (server-side only, local tidak)
+
+Prod server changes only — local main branch sudah punya CSS + JS ini
+(dari commit lama). Yang di-inject di prod essentially port dari local.
+
+### Untuk lanjutan
+
+- [ ] User verify di browser (hard-refresh Ctrl+Shift+R untuk clear cache)
+- [ ] Kalau sidebar mini mode tidak dibutuhkan di prod, biarkan default
+- [ ] Continue M3 (Note) atau M4 (Share) sesuai prioritas
+
+---
+
 ## 2026-07-30 (lanjutan #2) — ✅ SIDEBAR UNIFIED: sync file identik di prod + dev + local
 
 **Konteks:** user minta "samakan sidebar prod dengan dev dan lin-dev". Sebelumnya
