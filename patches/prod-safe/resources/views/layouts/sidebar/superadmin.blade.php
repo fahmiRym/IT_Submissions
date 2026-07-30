@@ -9,8 +9,10 @@
      Di dev → semua menu tampil normal.
 
      Deploy 2026-07-30 M-Sync (samakan sidebar dgn dev + tambah Maintenance Mode).
+     Class `bg-white` trigger light-theme override di modern-theme.css prod
+     (default `.sidebar` = dark #1e293b; `.sidebar.bg-white` = light putih).
      ============================================================================ --}}
-<aside class="sidebar">
+<aside class="sidebar bg-white">
 
     {{-- HEADER --}}
     <div class="sidebar-header d-flex align-items-center justify-content-between">
