@@ -123,6 +123,9 @@
             line-height: 22px;
             font-size: 11px;
             padding: 0 2px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: clip;
         }
         .ruled-content {
             border-bottom: 1px solid #000;
@@ -594,7 +597,16 @@
             <div style="margin-top: 2px; text-align: justify;">
                 @if(!empty(trim((string) $arsip->keterangan)))
                     @php
-                        $ketLines = preg_split('/\r\n|\r|\n/', trim((string) $arsip->keterangan));
+                        // Split by newline dulu, terus wordwrap tiap baris ke <=95 char
+                        // supaya tidak overflow ke ruled-line di bawahnya (fixed height).
+                        $ketRaw = preg_split('/\r\n|\r|\n/', trim((string) $arsip->keterangan));
+                        $ketLines = [];
+                        foreach ($ketRaw as $line) {
+                            $wrapped = wordwrap(trim($line), 95, "\n", true);
+                            foreach (explode("\n", $wrapped) as $sub) {
+                                $ketLines[] = $sub;
+                            }
+                        }
                     @endphp
                     @foreach($ketLines as $kline)
                         @php $kt = trim($kline); @endphp
@@ -610,7 +622,17 @@
                     @endphp
                     <div class="ruled-line" style="font-weight: 800; color: #000;">No. Transaksi :</div>
                     @foreach($trxGroups as $gIdx => $group)
-                        @php $lines = array_values(array_filter(array_map('trim', explode("\n", $group)))); @endphp
+                        @php
+                            $rawLines = array_values(array_filter(array_map('trim', explode("\n", $group))));
+                            // Wordwrap juga di no_transaksi kalau ada baris panjang
+                            $lines = [];
+                            foreach ($rawLines as $rl) {
+                                $wrapped = wordwrap($rl, 95, "\n", true);
+                                foreach (explode("\n", $wrapped) as $sub) {
+                                    $lines[] = $sub;
+                                }
+                            }
+                        @endphp
                         @foreach($lines as $line)
                             <div class="ruled-line" style="color: #000;">{{ $line }}</div>
                         @endforeach
