@@ -196,6 +196,17 @@
             </li>
             @endif
 
+            {{-- LOG AKTIVITAS (M1 — deploy 2026-07-30) --}}
+            @if(Route::has('superadmin.activity-logs.index'))
+            <li class="nav-item">
+                <a href="{{ route('superadmin.activity-logs.index') }}"
+                   class="nav-link d-flex align-items-center {{ request()->routeIs('superadmin.activity-logs.*') ? 'active' : '' }}">
+                    <i class="bi bi-journal-text me-3 text-info"></i>
+                    <span class="fw-medium">Log Aktivitas</span>
+                </a>
+            </li>
+            @endif
+
             {{-- PENGATURAN --}}
             <li class="nav-item">
                 <a href="{{ route('superadmin.settings.index') }}"

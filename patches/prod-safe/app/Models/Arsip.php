@@ -13,9 +13,11 @@
  *    otomatis muncul di serialize JSON API response (Android tvStatusUtama).
  *    Bug sebelumnya: field tidak pernah dikirim → Android selalu fallback
  *    "DALAM PROSES" walaupun `no_doc` sudah terbit.
+ * 3. Tambah trait `HasAuditLogs` (v2 — 2026-07-30, setelah M1 audit_logs
+ *    table di-migrate). Auto-log setiap create/update/delete Arsip ke
+ *    tabel `audit_logs` untuk feature Log Aktivitas di superadmin.
  *
  * TIDAK di-porting (biar backward-compat dgn schema prod era April 2026):
- * - Trait `HasAuditLogs` (butuh `audit_logs` table — belum di prod)
  * - Relations `approvals/signatures/lampirans/shares/personalNotes/requesters/
  *   tindakanItems/produkBaruItems` (semua butuh table baru)
  * - Method `canBeEditedBy/currentApproval/isFullyApproved/approvalStarted/
@@ -42,9 +44,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use App\Traits\HasAuditLogs;
 
 class Arsip extends Model
 {
+    use HasAuditLogs;
+
     protected $fillable = [
         'no_registrasi',
         'jenis_pengajuan',
