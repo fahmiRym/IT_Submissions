@@ -227,29 +227,11 @@
         //   [signer name italic]          ← bila signed & beda dari role
         //   [↩ Mewakili: ORIGINAL NAME]   ← bila TTD sebagai delegasi
         //   [timestamp italic]            ← bila signed
+        // TTD digital ditahan — stamp kosong, cuma role label yang tampil (biar bisa TTD manual)
         $renderSig = function ($sig, $roleLabel) use ($arsip) {
             $roleLabel = strtoupper(trim($roleLabel ?? ''));
-            $html = '<div class="sig-stamp">';
-            if ($sig) {
-                $qr = \App\Services\QrSignatureService::renderSignatureQrDataUri($arsip, $sig, 130);
-                if ($qr) $html .= '<img src="' . $qr . '" alt="TTD">';
-            }
-            $html .= '</div>';
-
+            $html  = '<div class="sig-stamp">&nbsp;</div>';
             $html .= '<div class="sig-name">' . e($roleLabel) . '</div>';
-
-            if ($sig) {
-                $signerName = strtoupper(trim($sig->signer_name));
-                if ($signerName !== '' && $signerName !== $roleLabel) {
-                    $html .= '<div class="sig-signer">' . e($sig->signer_name) . '</div>';
-                }
-                if ($sig->delegated_from_id) {
-                    $orig = $sig->delegatedFrom;
-                    $origName = $orig ? $orig->name : 'user asal';
-                    $html .= '<div class="sig-delegate">↩ Mewakili ' . e($origName) . '</div>';
-                }
-                $html .= '<div class="sig-ts">' . optional($sig->signed_at)->format('d/m/Y H:i') . ' WIB</div>';
-            }
             return $html;
         };
 

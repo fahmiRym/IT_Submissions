@@ -720,25 +720,10 @@
             <div class="footer-place-date">{{ $kotaBa }}, {{ $tglSign }}</div>
 
             @php
+                // TTD digital ditahan — semua signature block dikosongkan (bebas untuk TTD manual).
+                // Kalau nanti mau on-kan, ganti kembali ke logic asli (git blame line ini).
                 $renderSig = function ($sig) use ($arsip) {
-                    if (!$sig) {
-                        return '<div class="sig-stamp"><div class="sig-pending">[ Menunggu TTD ]</div></div>';
-                    }
-                    $qr = \App\Services\QrSignatureService::renderSignatureQrDataUri($arsip, $sig, 150);
-                    $html = '<div class="sig-stamp">';
-                    if ($qr) {
-                        $html .= '<img src="' . $qr . '" alt="TTD">';
-                    }
-                    $html .= '<div class="sig-name">' . e($sig->signer_name) . '</div>';
-                    $html .= '<div class="sig-ts">' . optional($sig->signed_at)->format('d/m/Y H:i') . ' WIB</div>';
-                    // Delegasi: kalau signer TTD sebagai wakil dari user lain, tunjukkan siapa aslinya.
-                    if ($sig->delegated_from_id) {
-                        $orig = $sig->delegatedFrom;
-                        $origName = $orig ? $orig->name : 'user asal';
-                        $html .= '<div class="sig-delegate">↩ Mewakili: ' . e($origName) . '</div>';
-                    }
-                    $html .= '</div>';
-                    return $html;
+                    return '<div class="sig-stamp">&nbsp;</div>';
                 };
                 // Eager-load delegatedFrom untuk semua signature supaya render efficient.
                 $arsip->loadMissing('signatures.delegatedFrom');
