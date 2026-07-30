@@ -4,6 +4,98 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-30 (lanjutan) — ✅ DEPLOY M1 (Log Aktivitas / Audit Trail) ke PROD .200
+
+**Konteks:** setelah M2, lanjut M1 dari daftar 4 prioritas user (log/maintenance/note/share).
+Log Aktivitas = audit trail otomatis untuk Arsip (create/update/delete).
+
+### Delivered
+
+**Migration**: `create_audit_logs_table` — tabel baru dgn FK ke arsips + users.
+Schema: arsip_id, user_id, action, old_values (json), new_values (json), ip, user_agent.
+
+**Trait `HasAuditLogs`**: boot hook static::created/updated/deleted → panggil
+`logAudit()`. Filter: ignore `updated_at` + `updated_by` kalau itu satu-satunya change.
+
+**Model `AuditLog`**: relations `arsip()` + `user()`, casts json → array.
+
+**Controller `ActivityLogController`**: index (filter + pagination),
+destroy, bulkDelete (mode ids[] atau older_than_days retention).
+
+**View `superadmin/activity_logs/index.blade.php`** (354 baris): Bootstrap 5 list
+dgn filter q + user_id, pagination configurable, checkbox bulk delete.
+
+**Modified prod-safe backport**:
+- `Arsip.php` v2 — tambah `use HasAuditLogs` di class body (enable audit trigger)
+- sidebar `superadmin.blade.php` — tambah menu **Log Aktivitas** di section Sistem
+
+### Deploy timeline (03:03 UTC, urutan critical)
+
+**STEP 1** — Migration (additive, aman):
+- Backup: `/root/backups/{Arsip.php,web.php,sidebar_superadmin}.bak.20260730_030314`
+- SCP migration → `artisan migrate --force` (1 migration DONE, 50 ms)
+- Verify `Schema::hasTable('audit_logs')` = YES
+
+**STEP 2** — Deploy support files (file only, tidak execute Arsip yet):
+- SCP AuditLog.php + HasAuditLogs.php + ActivityLogController.php + view
+- Python inject 3 route ke web.php (activity-logs.index/bulk-delete/destroy)
+- SCP sidebar superadmin v2 (dgn menu Log Aktivitas + guard `Route::has`)
+
+**STEP 3** — LAST + CRITICAL — Enable audit trait:
+- SCP `Arsip.php` v2 (dgn `use HasAuditLogs`)
+- Clear cache 4x + graceful reload php-fpm
+
+### Test end-to-end (via tinker)
+
+```
+audit_logs count sebelum: 0
+
+$a = Arsip::first();  // id=110
+$a->keterangan = ... . " [test audit 100543]";
+$a->save();
+// Updated arsip id=110
+
+audit_logs count sesudah: 1
+Log id=1 action=updated arsip_id=110 changes=['keterangan']
+new_values: [keterangan] => "Salah Input [test audit 100543]"
+
+// Undo test change (juga di-log)
+Total 2 audit entries — trait 100% functional
+```
+
+### Interruption + recovery
+
+Container `it_app` exit sendiri sebelum STEP 2 (kemungkinan user testing atau
+`docker stop` manual). `docker start it_app` → recover 3 detik. Nginx
+maintenance fallback (Paket A) aktif — user tidak lihat 502 raw selama window ini.
+
+**Total downtime user-visible ≈ 5 detik** (container restart).
+
+### Impact user
+
+- ✅ Setiap create/update/delete Arsip otomatis di-log dgn before/after values
+- ✅ Menu baru **Sidebar Superadmin → Log Aktivitas** (badge active saat halaman aktif)
+- ✅ Superadmin bisa filter log by no_registrasi / no_transaksi / user
+- ✅ Bulk delete: pilih checkbox atau retention (mis. "hapus log > 90 hari")
+- ✅ IP + User Agent captured untuk forensic
+- ✅ Zero regresi (Arsip.php baseline preserved, cuma add trait)
+
+### Yang TIDAK di-include
+
+- Audit untuk model lain (Department, Unit, Manager, User) — HasAuditLogs
+  trait hanya di-attach ke Arsip. Kalau butuh audit master data, attach
+  trait ke masing2 model (session lain).
+- Auto-purge cron untuk retention — sekarang manual via bulkDelete UI.
+  Bisa buatkan Laravel Scheduler kalau perlu.
+
+### Untuk lanjutan (rencana M3, M4)
+
+- [ ] **M3 (Note)**: `create_arsip_personal_notes` + model + controller + modal (~1 jam)
+- [ ] **M4 (Share)**: `create_arsip_shares` + `extend_role_target` + model +
+       controller + modal + method di User/Arsip + filter di ArsipController::index (~1.5 jam)
+
+---
+
 ## 2026-07-30 — ✅ DEPLOY M2 (Maintenance Mode UI) + sidebar backport ke PROD .200
 
 **Konteks:** user prioritas 4 fitur (log, maintenance, note, sharing pengajuan). Pilih
