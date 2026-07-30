@@ -326,15 +326,39 @@ class Arsip extends Model
         return $this->hasMany(ArsipPersonalNote::class)->orderBy('created_at');
     }
 
+    /* ===================== Y2 (M4): SHARE (Layer 2 access) ===================== */
+
+    public function shares()
+    {
+        return $this->hasMany(ArsipShare::class);
+    }
+
+    public function sharedUsers()
+    {
+        return $this->belongsToMany(User::class, 'arsip_shares')
+            ->withPivot(['shared_by', 'note'])
+            ->withTimestamps();
+    }
+
     /**
-     * Simple access check untuk edit/note/share operations.
-     * Superadmin atau owner (admin_id) → allowed.
+     * Access check: superadmin, owner, ATAU user yg di-share (Y2 M4).
      */
     public function canBeEditedBy($u): bool
     {
         if (!$u) return false;
         if ($u->role === 'superadmin') return true;
-        return (int) $this->admin_id === (int) $u->id;
+        if ((int) $this->admin_id === (int) $u->id) return true;
+
+        // Layer 2: share by user_id atau by role
+        return ArsipShare::where('arsip_id', $this->id)
+            ->where(function ($q) use ($u) {
+                $q->where(function ($x) use ($u) {
+                    $x->where('target_type', 'user')->where('user_id', $u->id);
+                })->orWhere(function ($x) use ($u) {
+                    $x->where('target_type', 'role')->where('role', $u->role);
+                });
+            })
+            ->exists();
     }
 
     /* ===================== HELPERS ===================== */

@@ -66,6 +66,30 @@
             display: block !important;
         }
 
+        /* NOTIFICATION DROPDOWN FIX (2026-07-30) — prevent text overflow, better spacing */
+        .notif-dropdown {
+            word-break: break-word;
+        }
+        .notif-dropdown .p-3.border-bottom {
+            padding: 14px 16px !important;
+            transition: background 0.15s;
+        }
+        .notif-dropdown .p-3.border-bottom:hover {
+            background: #f8fafc;
+        }
+        .notif-dropdown .fw-semibold.small.text-dark {
+            font-size: 0.88rem;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .notif-dropdown .small.text-muted {
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .notif-dropdown::-webkit-scrollbar { width: 6px; }
+        .notif-dropdown::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .notif-dropdown::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
         /* LAYOUT */
         .content {
             margin-left: var(--sidebar-width);
@@ -216,8 +240,8 @@
                         </button>
 
 
-                        <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-0"
-                            style="width: 320px; max-height: 400px; overflow-y: auto; border-radius: 12px;">
+                        <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-0 notif-dropdown"
+                            style="width: 360px; max-width: 92vw; max-height: 480px; overflow-y: auto; overflow-x: hidden; border-radius: 14px;">
                             <div
                                 class="p-3 border-bottom bg-primary text-white d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0 fw-bold"><i class="bi bi-bell-fill me-2"></i>Notifikasi</h6>
