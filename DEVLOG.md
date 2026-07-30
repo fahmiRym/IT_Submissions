@@ -4,6 +4,78 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-30 (lanjutan #6) — ✅ TRIKASA .191 (cabang TJL): analisa + install maintenance page
+
+**Konteks:** user minta analisa server Trikasa (cabang Tanjungan-Lampung) dan
+aktifkan fitur maintenance.
+
+### Analisa Trikasa `.191`
+
+| Field | Value |
+|---|---|
+| Hostname | `it-submission-tjl` (Tanjungan-Lampung branch) |
+| Kernel | Linux PVE (Proxmox container) |
+| Path project | `/root/it_submissions` (sama pattern prod/dev) |
+| Git HEAD | `147ff58 first commit` (era April 2026, sama tertinggal dgn prod .200) |
+| Docker | 3 container: `it_app` + `it_nginx` + `it_db` |
+| Migration ran | 31 files (prod .200: 30, dev .199: full) |
+| Data live | **641 arsip**, **44 user** (skala 40% dari prod .200 yg 1586/176) |
+| PHP config | DEFAULT (2M/8M/128M) — sama seperti prod .200 pre-tune |
+| Disk | 100G total, 2.9G used (97G free) |
+| Nginx | baseline sederhana (server + php-fpm + try_files) |
+| Host key ed25519 | `SHA256:fWfirG3L4y7Rm2fCN6HUpSYl8FiTgXHFSAIy1/sFNIw` |
+
+Fitur belum ada (sama seperti prod .200):
+`app_versions`, `arsip_shares`, `delegate_to_id`, approval chain, dst.
+
+### Deploy maintenance page (07:37 UTC)
+
+- Backup nginx config dalam container: `default.conf.bak.20260730_073641`
+- SCP 3 file via SSH stdin:
+  - `public/maintenance.html` (18.8 KB dark theme)
+  - `resources/views/errors/503.blade.php`
+  - `scripts/install-maintenance-page.sh` + chmod +x + strip BOM/CRLF
+- Run `bash scripts/install-maintenance-page.sh`:
+  - ✓ Ditemukan `/var/www/public/maintenance.html`
+  - ✓ Backup config asli
+  - ✓ Config baru ditulis (upstream + error_page 502/503/504 → @maintenance + fastcgi_intercept_errors)
+  - ✓ nginx -t OK, reload OK
+
+### Test verified
+
+```
+GET /login HTTP 200 (normal)
+GET /maintenance.html HTTP 200 (18.8 KB dark theme accessible)
+
+Trigger: docker exec it_app php artisan down --refresh=5
+GET /login while DOWN HTTP 200 dgn <title>Sedang Dalam Perbaikan – IT Submissions Inkalum</title>
+(nginx catch 503 → serve maintenance.html)
+
+Restore: docker exec it_app php artisan up
+GET /login after UP HTTP 200 (normal)
+```
+
+### Memory update
+
+`servers-ssh` memory dilengkapi info Trikasa lengkap: hostname, path, migration
+count, data volume, PHP config baseline, host key ed25519 fingerprint untuk
+`plink -batch` mode (pakai `-hostkey SHA256:fWfirG...`).
+
+### Yang TIDAK di-deploy (biarkan sesuai pola prod .200)
+
+- PHP config tune (2M/8M/128M → 250M/250M/512M) — bisa deploy kalau perlu upload
+  besar via LAN, tapi Trikasa scale lebih kecil belum urgent
+- Migration 47 belum (approval chain, TTD, delegasi, share, lampiran, multi-pemohon)
+- App versioning + Master feature (Y1c, Y1b, dst)
+
+Kalau nanti mau sinkronkan Trikasa dgn feature X1/X2/X3/Y1/Y2 yg sudah di-deploy
+ke prod, pakai pattern SCP + migrate + inject route yg sama. Semua dokumentasi
+di `patches/prod-safe/` folder.
+
+Zero downtime deploy (nginx reload graceful).
+
+---
+
 ## 2026-07-30 (lanjutan #5) — ✅ X1+X2+X3 batch: catatan_it + dropdown + log riwayat + Personal Notes
 
 **Konteks:** user prioritas 4 fitur (log/maintenance/note/share). Setelah M1 log +
