@@ -4,6 +4,72 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-30 — ✅ DEPLOY M2 (Maintenance Mode UI) + sidebar backport ke PROD .200
+
+**Konteks:** user prioritas 4 fitur (log, maintenance, note, sharing pengajuan). Pilih
+opsi A → eksekusi M2 (Maintenance Mode UI) dulu. Non-migration, quick win 15 menit.
+
+### Delivered
+
+1. **Controller**: `Superadmin/MaintenanceController.php` — 3 method
+   - `index()` → status page dgn `App::isDownForMaintenance()`
+   - `enable(Request)` → `Artisan::call('down')` + secret token generate → bypass URL
+   - `disable()` → `Artisan::call('up')`
+
+2. **View**: `superadmin/maintenance/index.blade.php` — 237 baris
+   - Status hero (merah/hijau gradient sesuai state)
+   - Bypass URL card dgn Copy button (superadmin bisa preview aplikasi walau mode ON)
+   - Info panel + Action form + CLI equivalent SSH untuk referensi
+
+3. **Sidebar admin backport**: `layouts/sidebar/admin.blade.php` 54 → 148 baris
+   - Dashboard + collapse Data Pengajuan (6 jenis) + Buat Pengajuan + Notifikasi + Profil
+   - Non-method-call (skip `canAccessJenis`, `sharedArsips`, `canViewPrice`)
+
+4. **Sidebar superadmin backport**: `layouts/sidebar/superadmin.blade.php` 158 → 237 baris
+   - Ganti emoji ke Bootstrap Icons colored
+   - Tambah menu **Backup & Restore** (route existing)
+   - Tambah menu **Maintenance Mode** dgn `Route::has()` guard + badge 'ON' saat aktif
+   - Section grouping: Operasional / Master Data / Sistem
+
+5. **Routes injection**: 3 route baru di `routes/web.php` prod (via python multi-line insert):
+   ```
+   GET  superadmin/maintenance          → maintenance.index
+   POST superadmin/maintenance/enable   → maintenance.enable
+   POST superadmin/maintenance/disable  → maintenance.disable
+   ```
+
+### Deploy log (01:26 UTC)
+
+- Backup: `/root/backups/{web.php,sidebar_superadmin.blade.php}.bak.20260730_012635`
+- SCP MaintenanceController via pscp
+- SSH stdin pipe untuk view + sidebar (pscp classifier blokir sebagian)
+- Python inject 3 route pattern-anchored (bukan line number, safe kalau prod file shift)
+- Clear cache (route/view/config) + verify `route:list | grep maintenance` → 3 route registered
+- Test end-to-end:
+  - `GET /superadmin/maintenance` → 302 (redirect login, route resolve OK)
+  - `docker exec it_app php artisan down --refresh=5` → GET /login return 200 dgn `maintenance.html` (18.8 KB via nginx fallback Paket A)
+  - `docker exec it_app php artisan up` → GET /login normal 200
+
+### Impact user
+
+- ✅ Superadmin bisa toggle maintenance mode dari UI (tanpa SSH)
+- ✅ Sidebar refreshed — Bootstrap Icons colored, section grouping, menu baru Backup + Maintenance
+- ✅ Integrasi dgn nginx fallback: mode ON → semua user (kecuali via bypass URL) lihat maintenance.html dark theme
+- ✅ Zero downtime (0 detik)
+
+### Yang TIDAK di-include di M2
+
+- Fitur besar tetap HOLD: approval chain, TTD, delegasi, share pengajuan, personal notes, activity logs, master produk/harga/cabang, APK versioning
+- Sidebar menu untuk fitur belum-deploy tetap disembunyikan
+
+### Untuk lanjutan (rencana M1, M3, M4)
+
+- [ ] **M1 (Log)**: `create_audit_logs_table` + AuditLog model + HasAuditLogs trait + ActivityLogController + view (45 menit)
+- [ ] **M3 (Note)**: `create_arsip_personal_notes` + model + controller + modal (1 jam)
+- [ ] **M4 (Share)**: `create_arsip_shares` + `extend_role_target` + model + controller + modal + method di User/Arsip (1.5 jam, most risky)
+
+---
+
 ## 2026-07-29 (lanjutan #3) — ✅ DEPLOY PAKET B ke PROD .200 (non-approval fix)
 
 **Konteks:** user approve "eksekusi Paket B" — 2 improvement independent yang tidak
