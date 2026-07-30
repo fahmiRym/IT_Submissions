@@ -4,6 +4,64 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-30 (lanjutan #4) — ✅ FIX CF CACHE modern-theme.css (root cause tampilan flat)
+
+**Konteks:** setelah deploy 4 CSS + JS handler, user complain sidebar prod STILL
+tampak flat + collapse tidak work + hover tidak work + macet scroll.
+
+### Root cause found (via curl CF response headers)
+
+```
+premium-sidebar-topbar.css: 15527 bytes ✓ NEW
+responsive-mobile.css:      12505 bytes ✓ NEW
+adjust-theme.css:            4349 bytes ✓ NEW
+modern-theme.css:            9359 bytes ❌ CF cache VERSI LAMA (Feb 2026)
+                                        (server actual 16109 bytes)
+CF Cache-Control: max-age=2678400 (~31 hari!)
+cf-cache-status: HIT ← CF serve stale cache
+```
+
+`modern-theme.css` sudah pernah di-request via CF sebelumnya (waktu prod pertama
+kali up). CF cache 31 hari. Setelah aku update file di origin, CF tetap serve
+cache lama karena URL sama (`?v=` cache-buster BELUM ada di link ini).
+
+3 CSS lain (premium/responsive/adjust) fresh karena baru pertama kali di-request
+→ CF fetch dari origin.
+
+### Fix (03:44 UTC)
+
+Add cache-buster `?v={{ filemtime(...) }}` ke link modern-theme.css di
+app.blade.php prod. Sekarang URL jadi:
+```
+/css/modern-theme.css?v=1785382246
+```
+
+CF treat sebagai URL baru → fetch fresh dari origin → cache versi baru:
+```
+modern-theme (fresh URL) HTTP 200 size=16109 ✓
+Content-Length: 16109
+cf-cache-status: HIT (for new URL)
+```
+
+Verified: CF sekarang serve versi baru (16109 bytes) yg punya rule
+`.sidebar.bg-white`, chevron animation, hover translate, etc.
+
+### Impact user
+
+Setelah user hard-refresh browser → dashboard load HTML terbaru dgn URL CSS
+punya `?v=1785382246` → browser fetch fresh CSS (bukan cache) → styling premium
+apply.
+
+Kalau user browser masih cache HTML lama (tanpa `?v=` di link), HTML page perlu
+refresh dulu supaya URL CSS jadi baru → CSS fetch fresh.
+
+### File berubah
+
+Server-side only (prod app.blade.php via python SED insert `?v=filemtime`
+setelah modern-theme.css). Local main branch sudah punya pattern ini.
+
+---
+
 ## 2026-07-30 (lanjutan #3) — ✅ FIX SIDEBAR PROD: deploy 3 CSS + inject collapse handler
 
 **Konteks:** setelah sidebar unified deployed, user screenshot prod → sidebar
