@@ -201,7 +201,9 @@
             </li>
             @endif
 
-            {{-- MASTER HARGA — Gate view-price + route admin.prices.index (prod skip) --}}
+            {{-- MASTER HARGA — DISABLED (hidden per user request). Route + gate + tabel tetap ada,
+                 tinggal unwrap komentar ini kalau nanti mau on-kan lagi. --}}
+            {{--
             @if(Route::has('admin.prices.index'))
                 @can('view-price')
                 <li class="nav-header">ACCOUNTING</li>
@@ -214,6 +216,7 @@
                 </li>
                 @endcan
             @endif
+            --}}
 
             <li class="nav-header">SISTEM</li>
             <li class="nav-item">
