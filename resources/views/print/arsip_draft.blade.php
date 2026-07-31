@@ -488,26 +488,29 @@
                 <table class="main-table">
                     <thead>
                         <tr>
-                            <th style="width: 14%;">KODE<br>BARANG</th>
-                            <th style="width: 24%;">NAMA BARANG</th>
-                            <th style="width: 13%;">LOT</th>
-                            <th style="width: 17%;">LOKASI</th>
-                            <th style="width: 9%;">ODOO</th>
-                            <th style="width: 9%;">FISIK</th>
-                            <th style="width: 8%;">SELISIH</th>
-                            <th style="width: 6%;">ADJ</th>
+                            <th style="width: 13%;">KODE<br>BARANG</th>
+                            <th style="width: 22%;">NAMA BARANG</th>
+                            <th style="width: 12%;">LOT</th>
+                            <th style="width: 16%;">LOKASI</th>
+                            <th style="width: 9%; white-space: nowrap;">ODOO</th>
+                            <th style="width: 9%; white-space: nowrap;">FISIK</th>
+                            <th style="width: 11%; white-space: nowrap;">SELISIH</th>
+                            <th style="width: 8%; white-space: nowrap;">ADJ</th>
                         </tr>
                     </thead>
                     <tbody>
                         @php
                             $adjustItems = $arsip->adjustItems ?? [];
-                            // Helper format Odoo-style: 59,262.60 — comma ribuan, dot desimal.
-                            // Bilangan bulat tampil tanpa desimal.
+                            // Helper format Odoo-style: 59,262.60 (comma ribuan, dot desimal).
+                            // Bilangan bulat: '59,262.-' (dash suffix ala Odoo/German untuk 'no cents').
                             $fmtId = function ($n) {
                                 if ($n === null || $n === '') return '';
                                 $num = (float) $n;
-                                $decimals = (floor($num) == $num) ? 0 : 2;
-                                return number_format($num, $decimals, '.', ',');
+                                if (floor($num) == $num) {
+                                    // Whole number → Odoo notation '.-'
+                                    return number_format($num, 0, '.', ',') . '.-';
+                                }
+                                return number_format($num, 2, '.', ',');
                             };
                         @endphp
                         @for($i = 0; $i < max(4, count($adjustItems)); $i++)
