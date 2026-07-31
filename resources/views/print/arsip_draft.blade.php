@@ -501,16 +501,30 @@
                     <tbody>
                         @php
                             $adjustItems = $arsip->adjustItems ?? [];
-                            // Helper format Odoo-style: 59,262.60 (comma ribuan, dot desimal).
-                            // Bilangan bulat: '59,262.-' (dash suffix ala Odoo/German untuk 'no cents').
+                            // Helper format Odoo-style: whole.-decimal
+                            //   65.21   → '65.-21'
+                            //   -65.21  → '-65.-21'
+                            //   59262   → '59,262.-'
+                            //   59262.6 → '59,262.-6'
+                            //   0       → '0.-'
+                            // Comma = ribuan, '.-' = separator whole/decimal (notasi Odoo user).
                             $fmtId = function ($n) {
                                 if ($n === null || $n === '') return '';
                                 $num = (float) $n;
-                                if (floor($num) == $num) {
-                                    // Whole number → Odoo notation '.-'
-                                    return number_format($num, 0, '.', ',') . '.-';
+                                $negative = $num < 0;
+                                $abs = abs($num);
+                                $wholePart = (int) floor($abs);
+                                $decimalPart = $abs - $wholePart;
+                                $wholeFmt = number_format($wholePart, 0, '.', ',');
+                                if ($decimalPart == 0) {
+                                    $result = $wholeFmt . '.-';
+                                } else {
+                                    // ambil 2 digit desimal, buang trailing zero
+                                    $decStr = rtrim(number_format($decimalPart, 2, '.', ''), '0');
+                                    $decDigits = ltrim($decStr, '0.'); // '.60' → '60', '.21' → '21'
+                                    $result = $wholeFmt . '.-' . $decDigits;
                                 }
-                                return number_format($num, 2, '.', ',');
+                                return $negative ? '-' . $result : $result;
                             };
                         @endphp
                         @for($i = 0; $i < max(4, count($adjustItems)); $i++)
