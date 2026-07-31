@@ -369,7 +369,8 @@
     @stack('scripts')
 
     @auth
-        <audio id="notification-sound" src="{{ asset('audio/notif.mp3') }}" preload="auto"></audio>
+        {{-- SUARA NOTIFIKASI: update_notif.mp3 = untuk perubahan/update. notif.mp3 = fallback --}}
+        <audio id="notification-sound" src="{{ asset('audio/update_notif.mp3') }}" preload="auto"></audio>
         <script>
             // INITIALIZE SIDEBAR STATE IMMEDIATELY
             (function() {

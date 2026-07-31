@@ -637,12 +637,24 @@ class ArsipController extends Controller
 
             $arsip->update($updateData);
 
-            // 4. Sinkronisasi Tabel Relasi (Hapus Lama, Buat Baru)
-            // Produk Baru TIDAK di-delete: di-upsert agar barcode & tanggal dibuat tetap stabil.
-            ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
-            ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
-            ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
-            ArsipTindakanItem::where('arsip_id', $arsip->id)->delete();
+            // 4. Sinkronisasi Tabel Relasi per-tipe — hanya delete + recreate
+            //    kalau key benar dikirim di form. Preserve items existing kalau
+            //    key missing (fix bug 'field kembali kosong' saat partial save).
+            //    Produk Baru selalu upsert (jaga barcode & tanggal dibuat).
+            if (array_key_exists('mutasi_asal', $rawItems) || array_key_exists('mutasi_tujuan', $rawItems)) {
+                ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
+            }
+            if (array_key_exists('adjust', $rawItems)) {
+                ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
+            }
+            if (array_key_exists('bundel', $rawItems)) {
+                ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
+            }
+            // Tindakan IT: separate sync method sudah handle, tetap delete-first di sini
+            // hanya kalau request kirim tindakan_it_rows / tindakan_in / tindakan_out
+            if ($request->has('tindakan_it_rows') || $request->has('tindakan_in') || $request->has('tindakan_out')) {
+                ArsipTindakanItem::where('arsip_id', $arsip->id)->delete();
+            }
 
             $this->saveDetailItems($arsip, $rawItems);
             $this->syncProdukBaruItems($arsip, $rawItems['produk_baru'] ?? []);

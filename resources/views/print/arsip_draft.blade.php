@@ -499,7 +499,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php $adjustItems = $arsip->adjustItems ?? []; @endphp
+                        @php
+                            $adjustItems = $arsip->adjustItems ?? [];
+                            // Helper format Indonesian (Odoo-style): 59.262,60 — dot ribuan, koma desimal.
+                            // Kalau bilangan bulat → tampil tanpa desimal.
+                            $fmtId = function ($n) {
+                                if ($n === null || $n === '') return '';
+                                $num = (float) $n;
+                                $decimals = (floor($num) == $num) ? 0 : 2;
+                                return number_format($num, $decimals, ',', '.');
+                            };
+                        @endphp
                         @for($i = 0; $i < max(4, count($adjustItems)); $i++)
                             @php $row = $adjustItems[$i] ?? null; @endphp
                             <tr>
@@ -507,9 +517,9 @@
                                 <td class="cell-left">{{ $row->product_name ?? '' }}</td>
                                 <td>{{ $row->lot ?? '' }}</td>
                                 <td>{{ $row->location ?? '' }}</td>
-                                <td>{{ $row->odoo ?? '' }}</td>
-                                <td>{{ $row->fisik ?? '' }}</td>
-                                <td>{{ $row ? (($row->qty_in ?? 0) - ($row->qty_out ?? 0)) : '' }}</td>
+                                <td>{{ $row ? $fmtId($row->odoo) : '' }}</td>
+                                <td>{{ $row ? $fmtId($row->fisik) : '' }}</td>
+                                <td>{{ $row ? $fmtId(($row->qty_in ?? 0) - ($row->qty_out ?? 0)) : '' }}</td>
                                 <td>{{ $row ? ((($row->qty_in ?? 0) > 0) ? 'IN' : 'OUT') : '' }}</td>
                             </tr>
                         @endfor

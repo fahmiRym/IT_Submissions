@@ -428,13 +428,21 @@ class ArsipController extends Controller
                 'updated_by' => auth()->id(),
             ]);
 
-            // 5. REFRESH DETAIL ITEM (Hapus Lama, Buat Baru)
-            // Ini cara paling aman untuk edit data "One-to-Many" agar sinkron
-            ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
-            ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
-            ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
+            // 5. REFRESH DETAIL ITEM per TIPE — hanya delete + recreate kalau
+            //    key untuk tipe itu benar-benar dikirim di form. Kalau kosong /
+            //    missing → PRESERVE items existing (fix bug 'field kembali kosong'
+            //    saat user save form tanpa modif detail_barang).
+            if (array_key_exists('mutasi_asal', $dataToProcess) || array_key_exists('mutasi_tujuan', $dataToProcess)) {
+                ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
+            }
+            if (array_key_exists('adjust', $dataToProcess)) {
+                ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
+            }
+            if (array_key_exists('bundel', $dataToProcess)) {
+                ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
+            }
 
-            // Simpan Item Baru
+            // Simpan Item Baru (helper akan skip kalau key kosong)
             $this->saveDetailItems($arsip, $dataToProcess);
             // Produk Baru: upsert (jaga barcode & tanggal dibuat)
             $this->syncProdukBaruItems($arsip, $dataToProcess['produk_baru'] ?? []);
