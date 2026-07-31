@@ -37,6 +37,13 @@
             overflow: hidden;
             page-break-after: avoid;
             page-break-inside: avoid;
+            display: flex;
+            flex-direction: column;
+        }
+        .print-flow {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
         }
 
         /* ─── DOCUMENT HEADER ─────────────────────────────────────────── */
@@ -188,18 +195,16 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (anchored bottom, kasih breathing room utk _print_footer) ─ */
+        /* ─── SIGNATURE BLOCK (bottom via flex, bukan absolute — hindari duplikat di page 2) ─ */
         .footer-section-wrap {
-            position: absolute;
-            left: 12mm;
-            right: 12mm;
-            bottom: 10mm;             /* was 5mm — naik 5mm utk gap dgn _print_footer */
+            flex-shrink: 0;
             background: #fff;
-            z-index: 100;
             padding-top: 4mm;
+            padding-bottom: 4mm;      /* breathing room utk _print_footer (position: fixed) */
             page-break-inside: avoid;
             page-break-before: avoid;
             page-break-after: avoid;
+            break-inside: avoid;
         }
         .footer-place-date {
             margin: 0 0 5px;
@@ -425,6 +430,9 @@
             </style>
         @endif
 
+        {{-- ─── FLOW CONTAINER (flex: 1 supaya footer nempel bottom naturally) ── --}}
+        <div class="print-flow">
+
         {{-- ─── DOCUMENT HEADER (QR | Title | QR) ─────────────────── --}}
         @php
             $qrDocVerify = \App\Services\QrSignatureService::renderDocumentQrDataUri($arsip, 160);
@@ -576,18 +584,17 @@
             @endif
 
             @php
-                // Ruled-lines budget — sisa area antara content & signature anchored di bottom.
+                // Ruled-lines budget — flex layout auto-fit, jadi filler bisa lebih konservatif.
+                // Terlalu banyak filler bikin content overflow → dulu memicu duplikat sig-block di page 2.
                 if ($isAdjust) {
-                    // Rebalance: keterangan filler diperbanyak supaya TINDAKAN section turun ke bawah.
-                    // Total turun -2 lines (sinkron dgn wrap naik 5mm utk breathing room footer).
-                    $keteranganLines = 5;
-                    $tindakanLines   = 9;
-                    if ($adjustItemsCount >= 3)  { $keteranganLines = 4; $tindakanLines = 8; }
-                    if ($adjustItemsCount >= 5)  { $keteranganLines = 4; $tindakanLines = 7; }
-                    if ($adjustItemsCount >= 7)  { $keteranganLines = 3; $tindakanLines = 7; }
-                    if ($adjustItemsCount >= 9)  { $keteranganLines = 2; $tindakanLines = 6; }
-                    if ($adjustItemsCount >= 12) { $keteranganLines = 2; $tindakanLines = 5; }
-                    if ($adjustItemsCount >= 15) { $keteranganLines = 1; $tindakanLines = 4; }
+                    $keteranganLines = 3;
+                    $tindakanLines   = 5;
+                    if ($adjustItemsCount >= 3)  { $keteranganLines = 2; $tindakanLines = 4; }
+                    if ($adjustItemsCount >= 5)  { $keteranganLines = 2; $tindakanLines = 3; }
+                    if ($adjustItemsCount >= 7)  { $keteranganLines = 1; $tindakanLines = 3; }
+                    if ($adjustItemsCount >= 9)  { $keteranganLines = 1; $tindakanLines = 2; }
+                    if ($adjustItemsCount >= 12) { $keteranganLines = 0; $tindakanLines = 2; }
+                    if ($adjustItemsCount >= 15) { $keteranganLines = 0; $tindakanLines = 1; }
                 } else {
                     $BUDGET_RULED   = 24;
                     $usedRuledLines = 0;
@@ -756,7 +763,9 @@
             </div>
         </div>
 
-        {{-- ─── FOOTER: Place/Date + Signature (anchored bottom) ──── --}}
+        </div>{{-- /.print-flow --}}
+
+        {{-- ─── FOOTER: Place/Date + Signature (nempel bottom via flex) ──── --}}
         <div class="footer-section-wrap">
             @php
                 // Prioritas kota: branch dept (per-cabang) > setting global > 'Pasuruan'
