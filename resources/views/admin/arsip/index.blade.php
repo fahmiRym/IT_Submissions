@@ -1221,11 +1221,18 @@
                             data.adjust_items.forEach(item => {
                                 let code = item.product_code || '';
                                 let nama = item.product_name || item.no_doc || '';
-                                let qty_in = item.qty_in || 0;
-                                let qty_out = item.qty_out || 0;
+                                let qty_in = parseFloat(item.qty_in) || 0;
+                                let qty_out = parseFloat(item.qty_out) || 0;
                                 let lot = item.lot || item.keterangan || '';
                                 let odoo = item.odoo;
                                 let fisik = item.fisik;
+                                // Backfill kalau data lama: odoo/fisik NULL tapi qty_in/qty_out ada.
+                                // Rumus asal: selisih = fisik - odoo. Kalau IN → asumsi odoo=0.
+                                if ((odoo === null || odoo === '' || odoo === undefined) &&
+                                    (fisik === null || fisik === '' || fisik === undefined)) {
+                                    if (qty_in > 0) { odoo = 0; fisik = qty_in; }
+                                    else if (qty_out > 0) { odoo = qty_out; fisik = 0; }
+                                }
                                 addAdjustRowEdit(code, nama, qty_in, qty_out, lot, odoo, fisik, item.keterangan_in || '', item.keterangan_out || '', item.location || '');
                             });
                         }

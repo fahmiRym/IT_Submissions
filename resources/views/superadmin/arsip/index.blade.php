@@ -1403,7 +1403,18 @@ $(document).ready(function() {
 
                 if(data.adjust_items && data.adjust_items.length > 0) {
                     data.adjust_items.forEach(item => {
-                        window.addAdjustRowEdit(item.product_code, item.product_name, item.qty_in, item.qty_out, item.lot, item.odoo, item.fisik, item.keterangan_in, item.keterangan_out, item.location);
+                        let qty_in = parseFloat(item.qty_in) || 0;
+                        let qty_out = parseFloat(item.qty_out) || 0;
+                        let odoo = item.odoo;
+                        let fisik = item.fisik;
+                        // Backfill data lama: odoo/fisik NULL tapi qty_in/qty_out ada.
+                        // Rumus: selisih = fisik - odoo. IN → asumsi odoo=0, OUT → asumsi fisik=0.
+                        if ((odoo === null || odoo === '' || odoo === undefined) &&
+                            (fisik === null || fisik === '' || fisik === undefined)) {
+                            if (qty_in > 0) { odoo = 0; fisik = qty_in; }
+                            else if (qty_out > 0) { odoo = qty_out; fisik = 0; }
+                        }
+                        window.addAdjustRowEdit(item.product_code, item.product_name, qty_in, qty_out, item.lot, odoo, fisik, item.keterangan_in, item.keterangan_out, item.location);
                     });
                 }
 
