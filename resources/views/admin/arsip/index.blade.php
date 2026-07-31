@@ -1173,17 +1173,14 @@
                     $('#editDepartment').val(data.department_id);
                     $('#editUnit').val(data.unit_id);
                     $('#editManager').val(data.manager_id);
-                    $('#editPemohon').val(data.pemohon);
-                    // Preload multi-pemohon picker dari relasi requesters
-                    if (typeof window.refreshPemohonPicker === 'function') {
-                        let presets = (data.requesters || []).map(r => ({
-                            id: r.user_id,
-                            employee_id: r.employee_id || (r.user ? r.user.employee_id : ''),
-                            name: r.name_snapshot || (r.user ? r.user.name : '')
-                        }));
-                        // fallback: jika tidak ada requesters tapi pemohon text ada, biarkan kosong
-                        window.refreshPemohonPicker('pemohonPickerEditAdmin', presets);
+                    // Nama Pemohon = textarea. Kalau pemohon kosong, fallback ke
+                    // joined requesters names supaya arsip lama yg dulu pakai picker
+                    // tidak muncul kosong saat di-edit.
+                    let pemohonVal = (data.pemohon || '').trim();
+                    if (!pemohonVal && Array.isArray(data.requesters) && data.requesters.length) {
+                        pemohonVal = data.requesters.map(r => r.name_snapshot || (r.user ? r.user.name : '')).filter(Boolean).join(', ');
                     }
+                    $('#editPemohon').val(pemohonVal);
                     $('#editKeterangan').val(data.keterangan);
 
                     // Reset file input + tampilkan status file saat ini

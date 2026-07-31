@@ -1323,15 +1323,14 @@ $(document).ready(function() {
                 $('#editUnit').val(data.unit_id);
                 $('#editManager').val(data.manager_id);
                 $('#editNoTransaksi').val(data.no_transaksi);
-                $('#editPemohon').val(data.pemohon);
-                if (typeof window.refreshPemohonPicker === 'function') {
-                    let presets = (data.requesters || []).map(r => ({
-                        id: r.user_id,
-                        employee_id: r.employee_id || (r.user ? r.user.employee_id : ''),
-                        name: r.name_snapshot || (r.user ? r.user.name : '')
-                    }));
-                    window.refreshPemohonPicker('pemohonPickerEditSuper', presets);
+                // Nama Pemohon = plain textarea (konsisten dgn admin). Kalau pemohon
+                // kosong, fallback ke joined requesters names supaya tidak ke-null-in
+                // saat superadmin update arsip lama yg dulu pakai picker.
+                let pemohonVal = (data.pemohon || '').trim();
+                if (!pemohonVal && Array.isArray(data.requesters) && data.requesters.length) {
+                    pemohonVal = data.requesters.map(r => r.name_snapshot || (r.user ? r.user.name : '')).filter(Boolean).join(', ');
                 }
+                $('#editPemohon').val(pemohonVal);
                 $('#editKeterangan').val(data.keterangan);
                 $('#editTindakan').val(data.tindakan || '');
                 $('#editCatatanIt').val(data.catatan_it || '');

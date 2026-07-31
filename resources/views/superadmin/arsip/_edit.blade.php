@@ -92,10 +92,12 @@
             </div>
         </div>
         
+        {{-- NAMA PEMOHON — textarea sederhana (konsisten dgn admin edit) --}}
         <div class="mb-3">
-            @include('partials._pemohon_picker', ['fieldId' => 'pemohonPickerEditSuper', 'name' => 'requesters', 'selected' => [], 'textName' => 'pemohon'])
-            {{-- legacy hidden field for backward-compat scripts referencing #editPemohon --}}
-            <input type="hidden" id="editPemohon">
+            <label class="form-label small fw-bold text-secondary text-uppercase">Nama Pemohon</label>
+            <textarea name="pemohon" id="editPemohon"
+                      class="form-control bg-white border-0 shadow-sm"
+                      rows="2" placeholder="Nama-nama Pemohon..."></textarea>
         </div>
 
         {{-- STATUS CONTROLS (Superadmin Special) --}}

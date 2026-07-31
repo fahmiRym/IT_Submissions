@@ -418,7 +418,8 @@ class ArsipController extends Controller
                 'jenis_pengajuan' => $request->jenis_pengajuan, // Update jenis juga jika berubah
                 'no_transaksi' => $request->no_transaksi,
                 'kategori' => $request->kategori,
-                'pemohon' => $request->pemohon,
+                // Preserve pemohon kalau field tidak dikirim di form
+                'pemohon' => $request->has('pemohon') ? $request->pemohon : $arsip->pemohon,
                 'keterangan' => $request->keterangan,
                 'total_qty_in' => $totalIn,
                 'total_qty_out' => $totalOut,

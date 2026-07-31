@@ -233,7 +233,10 @@ class ArsipController extends Controller
                 'manager_id' => $request->manager_id,
                 'unit_id' => $request->unit_id,
                 'kategori' => $request->kategori ?: 'None', // Handle empty string
-                'pemohon' => $request->pemohon,
+                // Kalau field pemohon dikirim → pakai nilai baru (termasuk empty string
+                // kalau user memang mau hapus). Kalau field TIDAK dikirim (mis. form JSON
+                // partial) → preserve nilai existing.
+                'pemohon' => $request->has('pemohon') ? $request->pemohon : $arsip->pemohon,
                 'keterangan' => $request->keterangan,
                 'tindakan' => $request->tindakan,
                 'catatan_it' => $request->catatan_it,
@@ -596,7 +599,8 @@ class ArsipController extends Controller
                 'no_transaksi' => $request->no_transaksi,
                 'kategori' => $request->kategori ?? 'None',
                 'jenis_pengajuan' => $request->jenis_pengajuan ?? $arsip->jenis_pengajuan,
-                'pemohon' => $request->pemohon,
+                // Preserve pemohon kalau field tidak dikirim di form
+                'pemohon' => $request->has('pemohon') ? $request->pemohon : $arsip->pemohon,
                 'target_qty' => $request->target_qty ?? $arsip->target_qty,
                 'keterangan' => $request->keterangan ?? $arsip->keterangan,
                 'tindakan' => $request->tindakan,
