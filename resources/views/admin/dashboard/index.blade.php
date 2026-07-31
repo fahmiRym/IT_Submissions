@@ -733,9 +733,9 @@
                             <td class="text-center d-none d-lg-table-cell">
                                 <div class="d-flex gap-2 justify-content-center">
                                     <span class="badge rounded-pill bg-success fw-bold px-2"
-                                        style="font-size:.72rem;">+{{ (int) $a->total_qty_in }}</span>
+                                        style="font-size:.72rem;">+{{ fmtOdoo($a->total_qty_in) }}</span>
                                     <span class="badge rounded-pill bg-danger fw-bold px-2"
-                                        style="font-size:.72rem;">-{{ (int) $a->total_qty_out }}</span>
+                                        style="font-size:.72rem;">-{{ fmtOdoo($a->total_qty_out) }}</span>
                                 </div>
                                 <small class="text-muted fw-bold mt-1 d-block" style="font-size:.6rem;">TOTAL QTY</small>
                             </td>

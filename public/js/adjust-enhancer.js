@@ -33,10 +33,23 @@
         const diff  = fisik - odoo;
         const absDiff = Math.abs(diff);
 
-        // Update Selisih display
+        // Update Selisih display (Odoo format: 65.-21 / 0.- / 59,262.-)
         const sel = row.querySelector('.adjust-selisih-display');
         if (sel) {
-            sel.textContent = absDiff === 0 ? '0' : (Number.isInteger(absDiff) ? absDiff.toLocaleString('id-ID') : absDiff.toFixed(2));
+            const fmt = window.fmtOdoo || function (n) {
+                if (n === null || n === '' || n === undefined || isNaN(n)) return '';
+                const num = Number(n);
+                const neg = num < 0;
+                const abs = Math.abs(num);
+                const whole = Math.floor(abs);
+                const wholeStr = whole.toLocaleString('en-US');
+                let decStr = '';
+                if (abs !== whole) decStr = abs.toFixed(2).split('.')[1].replace(/0+$/, '');
+                const body = wholeStr + '.-' + decStr;
+                return neg ? '-' + body : body;
+            };
+            window.fmtOdoo = fmt;
+            sel.textContent = fmt(absDiff);
             sel.dataset.selisih = absDiff;
             sel.classList.remove('text-success', 'text-danger', 'text-muted');
             if (diff > 0) sel.classList.add('text-success');
@@ -94,10 +107,26 @@
         if (!panel) return;
 
         const net = totalIn - totalOut;
-        const fmt = (n) => Number.isInteger(n) ? n.toLocaleString('id-ID') : n.toFixed(2);
+        // Odoo-style format: 65.-21, 59,262.-, -65.-21, 0.-
+        const fmt = window.fmtOdoo || function (n) {
+            if (n === null || n === '' || n === undefined || isNaN(n)) return '';
+            const num = Number(n);
+            const neg = num < 0;
+            const abs = Math.abs(num);
+            const whole = Math.floor(abs);
+            const wholeStr = whole.toLocaleString('en-US'); // 59,262
+            let decStr = '';
+            if (abs !== whole) {
+                decStr = abs.toFixed(2).split('.')[1].replace(/0+$/, ''); // 60→6, 21→21
+            }
+            const body = wholeStr + '.-' + decStr;
+            return neg ? '-' + body : body;
+        };
+        window.fmtOdoo = fmt;
+
         const set = (stat, val) => {
             const el = panel.querySelector('[data-stat="' + stat + '"]');
-            if (el) el.textContent = fmt(val);
+            if (el) el.textContent = stat === 'count' ? val : fmt(val);
         };
         set('count', count);
         set('in', totalIn);

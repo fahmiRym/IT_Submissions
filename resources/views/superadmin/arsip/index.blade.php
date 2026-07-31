@@ -711,8 +711,8 @@
 
                         <td class="text-center d-none d-md-table-cell">
                             <div class="d-flex flex-column align-items-center lh-1">
-                                <span class="fw-bold text-success" style="font-size: 0.72rem;">+{{ $a->total_qty_in + 0 }}</span>
-                                <span class="fw-bold text-danger" style="font-size: 0.72rem;">-{{ $a->total_qty_out + 0 }}</span>
+                                <span class="fw-bold text-success" style="font-size: 0.72rem;">+{{ fmtOdoo($a->total_qty_in) }}</span>
+                                <span class="fw-bold text-danger" style="font-size: 0.72rem;">-{{ fmtOdoo($a->total_qty_out) }}</span>
                             </div>
                         </td>
 

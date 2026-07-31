@@ -517,11 +517,11 @@
                                     <div class="d-flex flex-column align-items-center gap-1">
                                         @if($a->total_qty_in > 0)
                                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100"
-                                                style="font-size: 0.68rem; min-width: 65px;">+{{ number_format($a->total_qty_in, 2) }}</span>
+                                                style="font-size: 0.68rem; min-width: 65px;">+{{ fmtOdoo($a->total_qty_in) }}</span>
                                         @endif
                                         @if($a->total_qty_out > 0)
                                             <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 w-100"
-                                                style="font-size: 0.68rem; min-width: 65px;">-{{ number_format($a->total_qty_out, 2) }}</span>
+                                                style="font-size: 0.68rem; min-width: 65px;">-{{ fmtOdoo($a->total_qty_out) }}</span>
                                         @endif
                                         @if($a->total_qty_in == 0 && $a->total_qty_out == 0)
                                             <span class="text-muted small">0</span>
