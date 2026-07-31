@@ -501,13 +501,13 @@
                     <tbody>
                         @php
                             $adjustItems = $arsip->adjustItems ?? [];
-                            // Helper format Indonesian (Odoo-style): 59.262,60 — dot ribuan, koma desimal.
-                            // Kalau bilangan bulat → tampil tanpa desimal.
+                            // Helper format Odoo-style: 59,262.60 — comma ribuan, dot desimal.
+                            // Bilangan bulat tampil tanpa desimal.
                             $fmtId = function ($n) {
                                 if ($n === null || $n === '') return '';
                                 $num = (float) $n;
                                 $decimals = (floor($num) == $num) ? 0 : 2;
-                                return number_format($num, $decimals, ',', '.');
+                                return number_format($num, $decimals, '.', ',');
                             };
                         @endphp
                         @for($i = 0; $i < max(4, count($adjustItems)); $i++)

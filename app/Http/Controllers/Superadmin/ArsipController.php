@@ -638,21 +638,20 @@ class ArsipController extends Controller
             $arsip->update($updateData);
 
             // 4. Sinkronisasi Tabel Relasi per-tipe — hanya delete + recreate
-            //    kalau key benar dikirim di form. Preserve items existing kalau
-            //    key missing (fix bug 'field kembali kosong' saat partial save).
+            //    kalau ARRAY items ADA + tidak kosong. Preserve items existing
+            //    kalau missing/empty (fix bug 'field kembali kosong' saat partial save).
             //    Produk Baru selalu upsert (jaga barcode & tanggal dibuat).
-            if (array_key_exists('mutasi_asal', $rawItems) || array_key_exists('mutasi_tujuan', $rawItems)) {
+            if (!empty($rawItems['mutasi_asal']) || !empty($rawItems['mutasi_tujuan'])) {
                 ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
             }
-            if (array_key_exists('adjust', $rawItems)) {
+            if (!empty($rawItems['adjust'])) {
                 ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
             }
-            if (array_key_exists('bundel', $rawItems)) {
+            if (!empty($rawItems['bundel'])) {
                 ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
             }
-            // Tindakan IT: separate sync method sudah handle, tetap delete-first di sini
-            // hanya kalau request kirim tindakan_it_rows / tindakan_in / tindakan_out
-            if ($request->has('tindakan_it_rows') || $request->has('tindakan_in') || $request->has('tindakan_out')) {
+            // Tindakan IT: separate sync method sudah handle
+            if (!empty($request->input('tindakan_it_rows')) || !empty($request->input('tindakan_in')) || !empty($request->input('tindakan_out'))) {
                 ArsipTindakanItem::where('arsip_id', $arsip->id)->delete();
             }
 

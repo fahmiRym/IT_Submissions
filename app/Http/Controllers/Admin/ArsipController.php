@@ -429,16 +429,16 @@ class ArsipController extends Controller
             ]);
 
             // 5. REFRESH DETAIL ITEM per TIPE — hanya delete + recreate kalau
-            //    key untuk tipe itu benar-benar dikirim di form. Kalau kosong /
+            //    array items untuk tipe itu ADA + tidak kosong. Kalau kosong /
             //    missing → PRESERVE items existing (fix bug 'field kembali kosong'
             //    saat user save form tanpa modif detail_barang).
-            if (array_key_exists('mutasi_asal', $dataToProcess) || array_key_exists('mutasi_tujuan', $dataToProcess)) {
+            if (!empty($dataToProcess['mutasi_asal']) || !empty($dataToProcess['mutasi_tujuan'])) {
                 ArsipMutasiItem::where('arsip_id', $arsip->id)->delete();
             }
-            if (array_key_exists('adjust', $dataToProcess)) {
+            if (!empty($dataToProcess['adjust'])) {
                 ArsipAdjustItem::where('arsip_id', $arsip->id)->delete();
             }
-            if (array_key_exists('bundel', $dataToProcess)) {
+            if (!empty($dataToProcess['bundel'])) {
                 ArsipBundelItem::where('arsip_id', $arsip->id)->delete();
             }
 
