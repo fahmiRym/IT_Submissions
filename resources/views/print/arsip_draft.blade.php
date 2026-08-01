@@ -191,7 +191,7 @@
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 10mm;
+            bottom: 15mm;              /* 10mm → 15mm — kasih breathing room dgn _print_footer (position: fixed; bottom: 4mm) */
             background: #fff;
             z-index: 100;
             padding-top: 4mm;
@@ -583,7 +583,9 @@
                     if ($adjustItemsCount >= 12) { $keteranganLines = 0; $tindakanLines = 2; }
                     if ($adjustItemsCount >= 15) { $keteranganLines = 0; $tindakanLines = 1; }
                 } else {
-                    $BUDGET_RULED   = 24;
+                    // Budget filler untuk non-Adjust — 32 lines cukup mengisi area tanpa buat overflow.
+                    // Sebelumnya 24 → sisa gap ~30-45mm antara content & sig-block.
+                    $BUDGET_RULED   = 32;
                     $usedRuledLines = 0;
 
                     if (!empty(trim((string) $arsip->no_transaksi))) {
@@ -610,8 +612,8 @@
                     }
 
                     $remainingBudget = max(12, $BUDGET_RULED - $usedRuledLines);
-                    $tindakanLines   = min(15, max(5, (int) floor($remainingBudget * 0.60)));
-                    $keteranganLines = max(3, $remainingBudget - $tindakanLines);
+                    $tindakanLines   = min(20, max(6, (int) floor($remainingBudget * 0.60)));
+                    $keteranganLines = max(4, $remainingBudget - $tindakanLines);
                 }
             @endphp
 
