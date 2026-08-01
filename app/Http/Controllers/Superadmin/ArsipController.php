@@ -559,9 +559,10 @@ class ArsipController extends Controller
             }
 
             // MAP STATUS UTAMA
+            // ba mirror progress: Process selama BA masih dikerjakan, Done hanya saat final Done.
             $map = [
-                'Check' => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Review'],
-                'Process' => ['ba' => 'Done', 'arsip' => 'Pending', 'ket_process' => 'Process'],
+                'Check' => ['ba' => 'Process', 'arsip' => 'Pending', 'ket_process' => 'Review'],
+                'Process' => ['ba' => 'Process', 'arsip' => 'Pending', 'ket_process' => 'Process'],
                 'Pending' => ['ket_process' => 'Pending'],
                 'Done' => ['ba' => 'Done', 'arsip' => 'Done', 'ket_process' => 'Done'],
                 'Reject' => ['ba' => 'Void', 'arsip' => 'None', 'ket_process' => 'Void'],

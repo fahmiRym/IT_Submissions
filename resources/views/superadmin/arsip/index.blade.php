@@ -1668,6 +1668,39 @@ window.addTindakanItRowEdit = function(tindakanIn='', ketTindakanIn='', tindakan
         </tr>
     `);
 };
+
+// =========================================================================
+// AUTO REFRESH (AJAX POLLING) — samakan dengan admin/arsip/index
+// Skip saat modal terbuka supaya form user tidak ke-reset di tengah edit.
+// =========================================================================
+(function () {
+    let currentLastUpdate = null;
+    let currentCount = null;
+
+    function checkArsipUpdates() {
+        if ($('.modal.show').length > 0) return;
+
+        $.ajax({
+            url: "{{ route('arsip.check-updates') }}",
+            type: 'GET',
+            cache: false,
+            success: function (res) {
+                if (currentLastUpdate === null) {
+                    currentLastUpdate = res.last_update;
+                    currentCount = res.count;
+                    return;
+                }
+                if (res.last_update !== currentLastUpdate || res.count !== currentCount) {
+                    window.location.reload();
+                }
+            },
+            error: function (err) { console.log('check-updates gagal:', err); }
+        });
+    }
+
+    setInterval(checkArsipUpdates, 2000);
+    checkArsipUpdates();
+})();
 </script>
 @endpush
 
