@@ -36,6 +36,13 @@
             padding: 13mm 12mm 5mm 12mm;
             overflow: hidden;
         }
+        /* Content wrapper: fixed height, overflow: hidden supaya ruled-lines excess
+           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm). */
+        .print-content {
+            height: 219mm;
+            max-height: 219mm;
+            overflow: hidden;
+        }
 
         /* ─── DOCUMENT HEADER ─────────────────────────────────────────── */
         .doc-header {
@@ -186,15 +193,15 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (absolute bottom — filler ruled-lines agresif, sig block cover excess) ─ */
+        /* ─── SIGNATURE BLOCK (absolute bottom — posisi FIXED, tidak berubah) ─ */
         .footer-section-wrap {
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 15mm;              /* breathing room dgn _print_footer (position: fixed; bottom: 4mm) */
+            bottom: 8mm;               /* dekat dgn _print_footer, gap konsisten ~15mm */
             background: #fff;
             z-index: 100;
-            padding-top: 6mm;          /* extra padding-top untuk pastikan cover ruled-line di bawah */
+            padding-top: 2mm;
         }
         .footer-place-date {
             margin: 0 0 5px;
@@ -419,6 +426,9 @@
                 .ruled-content { min-height: 16px; }
             </style>
         @endif
+
+        {{-- ─── CONTENT WRAPPER (fixed height + overflow hidden = ruled-line excess clip clean) ── --}}
+        <div class="print-content">
 
         {{-- ─── DOCUMENT HEADER (QR | Title | QR) ─────────────────── --}}
         @php
@@ -752,6 +762,8 @@
                 @endfor
             </div>
         </div>
+
+        </div>{{-- /.print-content --}}
 
         {{-- ─── FOOTER: Place/Date + Signature (anchored bottom via absolute) ──── --}}
         <div class="footer-section-wrap">
