@@ -37,10 +37,11 @@
             overflow: hidden;
         }
         /* Content wrapper: fixed height, overflow: hidden supaya ruled-lines excess
-           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm). */
+           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm).
+           213mm = 277 (container) - 13 (pad-top) - 8 (sig bottom) - 40 (sig height 90px td) - 3 (safety) */
         .print-content {
-            height: 219mm;
-            max-height: 219mm;
+            height: 213mm;
+            max-height: 213mm;
             overflow: hidden;
         }
 
@@ -229,7 +230,7 @@
             background: #f7f7f7;
         }
         .signature-table td {
-            height: 72px;
+            height: 90px;
             vertical-align: bottom;
             padding: 3px;
         }
@@ -398,7 +399,7 @@
                 body { font-size: 10.5px; }
                 .main-table th, .main-table td { padding: 3px; font-size: 9.5px; }
                 .info-table { margin-bottom: 3px; }
-                .signature-table td { height: 70px; padding: 3px; }
+                .signature-table td { height: 85px; padding: 3px; }
                 .header-title { font-size: 14px; }
             </style>
         @elseif($compactLevel === 2)
@@ -408,7 +409,7 @@
                 .main-table td { height: 14px; }
                 .info-table { margin-bottom: 2px; }
                 .info-table td { padding: 2px; font-size: 10px; }
-                .signature-table td { height: 64px; padding: 2px; }
+                .signature-table td { height: 78px; padding: 2px; }
                 .header-title { font-size: 13px; }
                 .ruled-line, .ruled-content { line-height: 18px; height: 18px; font-size: 9.5px; }
                 .ruled-content { min-height: 18px; }
@@ -420,7 +421,7 @@
                 .main-table td { height: 12px; }
                 .info-table { margin-bottom: 2px; }
                 .info-table td { padding: 1.5px; font-size: 9px; }
-                .signature-table td { height: 58px; padding: 2px; }
+                .signature-table td { height: 72px; padding: 2px; }
                 .header-title { font-size: 12px; }
                 .ruled-line, .ruled-content { line-height: 16px; height: 16px; font-size: 8.5px; }
                 .ruled-content { min-height: 16px; }
@@ -581,22 +582,20 @@
             @endif
 
             @php
-                // Ruled-lines filler — sengaja dibuat agresif supaya SELALU mengisi gap ke sig-block.
-                // Kelebihan akan otomatis terpotong: sig-block absolute-positioned dengan
-                // background:#fff dan z-index tinggi akan menutupi ruled-lines yang di belakangnya.
-                // Trade-off ini lebih baik daripada whitespace kosong tidak konsisten.
+                // Filler split:
+                // - keteranganLines = gap kecil (2-3 baris) antara content dan TINDAKAN,
+                //   supaya TINDAKAN mengikuti no_transaksi terakhir, tidak mengambang di bawah.
+                // - tindakanLines = agresif (fill sisa area), otomatis terpotong .print-content.
                 if ($isAdjust) {
-                    $keteranganLines = 8;
-                    $tindakanLines   = 15;
-                    if ($adjustItemsCount >= 3)  { $keteranganLines = 6; $tindakanLines = 13; }
-                    if ($adjustItemsCount >= 5)  { $keteranganLines = 5; $tindakanLines = 11; }
-                    if ($adjustItemsCount >= 7)  { $keteranganLines = 4; $tindakanLines = 9; }
-                    if ($adjustItemsCount >= 9)  { $keteranganLines = 3; $tindakanLines = 7; }
-                    if ($adjustItemsCount >= 12) { $keteranganLines = 2; $tindakanLines = 5; }
-                    if ($adjustItemsCount >= 15) { $keteranganLines = 1; $tindakanLines = 3; }
+                    $keteranganLines = 2;
+                    $tindakanLines   = 20;
+                    if ($adjustItemsCount >= 5)  { $tindakanLines = 15; }
+                    if ($adjustItemsCount >= 10) { $tindakanLines = 10; }
+                    if ($adjustItemsCount >= 15) { $tindakanLines = 5; }
                 } else {
-                    // Budget filler untuk non-Adjust — 40 lines aggressive; overflow ditutupi sig-block.
-                    $BUDGET_RULED   = 40;
+                    // Non-Adjust: gap 3 baris post no_transaksi, tindakan fill sisa.
+                    $keteranganLines = 3;
+                    $BUDGET_RULED   = 45;
                     $usedRuledLines = 0;
 
                     if (!empty(trim((string) $arsip->no_transaksi))) {
@@ -622,9 +621,8 @@
                         }
                     }
 
-                    $remainingBudget = max(20, $BUDGET_RULED - $usedRuledLines);
-                    $tindakanLines   = min(25, max(10, (int) floor($remainingBudget * 0.60)));
-                    $keteranganLines = max(6, $remainingBudget - $tindakanLines);
+                    // tindakanLines fill sisa budget, keteranganLines sudah di-set fix 3 di atas
+                    $tindakanLines = max(10, $BUDGET_RULED - $usedRuledLines - $keteranganLines);
                 }
             @endphp
 
