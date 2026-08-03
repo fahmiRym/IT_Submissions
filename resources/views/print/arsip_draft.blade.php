@@ -31,17 +31,17 @@
         /* ─── PAGE CONTAINER ──────────────────────────────────────────── */
         .print-container {
             position: relative;
-            height: 277mm;
-            max-height: 277mm;
+            height: 285mm;              /* 277 → 285 supaya sig-block bisa turun ~8mm dekat ke _print_footer */
+            max-height: 285mm;
             padding: 13mm 12mm 5mm 12mm;
             overflow: hidden;
         }
         /* Content wrapper: fixed height, overflow: hidden supaya ruled-lines excess
-           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm).
-           213mm = 277 (container) - 13 (pad-top) - 8 (sig bottom) - 40 (sig height 90px td) - 3 (safety) */
+           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 7mm).
+           222mm = 285 (container) - 13 (pad-top) - 7 (sig bottom) - 40 (sig height) - 3 (safety) */
         .print-content {
-            height: 213mm;
-            max-height: 213mm;
+            height: 222mm;
+            max-height: 222mm;
             overflow: hidden;
         }
 
@@ -199,7 +199,7 @@
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 8mm;               /* dekat dgn _print_footer, gap konsisten ~15mm */
+            bottom: 7mm;               /* gap ke _print_footer ~10mm (turun 1cm dari sebelumnya) */
             background: #fff;
             z-index: 100;
             padding-top: 2mm;
