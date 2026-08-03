@@ -37,11 +37,11 @@
             overflow: hidden;
         }
         /* Content wrapper: fixed height, overflow: hidden supaya ruled-lines excess
-           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 3mm).
-           226mm = 285 (container) - 13 (pad-top) - 3 (sig bottom) - 40 (sig height) - 3 (safety) */
+           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm).
+           221mm = 285 (container) - 13 (pad-top) - 8 (sig bottom) - 40 (sig height) - 3 (safety) */
         .print-content {
-            height: 226mm;
-            max-height: 226mm;
+            height: 221mm;
+            max-height: 221mm;
             overflow: hidden;
         }
 
@@ -199,13 +199,13 @@
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 3mm;               /* sig-block lebih ke bawah, dekat _print_footer */
+            bottom: 8mm;               /* geser ke atas dari 3mm, lega dgn _print_footer */
             background: #fff;
             z-index: 100;
             padding-top: 2mm;
         }
-        /* Override _print_footer supaya naik dikit (khusus print draft, tidak mengganggu view lain) */
-        .itsub-print-footer { bottom: 8mm !important; }
+        /* Override _print_footer supaya ikut naik (khusus print draft, tidak mengganggu view lain) */
+        .itsub-print-footer { bottom: 13mm !important; }
         .footer-place-date {
             margin: 0 0 5px;
             font-weight: 800;
