@@ -186,15 +186,15 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (absolute bottom — content dijaga tetap fit lewat filler reduction) ─ */
+        /* ─── SIGNATURE BLOCK (absolute bottom — filler ruled-lines agresif, sig block cover excess) ─ */
         .footer-section-wrap {
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 15mm;              /* 10mm → 15mm — kasih breathing room dgn _print_footer (position: fixed; bottom: 4mm) */
+            bottom: 15mm;              /* breathing room dgn _print_footer (position: fixed; bottom: 4mm) */
             background: #fff;
             z-index: 100;
-            padding-top: 4mm;
+            padding-top: 6mm;          /* extra padding-top untuk pastikan cover ruled-line di bawah */
         }
         .footer-place-date {
             margin: 0 0 5px;
@@ -571,21 +571,22 @@
             @endif
 
             @php
-                // Ruled-lines budget — flex layout auto-fit, jadi filler bisa lebih konservatif.
-                // Terlalu banyak filler bikin content overflow → dulu memicu duplikat sig-block di page 2.
+                // Ruled-lines filler — sengaja dibuat agresif supaya SELALU mengisi gap ke sig-block.
+                // Kelebihan akan otomatis terpotong: sig-block absolute-positioned dengan
+                // background:#fff dan z-index tinggi akan menutupi ruled-lines yang di belakangnya.
+                // Trade-off ini lebih baik daripada whitespace kosong tidak konsisten.
                 if ($isAdjust) {
-                    $keteranganLines = 3;
-                    $tindakanLines   = 5;
-                    if ($adjustItemsCount >= 3)  { $keteranganLines = 2; $tindakanLines = 4; }
-                    if ($adjustItemsCount >= 5)  { $keteranganLines = 2; $tindakanLines = 3; }
-                    if ($adjustItemsCount >= 7)  { $keteranganLines = 1; $tindakanLines = 3; }
-                    if ($adjustItemsCount >= 9)  { $keteranganLines = 1; $tindakanLines = 2; }
-                    if ($adjustItemsCount >= 12) { $keteranganLines = 0; $tindakanLines = 2; }
-                    if ($adjustItemsCount >= 15) { $keteranganLines = 0; $tindakanLines = 1; }
+                    $keteranganLines = 8;
+                    $tindakanLines   = 15;
+                    if ($adjustItemsCount >= 3)  { $keteranganLines = 6; $tindakanLines = 13; }
+                    if ($adjustItemsCount >= 5)  { $keteranganLines = 5; $tindakanLines = 11; }
+                    if ($adjustItemsCount >= 7)  { $keteranganLines = 4; $tindakanLines = 9; }
+                    if ($adjustItemsCount >= 9)  { $keteranganLines = 3; $tindakanLines = 7; }
+                    if ($adjustItemsCount >= 12) { $keteranganLines = 2; $tindakanLines = 5; }
+                    if ($adjustItemsCount >= 15) { $keteranganLines = 1; $tindakanLines = 3; }
                 } else {
-                    // Budget filler untuk non-Adjust — 32 lines cukup mengisi area tanpa buat overflow.
-                    // Sebelumnya 24 → sisa gap ~30-45mm antara content & sig-block.
-                    $BUDGET_RULED   = 32;
+                    // Budget filler untuk non-Adjust — 40 lines aggressive; overflow ditutupi sig-block.
+                    $BUDGET_RULED   = 40;
                     $usedRuledLines = 0;
 
                     if (!empty(trim((string) $arsip->no_transaksi))) {
@@ -611,9 +612,9 @@
                         }
                     }
 
-                    $remainingBudget = max(12, $BUDGET_RULED - $usedRuledLines);
-                    $tindakanLines   = min(20, max(6, (int) floor($remainingBudget * 0.60)));
-                    $keteranganLines = max(4, $remainingBudget - $tindakanLines);
+                    $remainingBudget = max(20, $BUDGET_RULED - $usedRuledLines);
+                    $tindakanLines   = min(25, max(10, (int) floor($remainingBudget * 0.60)));
+                    $keteranganLines = max(6, $remainingBudget - $tindakanLines);
                 }
             @endphp
 
