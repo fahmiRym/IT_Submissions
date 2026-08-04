@@ -16,9 +16,11 @@
         html, body {
             margin: 0;
             padding: 0;
+            @if(empty($forPdf))
             height: 297mm;
             max-height: 297mm;
             overflow: hidden;
+            @endif
         }
 
         body {
@@ -31,17 +33,22 @@
         /* ─── PAGE CONTAINER ──────────────────────────────────────────── */
         .print-container {
             position: relative;
+            padding: 13mm 12mm 5mm 12mm;
+            @if(empty($forPdf))
+            /* Chrome print: fixed height + absolute sig-block */
             height: 285mm;
             max-height: 285mm;
-            padding: 13mm 12mm 5mm 12mm;
             overflow: hidden;
             page-break-after: avoid;
             page-break-inside: avoid;
+            @endif
         }
         .print-content {
+            @if(empty($forPdf))
             height: 221mm;
             max-height: 221mm;
             overflow: hidden;
+            @endif
         }
 
         /* ─── DOCUMENT HEADER ─────────────────────────────────────────── */
@@ -193,20 +200,31 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (absolute anchored bottom) ─ */
+        /* ─── SIGNATURE BLOCK ─ */
         .footer-section-wrap {
+            background: #fff;
+            padding-top: 2mm;
+            page-break-inside: avoid;
+            @if(empty($forPdf))
+            /* Chrome: absolute anchored bottom */
             position: absolute;
             left: 12mm;
             right: 12mm;
             bottom: 8mm;
-            background: #fff;
             z-index: 100;
-            padding-top: 2mm;
-            page-break-inside: avoid;
+            @else
+            /* Dompdf: static flow at end of content */
+            margin-top: 6mm;
+            @endif
         }
         @if(empty($forPdf))
-        /* Override _print_footer khusus browser print (dompdf pakai default bottom:4mm) */
+        /* Override _print_footer khusus browser print */
         .itsub-print-footer { bottom: 13mm !important; }
+        @else
+        /* mpdf: sembunyikan _print_footer (position: fixed) + watermark supaya tidak trigger
+           bug WriteFixedPosHTML "Division by zero" pada mpdf */
+        .itsub-print-footer { display: none !important; }
+        .watermark { display: none !important; }
         @endif
         .footer-place-date {
             margin: 0 0 5px;
