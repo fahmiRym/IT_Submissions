@@ -133,6 +133,18 @@
             white-space: nowrap;
             text-overflow: clip;
         }
+        /* Watermark approval TTD di sebelah no_transaksi ── */
+        .tx-approval-mark {
+            float: right;
+            font-size: 8.5px;
+            color: #059669;
+            font-weight: 700;
+            font-style: italic;
+            line-height: 22px;
+            padding-left: 8px;
+            letter-spacing: 0.2px;
+        }
+        .tx-approval-mark i { color: #16a34a; font-style: normal; margin-right: 2px; }
         .ruled-content {
             border-bottom: 1px solid #000;
             min-height: 22px;
@@ -584,20 +596,26 @@
             @endif
 
             @php
-                // Filler split:
-                // - keteranganLines = gap kecil (2-3 baris) antara content dan TINDAKAN,
-                //   supaya TINDAKAN mengikuti no_transaksi terakhir, tidak mengambang di bawah.
-                // - tindakanLines = agresif (fill sisa area), otomatis terpotong .print-content.
+                // Filler harus PAS supaya konten fit dalam .print-content 221mm.
+                // Chrome print tidak reliably honor `overflow: hidden` untuk pagination —
+                // kalau kelebihan, konten spill ke page 2/3. Jadi count filler dibatasi
+                // conservatively berdasarkan estimasi tinggi tiap section.
+                //
+                // Available space untuk RULED LINES (mm):
+                //   221 (print-content) - 42 (header+info) - jenis_specific = ~150mm
+                //   1 baris = ~5.8mm → ~25 baris max
                 if ($isAdjust) {
+                    // Adjust punya main-table (5+ rows × 6mm), CATATAN, tindakan main-table.
+                    // Space untuk filler jauh lebih kecil.
                     $keteranganLines = 2;
-                    $tindakanLines   = 20;
-                    if ($adjustItemsCount >= 5)  { $tindakanLines = 15; }
-                    if ($adjustItemsCount >= 10) { $tindakanLines = 10; }
-                    if ($adjustItemsCount >= 15) { $tindakanLines = 5; }
+                    $tindakanLines   = 10;
+                    if ($adjustItemsCount >= 5)  { $tindakanLines = 8; }
+                    if ($adjustItemsCount >= 10) { $tindakanLines = 5; }
+                    if ($adjustItemsCount >= 15) { $tindakanLines = 3; }
                 } else {
-                    // Non-Adjust: gap 3 baris post no_transaksi, tindakan fill sisa.
+                    // Non-Adjust: gap 3 baris post no_transaksi, tindakan fill sisa (dibatasi).
                     $keteranganLines = 3;
-                    $BUDGET_RULED   = 45;
+                    $BUDGET_RULED   = 26;
                     $usedRuledLines = 0;
 
                     if (!empty(trim((string) $arsip->no_transaksi))) {
@@ -623,8 +641,8 @@
                         }
                     }
 
-                    // tindakanLines fill sisa budget, keteranganLines sudah di-set fix 3 di atas
-                    $tindakanLines = max(10, $BUDGET_RULED - $usedRuledLines - $keteranganLines);
+                    // tindakanLines fill sisa budget (dibatasi conservatively, min 5 max 20).
+                    $tindakanLines = min(20, max(5, $BUDGET_RULED - $usedRuledLines - $keteranganLines));
                 }
             @endphp
 
@@ -653,6 +671,12 @@
                         $normalized = preg_replace('/\|+/', "\n\n", trim((string) $arsip->no_transaksi));
                         $normalized = str_replace("\r\n", "\n", $normalized);
                         $trxGroups  = array_values(array_filter(array_map('trim', preg_split('/\n{2,}/', $normalized))));
+                        // Approvals per no_transaksi (safe: kembalikan [] kalau share feature belum ada).
+                        try {
+                            $txApprovals = class_exists(\App\Models\ArsipShare::class) && method_exists(\App\Models\ArsipShare::class, 'approvalsByTx')
+                                ? \App\Models\ArsipShare::approvalsByTx($arsip->id)
+                                : [];
+                        } catch (\Throwable $e) { $txApprovals = []; }
                     @endphp
                     <div class="ruled-line" style="font-weight: 800; color: #000;">No. Transaksi :</div>
                     @foreach($trxGroups as $gIdx => $group)
@@ -667,8 +691,26 @@
                                 }
                             }
                         @endphp
-                        @foreach($lines as $line)
-                            <div class="ruled-line" style="color: #000;">{{ $line }}</div>
+                        @foreach($lines as $lIdx => $line)
+                            @php
+                                // Watermark hanya di baris pertama tiap no_transaksi (bukan wrap-continuation).
+                                $lineApprovals = ($lIdx === 0) ? ($txApprovals[trim($line)] ?? []) : [];
+                            @endphp
+                            <div class="ruled-line" style="color: #000;">
+                                @if(!empty($lineApprovals))
+                                    <span class="tx-approval-mark">
+                                        <i>&#10004;</i>
+                                        {{ $lineApprovals[0]['name'] }}
+                                        @if(!empty($lineApprovals[0]['at']))
+                                            · {{ \Carbon\Carbon::parse($lineApprovals[0]['at'])->format('d/m/y') }}
+                                        @endif
+                                        @if(count($lineApprovals) > 1)
+                                            <span style="color:#0284c7;"> +{{ count($lineApprovals) - 1 }}</span>
+                                        @endif
+                                    </span>
+                                @endif
+                                {{ $line }}
+                            </div>
                         @endforeach
                         @if($gIdx < count($trxGroups) - 1)
                             {{-- separator antar group (jaga baseline ruled tetap konsisten) --}}
