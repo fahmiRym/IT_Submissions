@@ -645,8 +645,10 @@
                                                                 </span>
                                                             @endif
                                                         </li>
+                                                        {{-- SHOW DOCUMENT dihide sementara utk admin (layout PDF masih di-tune).
+                                                             Superadmin masih bisa akses via /superadmin/arsip. --}}
+                                                        @if(false)
                                                         <li><hr class="dropdown-divider my-1"></li>
-                                                        {{-- SHOW DOCUMENT — draft + lampiran gabung jadi 1 PDF --}}
                                                         <li>
                                                             <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3"
                                                                href="{{ route('admin.arsip.show-document', $a->id) }}" target="_blank">
@@ -660,6 +662,7 @@
                                                                 </div>
                                                             </a>
                                                         </li>
+                                                        @endif
                                                         <li><hr class="dropdown-divider my-1"></li>
                                                         {{-- PRINT DRAFT — draft saja tanpa lampiran --}}
                                                         <li>
