@@ -31,17 +31,16 @@
         /* ─── PAGE CONTAINER ──────────────────────────────────────────── */
         .print-container {
             position: relative;
-            height: 285mm;              /* 277 → 285 supaya sig-block bisa turun ~8mm dekat ke _print_footer */
-            max-height: 285mm;
+            height: 277mm;              /* revert ke A4 standard supaya dompdf/browser konsisten */
+            max-height: 277mm;
             padding: 13mm 12mm 5mm 12mm;
             overflow: hidden;
         }
-        /* Content wrapper: fixed height, overflow: hidden supaya ruled-lines excess
-           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm).
-           221mm = 285 (container) - 13 (pad-top) - 8 (sig bottom) - 40 (sig height) - 3 (safety) */
+        /* Content wrapper: fixed height, overflow: hidden.
+           213mm = 277 (container) - 13 (pad-top) - 15 (sig bottom) - 33 (sig height) - 3 (safety) */
         .print-content {
-            height: 221mm;
-            max-height: 221mm;
+            height: 213mm;
+            max-height: 213mm;
             overflow: hidden;
         }
 
@@ -206,18 +205,16 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (absolute bottom — posisi FIXED, tidak berubah) ─ */
+        /* ─── SIGNATURE BLOCK (absolute bottom — posisi FIXED) ─ */
         .footer-section-wrap {
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 8mm;               /* geser ke atas dari 3mm, lega dgn _print_footer */
+            bottom: 15mm;              /* buffer aman dari _print_footer (position: fixed; bottom: 4mm) */
             background: #fff;
             z-index: 100;
             padding-top: 2mm;
         }
-        /* Override _print_footer supaya ikut naik (khusus print draft, tidak mengganggu view lain) */
-        .itsub-print-footer { bottom: 13mm !important; }
         .footer-place-date {
             margin: 0 0 5px;
             font-weight: 800;
@@ -603,18 +600,29 @@
                 //   header ~20, info ~22, CATATAN heading ~8, TINDAKAN heading ~12,
                 //   main-table row (dgn padding 4px + text 10px) ~8mm PER row termasuk header
                 //   ruled-line 22px ~5.8mm
-                //   Target aman: 210mm (buffer 11mm dari 221 utk dompdf variance)
-                $TARGET_MM = 210;
+                //   Target aman: 195mm (buffer 18mm dari 213 utk dompdf variance)
+                $TARGET_MM = 195;
+
+                // Estimate keterangan wrap lines (~90 char per line, ruled-line 5.8mm each)
+                $ketWrapLines = 0;
+                if (!empty(trim((string) $arsip->keterangan))) {
+                    $ketRawLines = preg_split('/\r\n|\r|\n/', (string) $arsip->keterangan);
+                    foreach ($ketRawLines as $kl) {
+                        $ketWrapLines += max(1, (int) ceil(mb_strlen(trim($kl)) / 90));
+                    }
+                }
+
                 if ($isAdjust) {
                     // Adjust: main-table body max(4, items) + header + tindakan-table (2 body + header)
-                    $mainTableRows    = max(4, $adjustItemsCount) + 1; // +1 header
+                    $mainTableRows    = max(4, $adjustItemsCount) + 1;
                     $mainTableMm      = $mainTableRows * 8;
-                    $tindakanTableMm  = 3 * 8; // 2 body + header
+                    $tindakanTableMm  = 3 * 8;
                     $staticMm         = 20 + 22 + 8 + 12 + 4; // header+info+CATATAN+TINDAKAN+margins
-                    $availableMm      = $TARGET_MM - $staticMm - $mainTableMm - $tindakanTableMm;
-                    $totalFillerLines = max(4, (int) floor($availableMm / 5.8));
-                    $keteranganLines  = 2;
-                    $tindakanLines    = max(3, $totalFillerLines - $keteranganLines);
+                    $ketMm            = $ketWrapLines * 5.8;
+                    $availableMm      = $TARGET_MM - $staticMm - $mainTableMm - $tindakanTableMm - $ketMm;
+                    $totalFillerLines = max(3, (int) floor($availableMm / 5.8));
+                    $keteranganLines  = min(2, $totalFillerLines);
+                    $tindakanLines    = max(2, $totalFillerLines - $keteranganLines);
                 } else {
                     // Non-Adjust: no main-tables. Space untuk filler + no_transaksi/keterangan text.
                     $keteranganLines = 3;
