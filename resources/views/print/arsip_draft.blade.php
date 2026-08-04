@@ -31,16 +31,17 @@
         /* ─── PAGE CONTAINER ──────────────────────────────────────────── */
         .print-container {
             position: relative;
-            height: 277mm;              /* revert ke A4 standard supaya dompdf/browser konsisten */
-            max-height: 277mm;
+            height: 285mm;              /* 277 → 285 supaya sig-block bisa turun ~8mm dekat ke _print_footer */
+            max-height: 285mm;
             padding: 13mm 12mm 5mm 12mm;
             overflow: hidden;
         }
-        /* Content wrapper: fixed height, overflow: hidden.
-           213mm = 277 (container) - 13 (pad-top) - 15 (sig bottom) - 33 (sig height) - 3 (safety) */
+        /* Content wrapper: fixed height, overflow: hidden supaya ruled-lines excess
+           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm).
+           221mm = 285 (container) - 13 (pad-top) - 8 (sig bottom) - 40 (sig height) - 3 (safety) */
         .print-content {
-            height: 213mm;
-            max-height: 213mm;
+            height: 221mm;
+            max-height: 221mm;
             overflow: hidden;
         }
 
@@ -132,18 +133,6 @@
             white-space: nowrap;
             text-overflow: clip;
         }
-        /* Watermark approval TTD di sebelah no_transaksi ── */
-        .tx-approval-mark {
-            float: right;
-            font-size: 8.5px;
-            color: #059669;
-            font-weight: 700;
-            font-style: italic;
-            line-height: 22px;
-            padding-left: 8px;
-            letter-spacing: 0.2px;
-        }
-        .tx-approval-mark i { color: #16a34a; font-style: normal; margin-right: 2px; }
         .ruled-content {
             border-bottom: 1px solid #000;
             min-height: 22px;
@@ -205,16 +194,21 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (absolute bottom — posisi FIXED) ─ */
+        /* ─── SIGNATURE BLOCK (absolute bottom — posisi FIXED, tidak berubah) ─ */
         .footer-section-wrap {
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 15mm;              /* buffer aman dari _print_footer (position: fixed; bottom: 4mm) */
+            bottom: 8mm;               /* geser ke atas dari 3mm, lega dgn _print_footer */
             background: #fff;
             z-index: 100;
             padding-top: 2mm;
         }
+        @if(empty($forPdf))
+        /* Override _print_footer khusus browser print — dompdf handle position:fixed berbeda,
+           override ini bikin overlap dgn sig-block di dompdf → skip untuk PDF */
+        .itsub-print-footer { bottom: 13mm !important; }
+        @endif
         .footer-place-date {
             margin: 0 0 5px;
             font-weight: 800;
@@ -593,42 +587,33 @@
             @endif
 
             @php
-                // Filler PAS supaya konten fit dalam .print-content 221mm.
-                // Formula dinamis: hitung sisa area setelah section fixed, isi dengan ruled-lines.
+                // Filler split:
+                // - keteranganLines = gap kecil (2-3 baris) antara content dan TINDAKAN.
+                // - tindakanLines = agresif (fill sisa area), otomatis terpotong .print-content.
                 //
-                // Estimasi tinggi tiap section (mm) — REVISED setelah kalibrasi dompdf:
-                //   header ~20, info ~22, CATATAN heading ~8, TINDAKAN heading ~12,
-                //   main-table row (dgn padding 4px + text 10px) ~8mm PER row termasuk header
-                //   ruled-line 22px ~5.8mm
-                //   Target aman: 195mm (buffer 18mm dari 213 utk dompdf variance)
-                $TARGET_MM = 195;
-
-                // Estimate keterangan wrap lines (~90 char per line, ruled-line 5.8mm each)
-                $ketWrapLines = 0;
-                if (!empty(trim((string) $arsip->keterangan))) {
-                    $ketRawLines = preg_split('/\r\n|\r|\n/', (string) $arsip->keterangan);
-                    foreach ($ketRawLines as $kl) {
-                        $ketWrapLines += max(1, (int) ceil(mb_strlen(trim($kl)) / 90));
-                    }
-                }
-
+                // Dompdf (show-document) render lebih tall dari Chrome print → gunakan filler
+                // lebih sedikit supaya tidak overflow ke page 2. Chrome print bisa lebih longgar.
+                $isPdf = !empty($forPdf ?? false);
                 if ($isAdjust) {
-                    // Adjust: main-table body max(4, items) + header + tindakan-table (2 body + header)
-                    $mainTableRows    = max(4, $adjustItemsCount) + 1;
-                    $mainTableMm      = $mainTableRows * 8;
-                    $tindakanTableMm  = 3 * 8;
-                    $staticMm         = 20 + 22 + 8 + 12 + 4; // header+info+CATATAN+TINDAKAN+margins
-                    $ketMm            = $ketWrapLines * 5.8;
-                    $availableMm      = $TARGET_MM - $staticMm - $mainTableMm - $tindakanTableMm - $ketMm;
-                    $totalFillerLines = max(3, (int) floor($availableMm / 5.8));
-                    $keteranganLines  = min(2, $totalFillerLines);
-                    $tindakanLines    = max(2, $totalFillerLines - $keteranganLines);
+                    $keteranganLines = 2;
+                    if ($isPdf) {
+                        // Dompdf lebih ketat
+                        $tindakanLines = 10;
+                        if ($adjustItemsCount >= 5)  { $tindakanLines = 8; }
+                        if ($adjustItemsCount >= 10) { $tindakanLines = 5; }
+                        if ($adjustItemsCount >= 15) { $tindakanLines = 3; }
+                    } else {
+                        // Browser print — longgar
+                        $tindakanLines = 20;
+                        if ($adjustItemsCount >= 5)  { $tindakanLines = 15; }
+                        if ($adjustItemsCount >= 10) { $tindakanLines = 10; }
+                        if ($adjustItemsCount >= 15) { $tindakanLines = 5; }
+                    }
                 } else {
-                    // Non-Adjust: no main-tables. Space untuk filler + no_transaksi/keterangan text.
+                    // Non-Adjust: gap 3 baris post no_transaksi, tindakan fill sisa.
                     $keteranganLines = 3;
-                    $staticMm        = 20 + 22 + 12 + 4; // header+info+TINDAKAN+margins = 58mm
-                    $BUDGET_RULED    = (int) floor(($TARGET_MM - $staticMm) / 5.8); // ~26 baris
-                    $usedRuledLines  = 0;
+                    $BUDGET_RULED   = $isPdf ? 27 : 45;   // dompdf: tighter
+                    $usedRuledLines = 0;
 
                     if (!empty(trim((string) $arsip->no_transaksi))) {
                         $nrm = preg_replace('/\|+/', "\n\n", trim((string) $arsip->no_transaksi));
@@ -653,8 +638,9 @@
                         }
                     }
 
-                    // tindakanLines fill sisa budget conservatively.
-                    $tindakanLines = max(5, $BUDGET_RULED - $usedRuledLines - $keteranganLines);
+                    // tindakanLines fill sisa budget, cap max 25 (dompdf) / 30 (browser)
+                    $capMax = $isPdf ? 20 : 30;
+                    $tindakanLines = min($capMax, max(5, $BUDGET_RULED - $usedRuledLines - $keteranganLines));
                 }
             @endphp
 
@@ -683,12 +669,6 @@
                         $normalized = preg_replace('/\|+/', "\n\n", trim((string) $arsip->no_transaksi));
                         $normalized = str_replace("\r\n", "\n", $normalized);
                         $trxGroups  = array_values(array_filter(array_map('trim', preg_split('/\n{2,}/', $normalized))));
-                        // Approvals per no_transaksi (safe: kembalikan [] kalau share feature belum ada).
-                        try {
-                            $txApprovals = class_exists(\App\Models\ArsipShare::class) && method_exists(\App\Models\ArsipShare::class, 'approvalsByTx')
-                                ? \App\Models\ArsipShare::approvalsByTx($arsip->id)
-                                : [];
-                        } catch (\Throwable $e) { $txApprovals = []; }
                     @endphp
                     <div class="ruled-line" style="font-weight: 800; color: #000;">No. Transaksi :</div>
                     @foreach($trxGroups as $gIdx => $group)
@@ -703,26 +683,8 @@
                                 }
                             }
                         @endphp
-                        @foreach($lines as $lIdx => $line)
-                            @php
-                                // Watermark hanya di baris pertama tiap no_transaksi (bukan wrap-continuation).
-                                $lineApprovals = ($lIdx === 0) ? ($txApprovals[trim($line)] ?? []) : [];
-                            @endphp
-                            <div class="ruled-line" style="color: #000;">
-                                @if(!empty($lineApprovals))
-                                    <span class="tx-approval-mark">
-                                        <i>&#10004;</i>
-                                        {{ $lineApprovals[0]['name'] }}
-                                        @if(!empty($lineApprovals[0]['at']))
-                                            · {{ \Carbon\Carbon::parse($lineApprovals[0]['at'])->format('d/m/y') }}
-                                        @endif
-                                        @if(count($lineApprovals) > 1)
-                                            <span style="color:#0284c7;"> +{{ count($lineApprovals) - 1 }}</span>
-                                        @endif
-                                    </span>
-                                @endif
-                                {{ $line }}
-                            </div>
+                        @foreach($lines as $line)
+                            <div class="ruled-line" style="color: #000;">{{ $line }}</div>
                         @endforeach
                         @if($gIdx < count($trxGroups) - 1)
                             {{-- separator antar group (jaga baseline ruled tetap konsisten) --}}
