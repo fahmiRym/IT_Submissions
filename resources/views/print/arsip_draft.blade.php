@@ -16,9 +16,12 @@
         html, body {
             margin: 0;
             padding: 0;
+            @if(empty($forPdf))
+            /* Chrome print: body clip supaya single-page enforced */
             height: 297mm;
             max-height: 297mm;
             overflow: hidden;
+            @endif
         }
 
         body {
@@ -31,17 +34,23 @@
         /* ─── PAGE CONTAINER ──────────────────────────────────────────── */
         .print-container {
             position: relative;
-            height: 285mm;              /* 277 → 285 supaya sig-block bisa turun ~8mm dekat ke _print_footer */
+            @if(empty($forPdf))
+            /* Chrome print: fixed height + overflow supaya konten muat 1 halaman */
+            height: 285mm;
             max-height: 285mm;
+            @else
+            /* Dompdf: min-height only + page-break avoid; hindari absolute-pos overflow bug */
+            min-height: 285mm;
+            page-break-inside: avoid;
+            @endif
             padding: 13mm 12mm 5mm 12mm;
             overflow: hidden;
         }
-        /* Content wrapper: fixed height, overflow: hidden supaya ruled-lines excess
-           terpotong CLEAN tepat sebelum sig-block. Sig-block posisi tetap (bottom: 8mm).
-           221mm = 285 (container) - 13 (pad-top) - 8 (sig bottom) - 40 (sig height) - 3 (safety) */
         .print-content {
+            @if(empty($forPdf))
             height: 221mm;
             max-height: 221mm;
+            @endif
             overflow: hidden;
         }
 
@@ -194,19 +203,25 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (absolute bottom — posisi FIXED, tidak berubah) ─ */
+        /* ─── SIGNATURE BLOCK (posisi berbeda Chrome vs dompdf) ─ */
         .footer-section-wrap {
+            @if(empty($forPdf))
+            /* Chrome print: absolute anchored di bottom container */
             position: absolute;
             left: 12mm;
             right: 12mm;
-            bottom: 8mm;               /* geser ke atas dari 3mm, lega dgn _print_footer */
-            background: #fff;
+            bottom: 8mm;
             z-index: 100;
+            @else
+            /* Dompdf: STATIC (flow di akhir konten) — absolute buggy di dompdf */
+            margin-top: 8mm;
+            page-break-inside: avoid;
+            @endif
+            background: #fff;
             padding-top: 2mm;
         }
         @if(empty($forPdf))
-        /* Override _print_footer khusus browser print — dompdf handle position:fixed berbeda,
-           override ini bikin overlap dgn sig-block di dompdf → skip untuk PDF */
+        /* Override _print_footer khusus browser print (dompdf pakai default bottom:4mm) */
         .itsub-print-footer { bottom: 13mm !important; }
         @endif
         .footer-place-date {
