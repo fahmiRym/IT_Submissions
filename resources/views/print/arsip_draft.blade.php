@@ -16,12 +16,9 @@
         html, body {
             margin: 0;
             padding: 0;
-            @if(empty($forPdf))
-            /* Chrome print: body clip supaya single-page enforced */
             height: 297mm;
             max-height: 297mm;
             overflow: hidden;
-            @endif
         }
 
         body {
@@ -34,23 +31,16 @@
         /* ─── PAGE CONTAINER ──────────────────────────────────────────── */
         .print-container {
             position: relative;
-            @if(empty($forPdf))
-            /* Chrome print: fixed height + overflow supaya konten muat 1 halaman */
             height: 285mm;
             max-height: 285mm;
-            @else
-            /* Dompdf: min-height only + page-break avoid; hindari absolute-pos overflow bug */
-            min-height: 285mm;
-            page-break-inside: avoid;
-            @endif
             padding: 13mm 12mm 5mm 12mm;
             overflow: hidden;
+            page-break-after: avoid;
+            page-break-inside: avoid;
         }
         .print-content {
-            @if(empty($forPdf))
             height: 221mm;
             max-height: 221mm;
-            @endif
             overflow: hidden;
         }
 
@@ -203,22 +193,16 @@
             height: 18.5px;
         }
 
-        /* ─── SIGNATURE BLOCK (posisi berbeda Chrome vs dompdf) ─ */
+        /* ─── SIGNATURE BLOCK (absolute anchored bottom) ─ */
         .footer-section-wrap {
-            @if(empty($forPdf))
-            /* Chrome print: absolute anchored di bottom container */
             position: absolute;
             left: 12mm;
             right: 12mm;
             bottom: 8mm;
-            z-index: 100;
-            @else
-            /* Dompdf: STATIC (flow di akhir konten) — absolute buggy di dompdf */
-            margin-top: 8mm;
-            page-break-inside: avoid;
-            @endif
             background: #fff;
+            z-index: 100;
             padding-top: 2mm;
+            page-break-inside: avoid;
         }
         @if(empty($forPdf))
         /* Override _print_footer khusus browser print (dompdf pakai default bottom:4mm) */
@@ -612,11 +596,11 @@
                 if ($isAdjust) {
                     $keteranganLines = 2;
                     if ($isPdf) {
-                        // Dompdf lebih ketat
-                        $tindakanLines = 10;
-                        if ($adjustItemsCount >= 5)  { $tindakanLines = 8; }
-                        if ($adjustItemsCount >= 10) { $tindakanLines = 5; }
-                        if ($adjustItemsCount >= 15) { $tindakanLines = 3; }
+                        // Dompdf VERY conservative supaya pasti 1 halaman
+                        $tindakanLines = 6;
+                        if ($adjustItemsCount >= 5)  { $tindakanLines = 4; }
+                        if ($adjustItemsCount >= 10) { $tindakanLines = 2; }
+                        if ($adjustItemsCount >= 15) { $tindakanLines = 1; }
                     } else {
                         // Browser print — longgar
                         $tindakanLines = 20;
@@ -627,7 +611,7 @@
                 } else {
                     // Non-Adjust: gap 3 baris post no_transaksi, tindakan fill sisa.
                     $keteranganLines = 3;
-                    $BUDGET_RULED   = $isPdf ? 27 : 45;   // dompdf: tighter
+                    $BUDGET_RULED   = $isPdf ? 22 : 45;   // dompdf: VERY tighter
                     $usedRuledLines = 0;
 
                     if (!empty(trim((string) $arsip->no_transaksi))) {
@@ -653,9 +637,9 @@
                         }
                     }
 
-                    // tindakanLines fill sisa budget, cap max 25 (dompdf) / 30 (browser)
-                    $capMax = $isPdf ? 20 : 30;
-                    $tindakanLines = min($capMax, max(5, $BUDGET_RULED - $usedRuledLines - $keteranganLines));
+                    // tindakanLines fill sisa budget, cap max 14 (dompdf) / 30 (browser)
+                    $capMax = $isPdf ? 14 : 30;
+                    $tindakanLines = min($capMax, max(4, $BUDGET_RULED - $usedRuledLines - $keteranganLines));
                 }
             @endphp
 
