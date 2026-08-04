@@ -22,7 +22,7 @@ class ArsipLampiranService
      * (mis. tambah cover-page placeholder, urutan append, dst) auto-invalidate cache lama.
      * Bump angka ini setiap kali ada perubahan signifikan di flow streamMergedPdf.
      */
-    private const SERVICE_VERSION = 2;
+    private const SERVICE_VERSION = 3;
 
     /**
      * Simpan banyak file lampiran PDF (semua sudah tervalidasi di controller).

@@ -596,27 +596,31 @@
             @endif
 
             @php
-                // Filler harus PAS supaya konten fit dalam .print-content 221mm.
-                // Chrome print tidak reliably honor `overflow: hidden` untuk pagination —
-                // kalau kelebihan, konten spill ke page 2/3. Jadi count filler dibatasi
-                // conservatively berdasarkan estimasi tinggi tiap section.
+                // Filler PAS supaya konten fit dalam .print-content 221mm.
+                // Formula dinamis: hitung sisa area setelah section fixed, isi dengan ruled-lines.
                 //
-                // Available space untuk RULED LINES (mm):
-                //   221 (print-content) - 42 (header+info) - jenis_specific = ~150mm
-                //   1 baris = ~5.8mm → ~25 baris max
+                // Estimasi tinggi tiap section (mm) — REVISED setelah kalibrasi dompdf:
+                //   header ~20, info ~22, CATATAN heading ~8, TINDAKAN heading ~12,
+                //   main-table row (dgn padding 4px + text 10px) ~8mm PER row termasuk header
+                //   ruled-line 22px ~5.8mm
+                //   Target aman: 210mm (buffer 11mm dari 221 utk dompdf variance)
+                $TARGET_MM = 210;
                 if ($isAdjust) {
-                    // Adjust punya main-table (5+ rows × 6mm), CATATAN, tindakan main-table.
-                    // Space untuk filler jauh lebih kecil.
-                    $keteranganLines = 2;
-                    $tindakanLines   = 10;
-                    if ($adjustItemsCount >= 5)  { $tindakanLines = 8; }
-                    if ($adjustItemsCount >= 10) { $tindakanLines = 5; }
-                    if ($adjustItemsCount >= 15) { $tindakanLines = 3; }
+                    // Adjust: main-table body max(4, items) + header + tindakan-table (2 body + header)
+                    $mainTableRows    = max(4, $adjustItemsCount) + 1; // +1 header
+                    $mainTableMm      = $mainTableRows * 8;
+                    $tindakanTableMm  = 3 * 8; // 2 body + header
+                    $staticMm         = 20 + 22 + 8 + 12 + 4; // header+info+CATATAN+TINDAKAN+margins
+                    $availableMm      = $TARGET_MM - $staticMm - $mainTableMm - $tindakanTableMm;
+                    $totalFillerLines = max(4, (int) floor($availableMm / 5.8));
+                    $keteranganLines  = 2;
+                    $tindakanLines    = max(3, $totalFillerLines - $keteranganLines);
                 } else {
-                    // Non-Adjust: gap 3 baris post no_transaksi, tindakan fill sisa (dibatasi).
+                    // Non-Adjust: no main-tables. Space untuk filler + no_transaksi/keterangan text.
                     $keteranganLines = 3;
-                    $BUDGET_RULED   = 26;
-                    $usedRuledLines = 0;
+                    $staticMm        = 20 + 22 + 12 + 4; // header+info+TINDAKAN+margins = 58mm
+                    $BUDGET_RULED    = (int) floor(($TARGET_MM - $staticMm) / 5.8); // ~26 baris
+                    $usedRuledLines  = 0;
 
                     if (!empty(trim((string) $arsip->no_transaksi))) {
                         $nrm = preg_replace('/\|+/', "\n\n", trim((string) $arsip->no_transaksi));
@@ -641,8 +645,8 @@
                         }
                     }
 
-                    // tindakanLines fill sisa budget (dibatasi conservatively, min 5 max 20).
-                    $tindakanLines = min(20, max(5, $BUDGET_RULED - $usedRuledLines - $keteranganLines));
+                    // tindakanLines fill sisa budget conservatively.
+                    $tindakanLines = max(5, $BUDGET_RULED - $usedRuledLines - $keteranganLines);
                 }
             @endphp
 
