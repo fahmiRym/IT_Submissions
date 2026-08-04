@@ -220,11 +220,6 @@
         @if(empty($forPdf))
         /* Override _print_footer khusus browser print */
         .itsub-print-footer { bottom: 13mm !important; }
-        @else
-        /* mpdf: sembunyikan _print_footer (position: fixed) + watermark supaya tidak trigger
-           bug WriteFixedPosHTML "Division by zero" pada mpdf */
-        .itsub-print-footer { display: none !important; }
-        .watermark { display: none !important; }
         @endif
         .footer-place-date {
             margin: 0 0 5px;
