@@ -15,14 +15,15 @@ class NotificationController extends Controller
         $unreadCount = (clone $baseQ)->count();
 
         // Latest notif untuk sound differentiation:
-        // - title mengandung 'baru' / 'pengajuan' → sound "new" (notif.mp3)
-        // - title mengandung 'update'/'perubahan'/'edit' → sound "update" (update_notif.mp3)
+        // - "Pengajuan Baru" → notif.mp3 (pengajuan baru masuk)
+        // - Lainnya (Update Tahap, Pengajuan Selesai/Dibatalkan/Ditunda/dsb) → update_notif.mp3
         $latest = (clone $baseQ)->latest()->first(['id', 'title']);
-        $type = 'new';
+        $type = 'update'; // default: semua perubahan status
         if ($latest) {
-            $t = mb_strtolower($latest->title ?? '');
-            if (str_contains($t, 'update') || str_contains($t, 'perubahan') || str_contains($t, 'edit') || str_contains($t, 'diperbarui')) {
-                $type = 'update';
+            $t = mb_strtolower(trim($latest->title ?? ''));
+            // Hanya title EXACT "pengajuan baru" yang dianggap "new"
+            if ($t === 'pengajuan baru' || str_contains($t, 'baru')) {
+                $type = 'new';
             }
         }
 
