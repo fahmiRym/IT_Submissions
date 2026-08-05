@@ -11,12 +11,21 @@ RUN apt-get update \
         libxml2-dev \
         libzip-dev \
         libbz2-dev \
-        wkhtmltopdf \
         xfonts-base \
         xfonts-75dpi \
         fontconfig \
         libjpeg62-turbo \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# wkhtmltopdf (Debian bookworm repos drop it; install dari GitHub release)
+RUN curl -L -o /tmp/wkhtmltox.deb \
+      https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/wkhtmltox.deb \
+    && rm /tmp/wkhtmltox.deb \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/local/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
 
 RUN docker-php-ext-install \
     pdo_mysql \
