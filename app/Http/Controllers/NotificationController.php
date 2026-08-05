@@ -17,15 +17,17 @@ class NotificationController extends Controller
         // Latest notif untuk sound differentiation:
         // - "Pengajuan Baru" → notif.mp3 (pengajuan baru masuk)
         // - Lainnya (Update Tahap, Pengajuan Selesai/Dibatalkan/Ditunda/dsb) → update_notif.mp3
-        $latest = (clone $baseQ)->latest()->first(['id', 'title']);
-        $type = 'update'; // default: semua perubahan status
-        if ($latest) {
-            $t = mb_strtolower(trim($latest->title ?? ''));
-            // Hanya title EXACT "pengajuan baru" yang dianggap "new"
-            if ($t === 'pengajuan baru' || str_contains($t, 'baru')) {
-                $type = 'new';
-            }
+        //
+        // Cek 5 notif terbaru (bukan 1) karena satu event pengajuan baru bisa
+        // create beberapa notif berbarengan (Pengajuan Baru + Menunggu Persetujuan Anda),
+        // dan latest() bisa ambil salah satu random.
+        $recent = (clone $baseQ)->latest('id')->limit(5)->get(['id', 'title']);
+        $type = 'update';
+        foreach ($recent as $n) {
+            $t = mb_strtolower(trim($n->title ?? ''));
+            if (str_contains($t, 'baru')) { $type = 'new'; break; }
         }
+        $latest = $recent->first();
 
         return response()->json([
             'unreadCount'    => $unreadCount,
