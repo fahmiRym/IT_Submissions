@@ -4,8 +4,8 @@
     Include ini di layouts/app.blade.php (sekali saja, dalam @auth).
 --}}
 
-{{-- Audio ─── SEPARATE dari notification-sound. Sound khusus share BA. --}}
-<audio id="share-inbox-sound" src="{{ asset('audio/updatebpb.mp3') }}" preload="auto"></audio>
+{{-- Audio ─── SEPARATE dari notification-sound. Sound khusus share BA (pakeet.mp3). --}}
+<audio id="share-inbox-sound" src="{{ asset('audio/pakeet.mp3') }}" preload="auto"></audio>
 
 {{-- Toast container ── bottom-right, WA-web style ── --}}
 <div id="share-toast-stack"
@@ -103,6 +103,33 @@
         try { a.currentTime = 0; a.play().catch(() => {}); } catch(e) {}
     }
 
+    // ── Desktop / OS-level notification (muncul di atas aplikasi lain, spt WA Web) ──
+    // Butuh user grant permission sekali. Kalau ditolak, in-app toast tetap berfungsi.
+    function ensureNotifPermission() {
+        if (!('Notification' in window)) return Promise.resolve('unsupported');
+        if (Notification.permission === 'granted') return Promise.resolve('granted');
+        if (Notification.permission === 'denied')  return Promise.resolve('denied');
+        return Notification.requestPermission();
+    }
+
+    function showDesktopNotif(item) {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        try {
+            const n = new Notification('BA Dibagikan · ' + (item.no_registrasi || ''), {
+                body: (item.jenis || 'Pengajuan') + '\nDari: ' + (item.shared_by || 'Sistem') +
+                      (item.note ? '\n"' + item.note + '"' : ''),
+                icon: '{{ asset('img/logo.png') }}',
+                tag:  'share-' + item.share_id, // dedup per share_id
+                requireInteraction: false,
+            });
+            n.onclick = function () {
+                window.focus();                     // fokus tab
+                openShareModal(item.share_id);      // buka modal
+                n.close();
+            };
+        } catch (e) { /* ignore */ }
+    }
+
     function renderToast(item) {
         if (seenShareIds.has(item.share_id)) return;
         seenShareIds.add(item.share_id);
@@ -136,18 +163,16 @@
         $.getJSON(UNREAD_URL).done(function (res) {
             if (!res || !Array.isArray(res.items)) return;
 
-            // First poll: hanya register seen IDs (jangan tampilkan toast lama saat pertama load)
-            if (firstPoll) {
-                res.items.forEach(it => seenShareIds.add(it.share_id));
-                firstPoll = false;
-                return;
-            }
-
             const newItems = res.items.filter(it => !seenShareIds.has(it.share_id));
             if (newItems.length > 0) {
-                playShareSound();
-                newItems.forEach(renderToast);
+                // Sound + desktop notif HANYA untuk arrival baru (bukan first-poll saat page load).
+                if (!firstPoll) {
+                    playShareSound();
+                    newItems.forEach(showDesktopNotif); // OS-level popup (browser boleh minimized)
+                }
+                newItems.forEach(renderToast);          // In-app toast selalu, termasuk saat load
             }
+            firstPoll = false;
         });
     }
 
@@ -270,6 +295,18 @@
             $btn.prop('disabled', false).html('<i class="bi bi-check2-circle me-1"></i>Setujui Terpilih');
             alert('Gagal menyetujui.');
         });
+    });
+
+    // Init: minta permission notif OS (auto — muncul prompt pertama kali)
+    // Prompt hanya boleh via user gesture, jadi fallback: trigger on first click di dokumen
+    ensureNotifPermission().then(function (perm) {
+        if (perm === 'default') {
+            // Belum di-grant, hook satu-shot pada click apa saja utk request permission
+            document.addEventListener('click', function once() {
+                Notification.requestPermission();
+                document.removeEventListener('click', once);
+            }, { once: true });
+        }
     });
 
     // Init polling — start immediate + interval 10s
