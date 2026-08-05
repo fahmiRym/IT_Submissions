@@ -369,8 +369,14 @@
     @stack('scripts')
 
     @auth
-        {{-- SUARA NOTIFIKASI: update_notif.mp3 = untuk perubahan/update. notif.mp3 = fallback --}}
+        {{-- SUARA NOTIFIKASI: dipilih runtime berdasarkan notifType dari endpoint check --}}
+        <audio id="notification-sound-new" src="{{ asset('audio/notif.mp3') }}" preload="auto"></audio>
+        <audio id="notification-sound-update" src="{{ asset('audio/update_notif.mp3') }}" preload="auto"></audio>
+        {{-- Legacy id supaya script lain yg ref #notification-sound tidak error (fallback ke update) --}}
         <audio id="notification-sound" src="{{ asset('audio/update_notif.mp3') }}" preload="auto"></audio>
+
+        {{-- Share Inbox: toast popup + modal + poller (menerima BA yang di-share) --}}
+        @include('partials._share_inbox_widget')
         <script>
             // INITIALIZE SIDEBAR STATE IMMEDIATELY
             (function() {
@@ -481,8 +487,11 @@
                             let currentCount = response.unreadCount;
 
                             if (currentCount > lastUnreadCount) {
-                                let audio = document.getElementById("notification-sound");
+                                // Pilih sound sesuai notifType: 'update' → update_notif.mp3, else notif.mp3
+                                let soundId = response.notifType === 'update' ? 'notification-sound-update' : 'notification-sound-new';
+                                let audio = document.getElementById(soundId) || document.getElementById("notification-sound");
                                 if (audio) {
+                                    try { audio.currentTime = 0; } catch(e) {}
                                     audio.play().catch(function (error) {
                                         console.log("Suara dinonaktifkan oleh browser:", error);
                                     });

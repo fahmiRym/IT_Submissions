@@ -173,6 +173,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('arsip/{arsip}/shares/{share}', [\App\Http\Controllers\Admin\ArsipShareController::class, 'destroy'])->name('arsip.shares.destroy');
     Route::get('share-user-search', [\App\Http\Controllers\Admin\ArsipShareController::class, 'searchUsers'])->name('arsip.shares.user-search');
 
+    // ── SHARE INBOX ACTIONS (untuk penerima share: notif toast, mark read, note, approve) ──
+    Route::get('arsip/shares/unread',              [\App\Http\Controllers\Admin\ArsipShareController::class, 'unread'])->name('arsip.shares.unread');
+    Route::get('arsip/shares/{share}/detail',      [\App\Http\Controllers\Admin\ArsipShareController::class, 'detail'])->name('arsip.shares.detail');
+    Route::post('arsip/shares/{share}/read',       [\App\Http\Controllers\Admin\ArsipShareController::class, 'markRead'])->name('arsip.shares.read');
+    Route::post('arsip/shares/{share}/note',       [\App\Http\Controllers\Admin\ArsipShareController::class, 'note'])->name('arsip.shares.note');
+    Route::post('arsip/shares/{share}/approve',    [\App\Http\Controllers\Admin\ArsipShareController::class, 'approve'])->name('arsip.shares.approve');
+
     // ── PERSONAL NOTES per arsip — siapapun yang punya edit-access bisa add/edit/hapus catatan ──
     Route::get('arsip/{arsip}/notes', [\App\Http\Controllers\Admin\ArsipNoteController::class, 'index'])->name('arsip.notes.index');
     Route::post('arsip/{arsip}/notes', [\App\Http\Controllers\Admin\ArsipNoteController::class, 'store'])->name('arsip.notes.store');

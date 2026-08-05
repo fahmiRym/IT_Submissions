@@ -164,6 +164,156 @@ class ArsipShareController extends Controller
         return response()->json(compact('users', 'roles'));
     }
 
+    /**
+     * Polling endpoint: count share yang belum dibaca + latest N untuk toast popup.
+     * Panggilan ringan (dipanggil tiap ~10s dari layout).
+     */
+    public function unread(Request $request)
+    {
+        $user = auth()->user();
+
+        $baseQ = ArsipShare::query()
+            ->where(function ($w) use ($user) {
+                $w->where(function ($x) use ($user) {
+                    $x->where('target_type', 'user')->where('user_id', $user->id);
+                })->orWhere(function ($x) use ($user) {
+                    $x->where('target_type', 'role')->where('role', $user->role);
+                });
+            })
+            ->whereNull('read_at');
+
+        $count = (clone $baseQ)->count();
+
+        $latest = (clone $baseQ)
+            ->with(['arsip:id,no_registrasi,jenis_pengajuan,pemohon,department_id', 'arsip.department:id,name', 'sharedBy:id,name'])
+            ->latest()
+            ->limit(5)
+            ->get()
+            ->map(fn ($s) => [
+                'share_id'       => $s->id,
+                'arsip_id'       => $s->arsip_id,
+                'no_registrasi'  => $s->arsip->no_registrasi ?? '—',
+                'jenis'          => $s->arsip->jenis_pengajuan ?? '',
+                'pemohon'        => $s->arsip->pemohon ?? '—',
+                'department'     => optional(optional($s->arsip)->department)->name,
+                'shared_by'      => optional($s->sharedBy)->name ?? 'Sistem',
+                'note'           => $s->note,
+                'shared_at'      => $s->created_at?->diffForHumans(),
+            ]);
+
+        return response()->json(['count' => $count, 'items' => $latest]);
+    }
+
+    /** Detail lengkap share untuk populate modal (no_transaksi list + approvals). */
+    public function detail(Request $request, ArsipShare $share)
+    {
+        $this->assertOwnedByAuth($share);
+        $share->load(['arsip:id,no_registrasi,jenis_pengajuan,pemohon,department_id,unit_id,no_transaksi,keterangan',
+                      'arsip.department:id,name', 'arsip.unit:id,name', 'sharedBy:id,name']);
+
+        // Parse no_transaksi ke array (support pipe | dan newline separator).
+        $noTxRaw  = trim((string) ($share->arsip->no_transaksi ?? ''));
+        $normalized = preg_replace('/\|+/', "\n", $noTxRaw);
+        $normalized = str_replace("\r\n", "\n", $normalized);
+        $noTx = array_values(array_filter(array_map('trim', explode("\n", $normalized))));
+
+        // Approvals sudah tersimpan per no_transaksi (dari user ini saja).
+        $existingApprovals = $share->approvals();
+
+        return response()->json([
+            'share' => [
+                'id'           => $share->id,
+                'note'         => $share->note,
+                'note_content' => $share->note_content,
+                'read_at'      => optional($share->read_at)->toIso8601String(),
+                'noted_at'     => optional($share->noted_at)->toIso8601String(),
+                'shared_by'    => optional($share->sharedBy)->name ?? 'Sistem',
+                'shared_at'    => optional($share->created_at)->format('d M Y, H:i'),
+            ],
+            'arsip' => [
+                'id'              => $share->arsip->id,
+                'no_registrasi'   => $share->arsip->no_registrasi,
+                'jenis_pengajuan' => str_replace('_', ' ', (string) $share->arsip->jenis_pengajuan),
+                'pemohon'         => $share->arsip->pemohon,
+                'department'      => optional($share->arsip->department)->name,
+                'unit'            => optional($share->arsip->unit)->name,
+                'keterangan'      => $share->arsip->keterangan,
+            ],
+            'no_transaksis' => $noTx,
+            'approvals'     => $existingApprovals,
+            'view_url'      => route('admin.arsip.show-document', $share->arsip->id),
+        ]);
+    }
+
+    /** Mark 1 share sebagai dibaca (auto dipanggil saat modal terbuka). */
+    public function markRead(Request $request, ArsipShare $share)
+    {
+        $this->assertOwnedByAuth($share);
+        if (is_null($share->read_at)) {
+            $share->update(['read_at' => now()]);
+        }
+        return response()->json(['ok' => true, 'read_at' => $share->read_at?->toIso8601String()]);
+    }
+
+    /** Simpan catatan text (opsional dari user penerima share). */
+    public function note(Request $request, ArsipShare $share)
+    {
+        $this->assertOwnedByAuth($share);
+        $data = $request->validate(['note_content' => 'nullable|string|max:1000']);
+        $share->update([
+            'note_content' => $data['note_content'],
+            'noted_at'     => now(),
+            'read_at'      => $share->read_at ?? now(),
+        ]);
+        return response()->json(['ok' => true, 'noted_at' => $share->noted_at->toIso8601String()]);
+    }
+
+    /**
+     * Approve satu / beberapa no_transaksi. Payload: { no_transaksis: [str, ...] }.
+     * Simpan snapshot user name + timestamp per no_transaksi ke approvals_json.
+     */
+    public function approve(Request $request, ArsipShare $share)
+    {
+        $this->assertOwnedByAuth($share);
+        $data = $request->validate([
+            'no_transaksis'   => 'required|array|min:1',
+            'no_transaksis.*' => 'string|max:255',
+        ]);
+
+        $user = auth()->user();
+        $existing = $share->approvals();
+        $existingKeys = array_map(fn ($a) => mb_strtolower(trim($a['no_transaksi'] ?? '')), $existing);
+
+        foreach ($data['no_transaksis'] as $tx) {
+            $txTrim = trim($tx);
+            if ($txTrim === '') continue;
+            if (in_array(mb_strtolower($txTrim), $existingKeys, true)) continue;
+            $existing[] = [
+                'no_transaksi'  => $txTrim,
+                'approved_name' => $user->name,
+                'approved_at'   => now()->toIso8601String(),
+            ];
+        }
+
+        $share->update([
+            'approvals_json' => $existing,
+            'read_at'        => $share->read_at ?? now(),
+        ]);
+
+        return response()->json(['ok' => true, 'approvals' => $existing]);
+    }
+
+    /** Guard: pastikan share memang milik auth user (target_type user atau role match). */
+    private function assertOwnedByAuth(ArsipShare $share): void
+    {
+        $user = auth()->user();
+        $isUserTarget = $share->target_type === 'user' && (int) $share->user_id === (int) $user->id;
+        $isRoleTarget = $share->target_type === 'role' && $share->role === $user->role;
+        if (!$isUserTarget && !$isRoleTarget) {
+            abort(403, 'Share bukan untuk Anda.');
+        }
+    }
+
     /** Inbox: arsip yang di-share ke user current via user_id ATAU role. */
     public function inbox(Request $request)
     {

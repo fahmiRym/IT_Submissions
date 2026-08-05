@@ -10,13 +10,26 @@ class NotificationController extends Controller
     public function checkUnread()
     {
         $user = Auth::user();
-        
-        $unreadCount = Notification::where('role_target', $user->role)
-            ->where('is_read', false)
-            ->count();
-            
+
+        $baseQ = Notification::where('role_target', $user->role)->where('is_read', false);
+        $unreadCount = (clone $baseQ)->count();
+
+        // Latest notif untuk sound differentiation:
+        // - title mengandung 'baru' / 'pengajuan' → sound "new" (notif.mp3)
+        // - title mengandung 'update'/'perubahan'/'edit' → sound "update" (update_notif.mp3)
+        $latest = (clone $baseQ)->latest()->first(['id', 'title']);
+        $type = 'new';
+        if ($latest) {
+            $t = mb_strtolower($latest->title ?? '');
+            if (str_contains($t, 'update') || str_contains($t, 'perubahan') || str_contains($t, 'edit') || str_contains($t, 'diperbarui')) {
+                $type = 'update';
+            }
+        }
+
         return response()->json([
-            'unreadCount' => $unreadCount
+            'unreadCount'    => $unreadCount,
+            'latestNotifId'  => optional($latest)->id,
+            'notifType'      => $type,   // 'new' | 'update'
         ]);
     }
 
