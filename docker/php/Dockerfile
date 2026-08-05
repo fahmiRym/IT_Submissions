@@ -1,15 +1,22 @@
 FROM php:8.2-fpm
 
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    zip \
-    unzip \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    libbz2-dev
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git \
+        curl \
+        zip \
+        unzip \
+        libpng-dev \
+        libonig-dev \
+        libxml2-dev \
+        libzip-dev \
+        libbz2-dev \
+        wkhtmltopdf \
+        xfonts-base \
+        xfonts-75dpi \
+        fontconfig \
+        libjpeg62-turbo \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install \
     pdo_mysql \

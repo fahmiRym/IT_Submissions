@@ -22,7 +22,7 @@ class ArsipLampiranService
      * (mis. tambah cover-page placeholder, urutan append, dst) auto-invalidate cache lama.
      * Bump angka ini setiap kali ada perubahan signifikan di flow streamMergedPdf.
      */
-    private const SERVICE_VERSION = 3;
+    private const SERVICE_VERSION = 4;
 
     /**
      * Simpan banyak file lampiran PDF (semua sudah tervalidasi di controller).
@@ -284,6 +284,18 @@ class ArsipLampiranService
             ? 'print.arsip_draft_bundel'
             : 'print.arsip_draft';
 
+        // Prefer Snappy (wkhtmltopdf) — render WebKit-based, hasil PERSIS Chrome browser print.
+        // Fallback ke dompdf kalau wkhtmltopdf binary belum terinstall (mis. lokal dev).
+        $binary = config('snappy.pdf.binary', '/usr/bin/wkhtmltopdf');
+        if (class_exists(\Barryvdh\Snappy\Facades\SnappyPdf::class) && is_file($binary) && is_executable($binary)) {
+            // Snappy pakai print draft layout AS-IS (bukan $forPdf variant) — WebKit render OK.
+            $html = view($template, ['arsip' => $arsip])->render();
+            return \Barryvdh\Snappy\Facades\SnappyPdf::loadHTML($html)
+                ->setPaper('A4', 'portrait')
+                ->output();
+        }
+
+        // Fallback: dompdf (lokal dev tanpa wkhtmltopdf) — pakai $forPdf variant utk avoid absolute-pos bug.
         $pdf = Pdf::loadView($template, ['arsip' => $arsip, 'forPdf' => true])
             ->setPaper('a4', 'portrait')
             ->setOptions([
