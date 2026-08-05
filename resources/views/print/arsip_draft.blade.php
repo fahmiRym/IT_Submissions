@@ -524,31 +524,8 @@
                     <tbody>
                         @php
                             $adjustItems = $arsip->adjustItems ?? [];
-                            // Helper format Odoo-style: whole.-decimal
-                            //   65.21   → '65.-21'
-                            //   -65.21  → '-65.-21'
-                            //   59262   → '59,262.-'
-                            //   59262.6 → '59,262.-6'
-                            //   0       → '0.-'
-                            // Comma = ribuan, '.-' = separator whole/decimal (notasi Odoo user).
-                            $fmtId = function ($n) {
-                                if ($n === null || $n === '') return '';
-                                $num = (float) $n;
-                                $negative = $num < 0;
-                                $abs = abs($num);
-                                $wholePart = (int) floor($abs);
-                                $decimalPart = $abs - $wholePart;
-                                $wholeFmt = number_format($wholePart, 0, '.', ',');
-                                if ($decimalPart == 0) {
-                                    $result = $wholeFmt . '.-';
-                                } else {
-                                    // ambil 2 digit desimal, buang trailing zero
-                                    $decStr = rtrim(number_format($decimalPart, 2, '.', ''), '0');
-                                    $decDigits = ltrim($decStr, '0.'); // '.60' → '60', '.21' → '21'
-                                    $result = $wholeFmt . '.-' . $decDigits;
-                                }
-                                return $negative ? '-' . $result : $result;
-                            };
+                            // Pakai helper global fmtOdoo() dari app/Helpers/ArsipFormatters.php.
+                            // Helper sekarang: null/kosong → '0.-', desimal 3 digit max (trailing 0 dibuang).
                         @endphp
                         @for($i = 0; $i < max(4, count($adjustItems)); $i++)
                             @php $row = $adjustItems[$i] ?? null; @endphp
@@ -557,9 +534,9 @@
                                 <td class="cell-left">{{ $row->product_name ?? '' }}</td>
                                 <td>{{ $row->lot ?? '' }}</td>
                                 <td>{{ $row->location ?? '' }}</td>
-                                <td>{{ $row ? $fmtId($row->odoo) : '' }}</td>
-                                <td>{{ $row ? $fmtId($row->fisik) : '' }}</td>
-                                <td>{{ $row ? $fmtId(($row->qty_in ?? 0) - ($row->qty_out ?? 0)) : '' }}</td>
+                                <td>{{ $row ? fmtOdoo($row->odoo) : '' }}</td>
+                                <td>{{ $row ? fmtOdoo($row->fisik) : '' }}</td>
+                                <td>{{ $row ? fmtOdoo(($row->qty_in ?? 0) - ($row->qty_out ?? 0)) : '' }}</td>
                                 <td>{{ $row ? ((($row->qty_in ?? 0) > 0) ? 'IN' : 'OUT') : '' }}</td>
                             </tr>
                         @endfor

@@ -37,14 +37,14 @@
         const sel = row.querySelector('.adjust-selisih-display');
         if (sel) {
             const fmt = window.fmtOdoo || function (n) {
-                if (n === null || n === '' || n === undefined || isNaN(n)) return '';
+                if (n === null || n === '' || n === undefined || isNaN(n)) return '0.-';
                 const num = Number(n);
                 const neg = num < 0;
                 const abs = Math.abs(num);
                 const whole = Math.floor(abs);
                 const wholeStr = whole.toLocaleString('en-US');
                 let decStr = '';
-                if (abs !== whole) decStr = abs.toFixed(2).split('.')[1].replace(/0+$/, '');
+                if (abs !== whole) decStr = abs.toFixed(3).split('.')[1].replace(/0+$/, '');
                 const body = wholeStr + '.-' + decStr;
                 return neg ? '-' + body : body;
             };
@@ -109,7 +109,7 @@
         const net = totalIn - totalOut;
         // Odoo-style format: 65.-21, 59,262.-, -65.-21, 0.-
         const fmt = window.fmtOdoo || function (n) {
-            if (n === null || n === '' || n === undefined || isNaN(n)) return '';
+            if (n === null || n === '' || n === undefined || isNaN(n)) return '0.-';
             const num = Number(n);
             const neg = num < 0;
             const abs = Math.abs(num);
@@ -117,7 +117,7 @@
             const wholeStr = whole.toLocaleString('en-US'); // 59,262
             let decStr = '';
             if (abs !== whole) {
-                decStr = abs.toFixed(2).split('.')[1].replace(/0+$/, ''); // 60→6, 21→21
+                decStr = abs.toFixed(3).split('.')[1].replace(/0+$/, ''); // 3 digit desimal
             }
             const body = wholeStr + '.-' + decStr;
             return neg ? '-' + body : body;
