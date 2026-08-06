@@ -70,7 +70,30 @@
             registerWebPush();
             document.removeEventListener('click', once);
         }, { once: true });
+    } else if (Notification.permission === 'denied') {
+        console.warn('[WebPush] Notifikasi DIBLOKIR. Chrome → icon 🔒 sebelah URL → Notifications → Allow, lalu refresh.');
     }
+
+    // Diagnostic tool — jalankan di console browser utk cek status:
+    //   itsubWebPushStatus()
+    window.itsubWebPushStatus = async function () {
+        const out = {
+            permission: Notification.permission,
+            serviceWorker: 'unregistered',
+            fcmToken: null,
+            localStorageToken: localStorage.getItem('itsub_web_push_token'),
+        };
+        try {
+            const reg = await navigator.serviceWorker.getRegistration('/');
+            if (reg) out.serviceWorker = 'registered (' + (reg.active ? 'active' : 'installing/waiting') + ')';
+        } catch (e) {}
+        try {
+            const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+            out.fcmToken = token ? (token.substring(0, 20) + '...') : 'null';
+        } catch (e) { out.fcmToken = 'ERROR: ' + e.message; }
+        console.table(out);
+        return out;
+    };
 
     // Foreground message handler — saat browser tab AKTIF, FCM tidak auto-fire OS notif.
     // Kita panggil showNotification manual supaya OS notif tetap muncul (spt WA Web).
