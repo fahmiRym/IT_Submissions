@@ -51,6 +51,19 @@ return [
     'fcm' => [
         'credentials' => env('FCM_CREDENTIALS_FILE', storage_path('app/firebase/firebase-credentials.json')),
         'project_id' => env('FCM_PROJECT_ID'),
+
+        // Firebase Web SDK config (dari Firebase Console → Project Settings → General → Your apps → Web).
+        // Values ini bersifat PUBLIC (bukan secret) — dipakai client-side untuk init Firebase Web SDK.
+        'web' => [
+            'api_key'             => env('FIREBASE_WEB_API_KEY'),
+            'auth_domain'         => env('FIREBASE_WEB_AUTH_DOMAIN'),
+            'project_id'          => env('FIREBASE_WEB_PROJECT_ID'),
+            'storage_bucket'      => env('FIREBASE_WEB_STORAGE_BUCKET'),
+            'messaging_sender_id' => env('FIREBASE_WEB_MESSAGING_SENDER_ID'),
+            'app_id'              => env('FIREBASE_WEB_APP_ID'),
+            // VAPID public key (dari Cloud Messaging → Web Push certificates → Generate key pair)
+            'vapid_key'           => env('FIREBASE_WEB_VAPID_KEY'),
+        ],
     ],
 
 ];

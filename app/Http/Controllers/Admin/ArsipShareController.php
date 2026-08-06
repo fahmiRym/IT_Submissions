@@ -78,22 +78,56 @@ class ArsipShareController extends Controller
             if ((int) $data['user_id'] === (int) $arsip->admin_id) {
                 return back()->with('info', 'Pemohon arsip ini sendiri, tidak perlu di-share.');
             }
-            ArsipShare::firstOrCreate(
+            $share = ArsipShare::firstOrCreate(
                 ['arsip_id' => $arsip->id, 'target_type' => 'user', 'user_id' => $data['user_id']],
                 ['shared_by' => auth()->id(), 'note' => $data['note'] ?? null, 'role' => null]
             );
             $target = User::find($data['user_id']);
             $label = "user {$target->name}";
+            // Kirim FCM push (web + android) ke target user — muncul OS-level walau browser closed.
+            $this->sendSharePush([$target->id], $arsip, $share, $data['note'] ?? null);
         } else {
-            ArsipShare::firstOrCreate(
+            $share = ArsipShare::firstOrCreate(
                 ['arsip_id' => $arsip->id, 'target_type' => 'role', 'role' => $data['role']],
                 ['shared_by' => auth()->id(), 'note' => $data['note'] ?? null, 'user_id' => null]
             );
             $roleLabel = RolePengajuanAccess::ROLE_LIST[$data['role']]['label'] ?? $data['role'];
             $label = "role {$roleLabel}";
+            // Kirim FCM push ke semua user dengan role tsb.
+            $userIds = User::where('role', $data['role'])->where('is_active', true)->pluck('id')->all();
+            $this->sendSharePush($userIds, $arsip, $share, $data['note'] ?? null);
         }
 
         return back()->with('success', "Pengajuan {$arsip->no_registrasi} dibagikan ke {$label}.");
+    }
+
+    /**
+     * Kirim FCM push notif "BA Dibagikan" ke user penerima share.
+     * Best-effort — kalau gagal, share tetap tersimpan.
+     */
+    private function sendSharePush(array $userIds, Arsip $arsip, ArsipShare $share, ?string $note = null): void
+    {
+        try {
+            $fcm = app(\App\Services\FcmService::class);
+            if (!$fcm->isConfigured()) return;
+            $title = "BA Dibagikan · " . ($arsip->no_registrasi ?? '');
+            $body  = "Dari " . (auth()->user()->name ?? 'Sistem')
+                   . " · " . str_replace('_', ' ', (string) $arsip->jenis_pengajuan)
+                   . ($note ? "\n\"{$note}\"" : '');
+            $data = [
+                'type'          => 'share',
+                'share_id'      => (string) $share->id,
+                'arsip_id'      => (string) $arsip->id,
+                'no_registrasi' => (string) ($arsip->no_registrasi ?? ''),
+                'click_url'     => url('/'),
+                'tag'           => 'share-' . $share->id,
+            ];
+            foreach ($userIds as $uid) {
+                $fcm->sendToUser((int) $uid, $title, $body, $data);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('FCM share push gagal: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Arsip $arsip, ArsipShare $share)

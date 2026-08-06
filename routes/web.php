@@ -48,6 +48,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/change-password', [\App\Http\Controllers\Auth\AccountSetupController::class, 'changePassword'])->name('auth.change-password.submit');
 });
 
+// PUBLIC: Web Push config (Service Worker perlu — SW tidak punya session/cookie).
+// Values di sini bersifat public (Firebase Web SDK client config), aman di-expose.
+Route::get('/api/web-push/config', [\App\Http\Controllers\WebPushController::class, 'config'])->name('web-push.config');
+
 /*
 |--------------------------------------------------------------------------
 | ROOT & DEBUG
@@ -172,6 +176,11 @@ Route::middleware('auth')->group(function () {
     Route::post('arsip/{arsip}/shares', [\App\Http\Controllers\Admin\ArsipShareController::class, 'store'])->name('arsip.shares.store');
     Route::delete('arsip/{arsip}/shares/{share}', [\App\Http\Controllers\Admin\ArsipShareController::class, 'destroy'])->name('arsip.shares.destroy');
     Route::get('share-user-search', [\App\Http\Controllers\Admin\ArsipShareController::class, 'searchUsers'])->name('arsip.shares.user-search');
+
+    // ── WEB PUSH (FCM) — desktop notif OS-level ──
+    // Route config PUBLIC (dipakai Service Worker unauthenticated context).
+    // Route register auth (menyimpan token per user login).
+    Route::post('web-push/register', [\App\Http\Controllers\WebPushController::class, 'register'])->name('web-push.register');
 
     // ── SHARE INBOX ACTIONS (untuk penerima share: notif toast, mark read, note, approve) ──
     Route::get('arsip/shares/unread',              [\App\Http\Controllers\Admin\ArsipShareController::class, 'unread'])->name('arsip.shares.unread');

@@ -38,17 +38,36 @@ class FcmService
     }
 
     /**
-     * Kirim notifikasi ke semua perangkat milik 1 user.
+     * Kirim notifikasi ke semua perangkat milik 1 user (Android + web).
      */
     public function sendToUser(int $userId, string $title, string $body, array $data = []): void
     {
-        $tokens = DeviceToken::where('user_id', $userId)->pluck('token')->all();
+        $devices = DeviceToken::where('user_id', $userId)->get(['token', 'platform']);
 
-        if (empty($tokens)) {
+        if ($devices->isEmpty()) {
             return;
         }
 
-        $this->sendToTokens($tokens, $title, $body, $data);
+        $this->sendToDevices($devices->toArray(), $title, $body, $data);
+    }
+
+    /**
+     * Kirim ke daftar device (mixed platform). Payload di-adjust per platform.
+     * @param array $devices [['token'=>..., 'platform'=>'android'|'web'|null], ...]
+     */
+    public function sendToDevices(array $devices, string $title, string $body, array $data = []): void
+    {
+        if (! $this->isConfigured()) {
+            Log::warning('FCM: kredensial belum dikonfigurasi, push dilewati.');
+            return;
+        }
+
+        $accessToken = $this->getAccessToken();
+        if (! $accessToken) return;
+
+        foreach ($devices as $d) {
+            $this->sendOne($accessToken, $d['token'], $title, $body, $data, $d['platform'] ?? 'android');
+        }
     }
 
     /**
@@ -74,64 +93,69 @@ class FcmService
     /**
      * Kirim ke satu token. Token invalid akan dihapus dari DB.
      */
-    private function sendOne(string $accessToken, string $token, string $title, string $body, array $data): void
+    private function sendOne(string $accessToken, string $token, string $title, string $body, array $data, string $platform = 'android'): void
     {
         // FCM v1 mensyaratkan semua value pada "data" berupa string.
-        // Title/message juga dititipkan di data supaya onMessageReceived bisa
-        // pakai field yang sama bila app aktif.
         $stringData = ['title' => $title, 'message' => $body];
         foreach ($data as $key => $value) {
             $stringData[(string) $key] = is_scalar($value) ? (string) $value : json_encode($value);
         }
 
-        // Tag dipakai untuk dedupe di level sistem (auto-render FCM).
-        // Bila notif untuk no_registrasi yang sama datang lagi, sistem MENG-UPDATE
-        // notif lama alih-alih menumpuk → kurangi tekanan NotificationShade MIUI.
         $tag = !empty($stringData['no_registrasi'])
             ? 'arsip-' . $stringData['no_registrasi']
-            : 'arsip-' . ($stringData['notification_id'] ?? 'global');
+            : 'arsip-' . ($stringData['notification_id'] ?? ($stringData['share_id'] ?? 'global'));
 
-        // Hybrid: notification block + data + priority HIGH.
-        // - App aktif → onMessageReceived dipanggil → custom layout kita yang dipakai.
-        // - App dibunuh/background: FCM SDK auto-render dari blok notification
-        //   pakai channel submission_channel_v2 → minimal notif tetap muncul DI HEADS-UP
-        //   (karena notification_priority = MAX & default_sound/vibrate true sebagai fallback
-        //   bila channel di device belum sempat dibuat oleh app).
-        $payload = [
-            'message' => [
-                'token' => $token,
+        $message = [
+            'token' => $token,
+            'notification' => [
+                'title' => $title,
+                'body'  => $body,
+            ],
+            'data' => $stringData,
+        ];
+
+        if ($platform === 'web') {
+            // WEB PUSH — bekerja walau browser closed (Service Worker handle).
+            $message['webpush'] = [
+                'headers' => [
+                    'Urgency' => 'high',
+                    'TTL'     => '600',
+                ],
+                'notification' => [
+                    'title' => $title,
+                    'body'  => $body,
+                    'icon'  => url('img/logo.png'),
+                    'badge' => url('img/logo.png'),
+                    'tag'   => $tag,
+                    'requireInteraction' => false,
+                ],
+                'fcm_options' => [
+                    'link' => !empty($stringData['click_url']) ? $stringData['click_url'] : url('/'),
+                ],
+            ];
+        } else {
+            // ANDROID — heads-up dgn channel + priority MAX.
+            $message['android'] = [
+                'priority' => 'high',
+                'ttl' => '600s',
+                'collapse_key' => $tag,
                 'notification' => [
                     'title' => $title,
                     'body' => $body,
+                    'channel_id' => 'submission_channel_v2',
+                    'notification_priority' => 'PRIORITY_MAX',
+                    'visibility' => 'PUBLIC',
+                    'default_sound' => true,
+                    'default_vibrate_timings' => true,
+                    'default_light_settings' => true,
+                    'tag' => $tag,
+                    'sticky' => false,
+                    'event_time' => now()->toRfc3339String(),
                 ],
-                'data' => $stringData,
-                'android' => [
-                    'priority' => 'high',
-                    'ttl' => '600s',
-                    'collapse_key' => $tag,
-                    'notification' => [
-                        // Title/body diulang di scope Android-specific supaya
-                        // auto-render konsisten dengan root notification (defensive).
-                        'title' => $title,
-                        'body' => $body,
-                        'channel_id' => 'submission_channel_v2',
-                        // PRIORITY_MAX = heads-up "bawaan device" di atas layar.
-                        'notification_priority' => 'PRIORITY_MAX',
-                        'visibility' => 'PUBLIC',
-                        // Fallback bila channel belum ter-create di device
-                        // (FCM kadang jatuh ke fcm_fallback_notification_channel
-                        // yang silent bila channel target tidak ada).
-                        'default_sound' => true,
-                        'default_vibrate_timings' => true,
-                        'default_light_settings' => true,
-                        // Tag = dedupe level sistem (pasangan dari notifId.hashCode di Android).
-                        'tag' => $tag,
-                        'sticky' => false,
-                        'event_time' => now()->toRfc3339String(),
-                    ],
-                ],
-            ],
-        ];
+            ];
+        }
+
+        $payload = ['message' => $message];
 
         try {
             $response = Http::withToken($accessToken)

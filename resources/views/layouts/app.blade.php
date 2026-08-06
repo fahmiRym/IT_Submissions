@@ -377,6 +377,9 @@
 
         {{-- Share Inbox: toast popup + modal + poller (menerima BA yang di-share) --}}
         @include('partials._share_inbox_widget')
+
+        {{-- Web Push (FCM) — notif desktop OS-level walau browser closed --}}
+        @include('partials._web_push_init')
         <script>
             // INITIALIZE SIDEBAR STATE IMMEDIATELY
             (function() {
