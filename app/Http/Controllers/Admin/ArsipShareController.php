@@ -308,6 +308,14 @@ class ArsipShareController extends Controller
      */
     public function approve(Request $request, ArsipShare $share)
     {
+        // TEMP DEBUG — hapus setelah fix confirmed
+        \Illuminate\Support\Facades\Log::info('SHARE APPROVE payload', [
+            'share_id' => $share->id,
+            'user_id'  => auth()->id(),
+            'all'      => $request->all(),
+            'content_type' => $request->header('Content-Type'),
+        ]);
+
         $this->assertOwnedByAuth($share);
         $data = $request->validate([
             'no_transaksis'   => 'required|array|min:1',
