@@ -285,9 +285,13 @@
         $.ajax({
             url: APPROVE_TPL.replace('__ID__', currentShareId),
             type: 'POST',
-            data: { no_transaksis: selected },
-            traditional: true,
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+            data: JSON.stringify({ no_transaksis: selected }),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            }
         }).done(function () {
             $btn.html('<i class="bi bi-check2-all me-1"></i>Berhasil');
             setTimeout(() => { $modal.modal('hide'); }, 800);
