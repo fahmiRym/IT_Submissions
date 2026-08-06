@@ -12,15 +12,18 @@
 (function () {
     if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
 
-    const FIREBASE_CONFIG = @json([
-        'apiKey'            => config('services.fcm.web.api_key'),
-        'authDomain'        => config('services.fcm.web.auth_domain'),
-        'projectId'         => config('services.fcm.web.project_id'),
-        'storageBucket'     => config('services.fcm.web.storage_bucket'),
-        'messagingSenderId' => config('services.fcm.web.messaging_sender_id'),
-        'appId'             => config('services.fcm.web.app_id'),
-    ]);
-    const VAPID_KEY  = @json(config('services.fcm.web.vapid_key'));
+    @php
+        $__fbCfg = [
+            'apiKey'            => config('services.fcm.web.api_key'),
+            'authDomain'        => config('services.fcm.web.auth_domain'),
+            'projectId'         => config('services.fcm.web.project_id'),
+            'storageBucket'     => config('services.fcm.web.storage_bucket'),
+            'messagingSenderId' => config('services.fcm.web.messaging_sender_id'),
+            'appId'             => config('services.fcm.web.app_id'),
+        ];
+    @endphp
+    const FIREBASE_CONFIG = {!! json_encode($__fbCfg) !!};
+    const VAPID_KEY  = {!! json_encode(config('services.fcm.web.vapid_key')) !!};
     const REGISTER_URL = "{{ route('web-push.register') }}";
     const CSRF = "{{ csrf_token() }}";
 
