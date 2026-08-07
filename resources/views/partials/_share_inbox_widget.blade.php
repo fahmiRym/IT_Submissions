@@ -152,6 +152,12 @@
         });
         $t.find('[data-dismiss]').on('click', function (e) {
             e.stopPropagation();
+            // Silang X = mark as read (permanent hide dari polling berikutnya)
+            $.ajax({
+                url: READ_TPL.replace('__ID__', item.share_id),
+                type: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            });
             $t.fadeOut(200, () => $t.remove());
         });
         $stack.append($t);
