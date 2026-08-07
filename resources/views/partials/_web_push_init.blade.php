@@ -96,33 +96,28 @@
     };
 
     // Foreground message handler — saat browser tab AKTIF, FCM tidak auto-fire OS notif.
-    // Kita panggil showNotification manual supaya OS notif tetap muncul (spt WA Web).
+    // NOTE: Sound TIDAK di-play di sini — poller widget (_share_inbox_widget) sudah handle
+    // sound, kalau keduanya play akan tumpuk. FCM foreground hanya fire OS notif.
     messaging.onMessage(async function (payload) {
-        // Sound
+        console.log('[FCM] foreground message diterima:', payload);
+        if (Notification.permission !== 'granted') return;
         try {
-            const audio = document.getElementById('share-inbox-sound');
-            if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
-        } catch (e) {}
-
-        // OS notification via Service Worker (paling reliable — konsisten dgn background)
-        if (Notification.permission === 'granted') {
-            try {
-                const reg = await navigator.serviceWorker.ready;
-                const notifData = (payload.notification || {});
-                const dataPayload = (payload.data || {});
-                await reg.showNotification(
-                    notifData.title || 'IT Submissions',
-                    {
-                        body:  notifData.body || '',
-                        icon:  '/img/logo.png',
-                        badge: '/img/logo.png',
-                        tag:   dataPayload.tag || ('itsub-' + Date.now()),
-                        data:  dataPayload,
-                        requireInteraction: false,
-                    }
-                );
-            } catch (e) { console.log('showNotification (foreground) gagal:', e.message); }
-        }
+            const reg = await navigator.serviceWorker.ready;
+            const notifData = (payload.notification || {});
+            const dataPayload = (payload.data || {});
+            await reg.showNotification(
+                notifData.title || 'IT Submissions',
+                {
+                    body:  notifData.body || '',
+                    icon:  '/img/logo.png',
+                    badge: '/img/logo.png',
+                    tag:   dataPayload.tag || ('itsub-' + Date.now()),
+                    data:  dataPayload,
+                    requireInteraction: false,
+                }
+            );
+            console.log('[FCM] showNotification foreground fired');
+        } catch (e) { console.log('[FCM] showNotification (foreground) gagal:', e.message); }
     });
 
     // Terima pesan dari service worker (klik notif desktop → buka modal share)

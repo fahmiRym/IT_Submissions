@@ -166,6 +166,11 @@ class FcmService
                 );
 
             if ($response->successful()) {
+                Log::info('FCM: push OK', [
+                    'platform' => $platform,
+                    'token_prefix' => substr($token, 0, 20) . '...',
+                    'name' => $response->json('name'),
+                ]);
                 return;
             }
 
@@ -174,12 +179,20 @@ class FcmService
             if (in_array($errorStatus, ['NOT_FOUND', 'UNREGISTERED', 'INVALID_ARGUMENT'], true)
                 || $response->status() === 404) {
                 DeviceToken::where('token', $token)->delete();
+                Log::warning('FCM: token invalid, dihapus dari DB', [
+                    'platform' => $platform,
+                    'token_prefix' => substr($token, 0, 20) . '...',
+                    'error' => $errorStatus,
+                ]);
             }
 
             Log::warning('FCM: gagal kirim push', [
+                'platform' => $platform,
+                'token_prefix' => substr($token, 0, 20) . '...',
                 'status' => $response->status(),
                 'error' => $response->json('error.status'),
                 'message' => $response->json('error.message'),
+                'body' => $response->body(),
             ]);
         } catch (\Throwable $e) {
             Log::error('FCM: exception saat kirim push: ' . $e->getMessage());
