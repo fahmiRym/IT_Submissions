@@ -25,4 +25,23 @@ class NotificationController extends Controller
         $notification->update(['is_read' => 1]);
         return back();
     }
+
+    /** Tandai SEMUA notifikasi milik user login sbg dibaca. */
+    public function markAllRead()
+    {
+        Notification::where('user_id', auth()->id())
+            ->where('role_target', 'admin')
+            ->where('is_read', false)
+            ->update(['is_read' => 1]);
+        return back()->with('success', 'Semua notifikasi ditandai sudah dibaca.');
+    }
+
+    /** Hapus SEMUA notifikasi milik user login. */
+    public function clearAll()
+    {
+        Notification::where('user_id', auth()->id())
+            ->where('role_target', 'admin')
+            ->delete();
+        return back()->with('success', 'Semua notifikasi dihapus.');
+    }
 }

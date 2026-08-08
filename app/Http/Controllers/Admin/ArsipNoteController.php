@@ -24,7 +24,7 @@ class ArsipNoteController extends Controller
         }
 
         $notes = $arsip->personalNotes()
-            ->with('user:id,name,role,department_id')
+            ->with('user:id,name,role,department_id,photo')
             ->with('user.department:id,name')
             ->get();
 
@@ -36,6 +36,9 @@ class ArsipNoteController extends Controller
                 'author_name' => $n->user->name ?? '—',
                 'author_role' => $n->user->role ?? '',
                 'author_dept' => optional($n->user->department)->name,
+                'author_photo' => !empty($n->user->photo)
+                    ? asset('profile_photos/' . $n->user->photo)
+                    : null,
                 'note' => $n->note,
                 'created_at' => $n->created_at?->format('d/m/Y H:i'),
                 'updated_at' => $n->updated_at?->format('d/m/Y H:i'),

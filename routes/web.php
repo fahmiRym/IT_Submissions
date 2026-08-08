@@ -252,6 +252,8 @@ Route::prefix('admin')
         // ✅ NOTIFIKASI ADMIN
         Route::get('notifications', [AdminNotification::class,'index'])->name('notifications.index');
         Route::put('notifications/{notification}/read',[AdminNotification::class,'read'])->name('notifications.read');
+        Route::post('notifications/mark-all-read', [AdminNotification::class,'markAllRead'])->name('notifications.mark-all-read');
+        Route::delete('notifications/clear-all', [AdminNotification::class,'clearAll'])->name('notifications.clear-all');
 
     });
 
@@ -310,6 +312,8 @@ Route::prefix('superadmin')
         // Notifikasi Superadmin
         Route::get('notifications',[SuperNotification::class,'index'])->name('notifications.index');
         Route::put('notifications/{notification}/read',[SuperNotification::class,'read'])->name('notifications.read');
+        Route::post('notifications/mark-all-read', [SuperNotification::class,'markAllRead'])->name('notifications.mark-all-read');
+        Route::delete('notifications/clear-all', [SuperNotification::class,'clearAll'])->name('notifications.clear-all');
         
         // Custom Arsip Action
         Route::get('arsip/{id}/print-draft', [SuperArsip::class, 'printDraft'])->name('arsip.print-draft');

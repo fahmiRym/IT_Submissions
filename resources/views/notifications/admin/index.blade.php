@@ -43,16 +43,32 @@
 <div class="row justify-content-center">
     <div class="col-lg-9">
         
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
                 <h5 class="fw-bold mb-1">🔔 Notifikasi Saya</h5>
                 <p class="text-muted small mb-0">Update status pengajuan arsip Anda.</p>
             </div>
-            @if($paginatedNotifications->count() > 0)
-            <span class="badge bg-light text-primary border rounded-pill px-3 py-2">
-                Total: {{ $paginatedNotifications->total() }}
-            </span>
-            @endif
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                @if($paginatedNotifications->count() > 0)
+                    <span class="badge bg-light text-primary border rounded-pill px-3 py-2">
+                        Total: {{ $paginatedNotifications->total() }}
+                    </span>
+                    <form action="{{ route('admin.notifications.mark-all-read') }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <i class="bi bi-check2-all me-1"></i> Tandai Sudah Dibaca
+                        </button>
+                    </form>
+                    <form action="{{ route('admin.notifications.clear-all') }}" method="POST" class="d-inline"
+                          onsubmit="return confirm('Hapus SEMUA notifikasi? Aksi ini tidak bisa dibatalkan.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                            <i class="bi bi-trash3 me-1"></i> Hapus Semua
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
 
         <div class="card shadow-sm border-0 rounded-4 overflow-hidden">

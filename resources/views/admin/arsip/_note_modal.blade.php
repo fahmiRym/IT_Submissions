@@ -15,7 +15,8 @@
     #modalNotes .note-card:hover { border-color:#fcd34d; }
 
     #modalNotes .note-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-    #modalNotes .note-head .avatar { width:32px; height:32px; border-radius:9px; background:#e0e7ff; color:#3730a3; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; }
+    #modalNotes .note-head .avatar { width:32px; height:32px; border-radius:9px; background:#e0e7ff; color:#3730a3; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; overflow:hidden; }
+    #modalNotes .note-head .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
     #modalNotes .note-card.mine .note-head .avatar { background:linear-gradient(135deg,#f59e0b,#d97706); color:white; }
     #modalNotes .note-head .author { font-weight:800; color:#0f172a; font-size:0.85rem; line-height:1.2; }
     #modalNotes .note-head .meta { color:#64748b; font-size:0.7rem; }
@@ -116,10 +117,14 @@
             $list.innerHTML = '<div class="empty"><i class="bi bi-chat-square-text d-block mb-2" style="font-size:2rem;opacity:.4;"></i>Belum ada catatan. Tulis yang pertama!</div>';
             return;
         }
-        $list.innerHTML = notes.map(n => `
+        $list.innerHTML = notes.map(n => {
+            const avatarHtml = n.author_photo
+                ? `<img src="${escapeHtml(n.author_photo)}" alt="${escapeHtml(n.author_name)}" onerror="this.parentElement.innerHTML='${escapeHtml((n.author_name||'?').charAt(0).toUpperCase())}';">`
+                : escapeHtml((n.author_name||'?').charAt(0).toUpperCase());
+            return `
             <div class="note-card ${n.is_mine ? 'mine' : ''}">
                 <div class="note-head">
-                    <div class="avatar">${escapeHtml((n.author_name||'?').charAt(0).toUpperCase())}</div>
+                    <div class="avatar">${avatarHtml}</div>
                     <div>
                         <div class="author">${escapeHtml(n.author_name)} <span class="role-pill">${escapeHtml(n.author_role)}</span></div>
                         <div class="meta">${escapeHtml(n.author_dept||'')} · ${escapeHtml(n.created_at)}${n.created_at !== n.updated_at ? ' · (diedit)' : ''}</div>
@@ -133,7 +138,8 @@
                 </div>
                 <div class="note-body" data-id="${n.id}">${escapeHtml(n.note)}</div>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         $list.querySelectorAll('.btn-edit-note').forEach(b => b.addEventListener('click', () => beginEdit(parseInt(b.dataset.id,10))));
         $list.querySelectorAll('.btn-del-note').forEach(b => b.addEventListener('click', () => deleteNote(parseInt(b.dataset.id,10))));
