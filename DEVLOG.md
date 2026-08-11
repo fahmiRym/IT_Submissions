@@ -4,6 +4,118 @@ Catatan kerja per sesi. Entri terbaru di atas.
 
 ---
 
+## 2026-07-31 — ✅ TRIKASA .191 PAKET FULL-SYNC (mirror prod .200)
+
+**Konteks:** user pilih "Paket Full-Sync" — deploy semua 17 fitur yang sudah aktif
+di prod `.200` ke Trikasa cabang Tanjungan-Lampung. Total effort ~90 menit.
+
+### Phases eksekusi (04:35 - 06:00 UTC approx)
+
+**Phase 0 — Backup**: 12 file critical di `/root/backups/*.bak.20260811_043532`
+(Arsip.php, User.php, web.php, app.blade, sidebar admin+superadmin,
+BarcodeController, BackupController, ArsipController, _arsip_sistem, arsip index,
+backup view).
+
+**Phase 1 — Fondasi (#1-#5)**:
+- #1 PHP `uploads.ini` 250M/512M/300s (bump dari default 2M/8M/128M)
+- #2 BackupController + backup view (max:2GB + accept .zip)
+- #3 Arsip.php v1 accessor status_utama (nanti ter-overwrite di Phase 5)
+- #4 BarcodeController fix accept_ba
+- #5 4 CSS files (modern-theme v2, premium-sidebar-topbar, responsive-mobile, adjust-theme)
+- #6+#8+#9 app.blade.php utuh (CSS links + JS sidebar-collapse-handler + notif-dropdown fix)
+  Trikasa app.blade baseline 292 baris NO SSO → aman replace utuh dgn local 557 baris
+
+**Phase 2 — Migrations (7 file)**:
+- audit_logs, tindakan+catatan_it, arsip_shares, role_pengajuan_access,
+  extend_arsip_shares_for_role_target, arsip_personal_notes, app_versions
+- All DONE dalam 1 batch (`php artisan migrate --force`)
+
+**Phase 3 — Models + Trait + Controllers + Views (11 file SCP)**:
+- Models: AuditLog, AppVersion, ArsipPersonalNote, ArsipShare, RolePengajuanAccess (5)
+- Trait: HasAuditLogs (1)
+- Controllers: ActivityLog, AppVersion, PengajuanAccess, ServerStat, ArsipNote, ArsipShare, Maintenance (7)
+- Views: _per_page_select, activity_logs, app_versions, pengajuan_access, server_stats,
+  maintenance, _note_modal, _share_modal, shared_inbox (9)
+
+**Phase 4 — Routes + Patches**:
+- Inject 17 route ke superadmin group (activity-logs, server-stats, pengajuan-access,
+  app-versions, maintenance)
+- Inject 8 route ke common auth group (arsip.notes + arsip.shares)
+- Total: 25 routes registered (verified via route:list)
+- Sed patch ArsipController: `processArchiving($id, $seq)` → `($id, $seq, $request->note)`
+- Python patch ActivityLogController: add filter `arsip_id` untuk tombol Log Riwayat
+- SCP `_arsip_sistem.blade.php` (baseline 224 → local 241 dgn field Catatan Arsip)
+- Python patch view arsip index: dropdown no_transaksi + 3 tombol AKSI
+  (Share cyan, Note kuning, Log Riwayat dark) + include _note_modal + _share_modal
+
+**Phase 5 FINAL** — Arsip.php v5 + User sharedArsips + sidebar unified:
+- SCP `patches/prod-safe/app/Models/Arsip.php` (v5 dgn HasAuditLogs trait +
+  personalNotes + shares + sharedUsers + canBeEditedBy Layer 2)
+- Inline sed patch User.php (append sharedArsips() method sebelum closing `}`)
+- SCP sidebar admin unified (234 lines) + superadmin unified (329 lines) —
+  Route::has + method_exists defensive guards, class `bg-white`
+- Seed 2 initial app_versions (itsubmissions + itapproval v1.0.0)
+- Clear cache 4x (route/view/config/cache) + graceful reload php-fpm via USR2
+
+### Test end-to-end (via tinker)
+
+- ✅ Health: HTTP `/` 302, `/login` 200 (backend responsive)
+- ✅ 24 route registered (17 superadmin + 8 common - overlap)
+- ✅ ArsipPersonalNote::create id=1 arsip=6 (X3 works)
+- ✅ ArsipShare::create id=1 arsip=6 → target=admin_user (Y2 works)
+- ✅ Arsip update trigger HasAuditLogs → AuditLog id=1 action=updated (M1 works)
+- ✅ Cleanup all test data OK
+
+### File total di Trikasa sekarang
+
+Same set dgn prod `.200` — 24+ file changes vs baseline `147ff58`:
+- 5 model baru (AuditLog, AppVersion, ArsipPersonalNote, ArsipShare, RolePengajuanAccess)
+- 1 trait (HasAuditLogs)
+- 7 controller baru (ActivityLog, AppVersion, PengajuanAccess, ServerStat,
+  ArsipNote, ArsipShare, Maintenance)
+- 9 view baru + 3 view patched
+- 4 CSS files
+- 7 migration applied
+- Arsip.php + User.php patched
+- routes/web.php +25 route
+- app.blade.php replaced (Trikasa no SSO custom, aman)
+
+### Kolom AKSI arsip Trikasa sekarang (7 tombol total)
+
+`print / view / edit / arsip-sistem / share / note / log-riwayat / delete`
+
+### Sidebar Trikasa menu
+
+- Semua menu prod .200 tampil (Route::has resolve)
+- Menu Maintenance Mode DIHIDE (sesuai policy prod)
+
+### Downtime aktual = 0 (graceful reload)
+
+### Backup + rollback
+
+Semua di `/root/backups/*.bak.20260811_043532` (12 file). Rollback cepat via
+`cp /root/backups/{FILE}.bak.20260811_043532 /root/it_submissions/{PATH}` + reload.
+
+### Impact user
+
+Trikasa cabang TJL sekarang punya SEMUA fitur yg baru aktif di prod .200:
+- Log Aktivitas (audit trail otomatis)
+- Catatan Arsip di modal Arsip Sistem
+- Dropdown No Transaksi + tombol Log Riwayat per arsip
+- Personal Notes per arsip (modal CRUD)
+- Statistik Server (real-time dashboard)
+- Akses Pengajuan (role × jenis matrix)
+- Kelola APK Android (2 apps seeded)
+- Sharing Pengajuan Layer 2 (user/role target)
+- Sidebar modern + collapse animation + notif dropdown fix
+- Bug fix Android status_utama + accept_ba
+- Backup upload up to 250MB via LAN
+
+Yang HOLD (belum di prod juga): Sign / Approve / Reject buttons, Master Cabang,
+Master Produk.
+
+---
+
 ## 2026-07-30 (lanjutan #6) — ✅ TRIKASA .191 (cabang TJL): analisa + install maintenance page
 
 **Konteks:** user minta analisa server Trikasa (cabang Tanjungan-Lampung) dan
